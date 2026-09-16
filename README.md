@@ -99,6 +99,7 @@ The audit is intended to be data-driven and generated per prospect account.
 
 Read:
 
+- `DYNAMIC-JSON.md` — Neuro generator contract (load path, frozen keys, fallbacks)
 - `docs/AUDIT_TEMPLATE_VARIABLES.md`
 
 This document explains every variable that should be dynamic, what it means, and where to inject it in the audit template.

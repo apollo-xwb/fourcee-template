@@ -23,6 +23,10 @@
 
 :root {
   --destructive-foreground: oklch(1 0 0);
+  --fourcee-accent-copper: #c8b58f;
+  --fourcee-accent-ice: #c2ccd6;
+  --fourcee-brand-primary: #102a43;
+  --fourcee-brand-secondary: #051b2d;
 }
 
 .dark {
@@ -75,4 +79,16 @@ button,
 li,
 a {
   font-family: var(--font-sans);
+}
+
+button,
+a,
+[role="button"] {
+  transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+@media (max-width: 640px) {
+  h1 {
+    letter-spacing: 0.04em;
+  }
 }

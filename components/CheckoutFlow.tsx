@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { PACKAGES, UPSELLS } from '../constants.tsx';
 import { CheckoutState } from '../types';
 import fcShad from '../public/assets/fcshad.png';
+import { isPlaceholderBusinessName, loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from '../lib/audit-content';
 interface CheckoutFlowProps {
   isDarkMode?: boolean;
   initialPackageId?: string | null;
@@ -24,18 +25,17 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
     step: 1,
     billingCycle: 'monthly',
   });
-  const [companyName, setCompanyName] = useState('PLACEHOLDER Business');
+  const [companyName, setCompanyName] = useState(PLACEHOLDER_BUSINESS_NAME);
 
   useEffect(() => {
     let mounted = true;
-    fetch('/content.json')
-      .then((res) => res.json())
-      .then((data: { business?: { name?: string } }) => {
+    loadAuditContent()
+      .then((data) => {
         if (!mounted) return;
         const incomingName = data?.business?.name?.trim();
         if (!incomingName) return;
         setCompanyName((current) =>
-          current && current !== 'PLACEHOLDER Business' ? current : incomingName
+          isPlaceholderBusinessName(current) ? incomingName : current
         );
       })
       .catch(() => {
@@ -73,7 +73,10 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
         return (
           <div className="space-y-10 animate-in fade-in duration-500">
             <div className="text-center max-w-3xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold serif text-navy-900 dark:text-white">
+              <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-navy-500 dark:text-sky-200/70">
+                Configure · {companyName}
+              </p>
+              <h2 className="mt-3 text-3xl md:text-4xl font-bold serif text-navy-900 dark:text-white">
                 Get Live in 2 Hours - Choose Your Plan
               </h2>
               <p className="mt-3 text-sm text-navy-600 dark:text-navy-400 leading-relaxed">

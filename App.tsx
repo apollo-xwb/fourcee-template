@@ -39,6 +39,7 @@ import { FloatingAiAssistant } from './components/ui/glowing-ai-chat-assistant';
 import { BLOG_POSTS } from './constants';
 import { AuditPage } from './components/AuditPage';
 import type { AuditData } from './types/audit';
+import { loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from './lib/audit-content';
 
 const INTEGRATIONS_DATA = [
   {
@@ -165,12 +166,11 @@ const App: React.FC = () => {
   const [sideMenuCallsPerMonth, setSideMenuCallsPerMonth] = useState(12);
   const [sideMenuAvgDeal, setSideMenuAvgDeal] = useState(4200);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const businessName = auditData?.business.name ?? 'PLACEHOLDER Business';
+  const businessName = auditData?.business.name ?? PLACEHOLDER_BUSINESS_NAME;
 
-  // Load audit data from content.json
+  // Neuro contract: always load /content.json (generator overwrites this file).
   useEffect(() => {
-    fetch('/content.json')
-      .then(res => res.json())
+    loadAuditContent()
       .then((data: AuditData) => {
         setAuditData(data);
         setAuditDataLoading(false);
@@ -180,6 +180,16 @@ const App: React.FC = () => {
         setAuditDataLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    const theme = auditData?.branding?.theme;
+    if (!theme) return;
+    const root = document.documentElement;
+    if (theme.primary) root.style.setProperty('--fourcee-brand-primary', theme.primary);
+    if (theme.secondary) root.style.setProperty('--fourcee-brand-secondary', theme.secondary);
+    if (theme.accentGold) root.style.setProperty('--fourcee-accent-copper', theme.accentGold);
+    if (theme.accentSilver) root.style.setProperty('--fourcee-accent-ice', theme.accentSilver);
+  }, [auditData]);
 
   useEffect(() => {
     const el = scrollContainerRef.current;
@@ -389,13 +399,29 @@ const App: React.FC = () => {
           {/* Hero text - mobile below 3D object, desktop top-right */}
           <div className="order-2 md:order-2 md:row-start-1 text-center mt-4 md:mt-0">
             <div className="relative z-10 max-w-2xl mx-auto">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-5xl 2xl:text-6xl font-bold mb-3 text-[#1f1b16] dark:text-white serif leading-[1.1] tracking-tight">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#c8b58f]/50 bg-white/40 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.28em] text-[#5c4a2e] backdrop-blur-sm dark:border-white/15 dark:bg-white/5 dark:text-sky-100/80">
+                <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
+                Concierge standby · audit compiled
+              </div>
+              <motion.h1
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-5xl 2xl:text-6xl font-bold mb-3 text-[#1f1b16] dark:text-white serif leading-[1.1] tracking-tight"
+              >
                 The Gold Standard <br/><span className="italic shimmer-text">of Voice AI</span>
-              </h1>
+              </motion.h1>
               {/* Test Fourcee — directly under h1 on mobile only */}
               <div className="mt-4 mb-4 flex justify-center md:hidden">
                 <div className="w-full max-w-[130px] min-[340px]:max-w-[160px] min-[375px]:max-w-[200px] sm:max-w-[280px]">
-                  <MiniPhone isDarkMode={isDarkMode} businessName={businessName} leadId={auditData?.lead_id} />
+                  <MiniPhone
+                    isDarkMode={isDarkMode}
+                    businessName={businessName}
+                    leadId={auditData?.lead_id}
+                    phoneCountryDefault={auditData?.liveDemo.phoneCountryDefault}
+                    ctaLabel={auditData?.liveDemo.ctaLabel}
+                    helperCopy={auditData?.liveDemo.helperCopy}
+                  />
                 </div>
               </div>
               <p className="text-xs sm:text-sm md:text-sm lg:text-base text-[#4f4536] dark:text-navy-300 font-medium leading-relaxed uppercase tracking-[0.25em]">
@@ -459,7 +485,14 @@ const App: React.FC = () => {
           {/* Test Fourcee — desktop bottom-right under headline */}
           <div className="hidden md:flex order-3 md:row-start-2 md:self-end justify-center">
             <div className="w-full max-w-sm">
-              <MiniPhone isDarkMode={isDarkMode} businessName={businessName} leadId={auditData?.lead_id} />
+              <MiniPhone
+                isDarkMode={isDarkMode}
+                businessName={businessName}
+                leadId={auditData?.lead_id}
+                phoneCountryDefault={auditData?.liveDemo.phoneCountryDefault}
+                ctaLabel={auditData?.liveDemo.ctaLabel}
+                helperCopy={auditData?.liveDemo.helperCopy}
+              />
             </div>
           </div>
         </div>
@@ -496,7 +529,7 @@ const App: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowDemoCallModal(true)}
-            className="mb-6 h-12 md:h-14 px-5 md:px-8 bg-emerald-500/90 backdrop-blur-md rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all border border-emerald-200/60 text-white text-[10px] md:text-xs uppercase tracking-[0.22em] font-bold shadow-xl"
+            className="mb-6 h-12 md:h-14 px-5 md:px-8 bg-navy-900/90 dark:bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all border border-[#c8b58f]/50 text-white dark:text-navy-950 text-[10px] md:text-xs uppercase tracking-[0.22em] font-bold shadow-xl"
           >
             Call me
           </button>
@@ -548,6 +581,9 @@ const App: React.FC = () => {
                 isDarkMode={isDarkMode}
                 businessName={businessName}
                 leadId={auditData?.lead_id}
+                phoneCountryDefault={auditData?.liveDemo.phoneCountryDefault}
+                ctaLabel={auditData?.liveDemo.ctaLabel}
+                helperCopy={auditData?.liveDemo.helperCopy}
                 onCallCompleted={handleDemoCallCompleted}
               />
             </div>
@@ -1007,7 +1043,7 @@ const App: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowDemoCallModal(true)}
-              className="inline-flex items-center gap-2 rounded-full bg-emerald-600 text-white px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.22em] shadow-xl hover:brightness-110 transition-all"
+              className="inline-flex items-center gap-2 rounded-full bg-navy-900 dark:bg-white text-white dark:text-navy-950 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.22em] shadow-xl hover:scale-[1.03] active:scale-95 transition-all"
             >
               Get a concierge callback
             </button>
@@ -1411,7 +1447,12 @@ const App: React.FC = () => {
           />
         )}
         {currentView === AppView.DASHBOARD && (
-          <CRMView isDarkMode={isDarkMode} businessName={auditData?.business.name ?? 'PLACEHOLDER Business'} />
+          <CRMView
+            isDarkMode={isDarkMode}
+            businessName={auditData?.business.name ?? PLACEHOLDER_BUSINESS_NAME}
+            reportId={auditData?.auditMeta.reportId}
+            location={auditData?.business.location}
+          />
         )}
         {currentView === AppView.ADMIN && <AdminDashboard isDarkMode={isDarkMode} />}
         {currentView === AppView.TERMS && <TermsPage />}

@@ -13,7 +13,10 @@ export interface AuditData {
     name: string;
     location: string;
     logoUrl: string;
-    /** Scraped storefront / business cover used as the audit brief intro hero. */
+    /**
+     * Optional apollo-only cover image. Neuro payloads omit this.
+     * UI must fall back to branding.clientLogoUrl then business.logoUrl.
+     */
     heroImageUrl?: string;
     industry: string;
     storeCount: number;

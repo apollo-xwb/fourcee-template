@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
-import logoUrl from '../assets/logo.png';
 import fcWhite from '../public/assets/fcwhite.png';
 import fcBlack from '../public/assets/fcblack.png';
 import placeholderGif from '../public/assets/placeholder.gif';
-import nivodaGif from '../public/assets/nivoda.gif';
 import { PendantFBX } from './PendantFBX';
 import { MiniPhone } from './ui/mini-phone';
 import { IncomingCallPhone } from './ui/incoming-call-phone';
 import { ValueCalculator } from './ValueCalculator';
 import type { AuditData } from '../types/audit';
+import {
+  formatAuditCurrency,
+  formatAuditRange,
+  resolveBusinessLogo,
+  resolveHeroImage,
+} from '../lib/audit-content';
 import {
   BeforeAfterCards,
   CallVolumeBarChart,
@@ -106,24 +110,19 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
     scrollToId('audit-booking-cta');
     onBookCall();
   };
+  const generatedDate = data.auditMeta.generatedDate;
+  const reportId = data.auditMeta.reportId;
+  const businessLogo = resolveBusinessLogo(data);
+  const businessHeroImage = resolveHeroImage(data);
+  const liveDemo = data.liveDemo;
+  const formatCurrency = (amount: number) => formatAuditCurrency(data, amount);
+  const formatRange = formatAuditRange;
   const shellClass = isDarkMode
     ? 'border-white/10 bg-gradient-to-br from-navy-900/90 via-navy-950 to-navy-900/90 text-white'
     : 'border-navy-200/80 bg-gradient-to-br from-white via-slate-50 to-slate-100 text-navy-900 shadow-[0_18px_55px_rgba(15,23,42,0.08)]';
   const panelClass = isDarkMode
     ? 'border-white/10 bg-white/[0.04] text-white'
     : 'border-navy-200/80 bg-white/85 text-navy-900 shadow-[0_10px_35px_rgba(15,23,42,0.06)]';
-
-  // Format currency helper
-  const formatCurrency = (amount: number) => {
-    return `${data.auditMeta.currencySymbol}${amount.toLocaleString(data.auditMeta.locale)}`;
-  };
-
-  // Format range helper
-  const formatRange = (min: number, max: number) => {
-    return `${min}-${max}`;
-  };
-
-  const businessHeroImage = data.business.heroImageUrl || data.business.logoUrl;
 
   return (
     <div
@@ -283,7 +282,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex min-w-0 items-center gap-3">
                   <img
-                    src={data.business.logoUrl}
+                    src={businessLogo}
                     alt={`${data.business.name} logo`}
                     className={`h-11 w-11 shrink-0 rounded-xl object-cover ring-2 shadow-md ${
                       isDarkMode ? 'ring-navy-200' : 'ring-white/30'
@@ -340,6 +339,12 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                   surface={headerSurface}
                   label={`Missed Calls ${formatRange(data.callModel.missedCallsPerWeekMin, data.callModel.missedCallsPerWeekMax)}/week`}
                 />
+                {generatedDate ? (
+                  <HeaderMetaItem tone="silver" surface={headerSurface} label={`Generated ${generatedDate}`} />
+                ) : null}
+                {reportId ? (
+                  <HeaderMetaItem tone="gold" surface={headerSurface} label={`Report ${reportId}`} />
+                ) : null}
               </div>
             )}
           </div>
@@ -407,7 +412,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
               <p className={`text-[10px] uppercase tracking-[0.3em] ${isDarkMode ? 'text-slate-500' : 'text-navy-500'}`}>Prepared exclusively for:</p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <img
-                  src={data.business.logoUrl}
+                  src={businessLogo}
                   alt=""
                   className="hidden h-12 w-12 rounded-xl object-cover ring-1 ring-white/15 sm:block"
                   aria-hidden
@@ -434,17 +439,28 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                 <HeroMetricPill label="Likely Missed / Week" value={`${formatRange(data.callModel.missedCallsPerWeekMin, data.callModel.missedCallsPerWeekMax)} calls`} isDarkMode={isDarkMode} />
               </div>
 
-              <div className="mt-7">
+              <div className="mt-7 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => scrollToId('audit-full-report')}
-                  className={`rounded-full border px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] shadow-lg transition ${
+                  onClick={onGetLive}
+                  className={`rounded-full px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] shadow-lg transition hover:scale-[1.02] active:scale-[0.98] ${
                     isDarkMode
-                      ? 'border-white/20 bg-gradient-to-r from-slate-800 to-zinc-900 text-slate-200 hover:border-amber-500/30 hover:from-zinc-800 hover:to-black'
-                      : 'border-navy-300 bg-gradient-to-r from-navy-100 to-white text-navy-900 hover:border-navy-500'
+                      ? 'bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 text-black shadow-amber-900/30 hover:brightness-110'
+                      : 'bg-navy-900 text-white hover:bg-navy-800'
                   }`}
                 >
                   Go live in 2 hours
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollToId('audit-lost-revenue')}
+                  className={`rounded-full border px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] transition hover:scale-[1.02] active:scale-[0.98] ${
+                    isDarkMode
+                      ? 'border-white/20 bg-white/5 text-slate-200 hover:border-amber-500/30'
+                      : 'border-navy-300 bg-white text-navy-900 hover:border-navy-500'
+                  }`}
+                >
+                  See the proof
                 </button>
               </div>
             </div>
@@ -462,14 +478,66 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                 <p
                   className={`mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.28em] ${isDarkMode ? 'text-amber-200/85' : 'text-navy-700'}`}
                 >
-                  Try Fourcee on your phone
+                  {liveDemo.ctaLabel}
                 </p>
-                <MiniPhone isDarkMode={isDarkMode} className="w-full" businessName={data.business.name} />
+                <MiniPhone
+                  isDarkMode={isDarkMode}
+                  className="w-full"
+                  businessName={data.business.name}
+                  leadId={data.lead_id}
+                  phoneCountryDefault={liveDemo.phoneCountryDefault}
+                  ctaLabel={liveDemo.ctaLabel}
+                  helperCopy={liveDemo.helperCopy}
+                />
                 <p className={`mt-3 text-center text-xs ${isDarkMode ? 'text-slate-400' : 'text-navy-600'}`}>
-                  Uses your public profile &amp; site context. No charge. ~60–90s.
+                  {liveDemo.helperCopy} {liveDemo.demoDurationHint}
                 </p>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section
+          id="audit-lost-revenue"
+          className={`relative mt-8 overflow-hidden rounded-[2rem] border px-6 py-8 md:px-10 md:py-10 ${
+            isDarkMode
+              ? 'border-rose-400/20 bg-gradient-to-br from-rose-950/40 via-navy-950 to-navy-950'
+              : 'border-rose-200 bg-gradient-to-br from-rose-50 via-white to-[#faf5ea]'
+          }`}
+        >
+          <p className={`text-[10px] font-bold uppercase tracking-[0.32em] ${isDarkMode ? 'text-rose-200/80' : 'text-rose-800'}`}>
+            Lost revenue proof
+          </p>
+          <h2 className={`mt-3 text-3xl font-semibold leading-tight md:text-5xl ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>
+            {formatCurrency(data.revenueModel.monthlyLossMin)}–{formatCurrency(data.revenueModel.monthlyLossMax)}
+            <span className="block text-lg font-normal tracking-normal md:text-2xl">walks out every month unanswered.</span>
+          </h2>
+          <p className={`mt-4 max-w-2xl text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-navy-700'}`}>
+            Mid-range leak for {data.business.name}: {formatCurrency(data.revenueModel.monthlyLossMidpoint)} / month.
+            Six-month cumulative: {formatCurrency(data.revenueModel.sixMonthCumulativeLeak)}.
+            {data.compliance.disclaimerShort ? ` ${data.compliance.disclaimerShort}` : ''}
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={onGetLive}
+              className={`rounded-full px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] shadow-lg transition hover:scale-[1.02] active:scale-[0.98] ${
+                isDarkMode
+                  ? 'bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 text-black'
+                  : 'bg-navy-900 text-white'
+              }`}
+            >
+              Recover this revenue
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToId('audit-full-report')}
+              className={`rounded-full border px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] ${
+                isDarkMode ? 'border-white/20 text-slate-200' : 'border-navy-300 text-navy-900'
+              }`}
+            >
+              Inspect the model
+            </button>
           </div>
         </section>
 
@@ -689,9 +757,8 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
           <div className="p-6 md:p-8">
             <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-slate-100' : 'text-navy-900'}`}>{data.recoveryPlan.headline}</h2>
             <p className={`mt-3 max-w-2xl text-sm leading-relaxed ${isDarkMode ? 'text-white/75' : 'text-navy-700'}`}>
-              Recovering this pipeline starts with immediate coverage and fast lead handling. Based on your current model,
-              this is a practical rollout designed to recover {formatCurrency(data.revenueModel.monthlyLossMin)} to {formatCurrency(data.revenueModel.monthlyLossMax)}
-              in monthly leakage while protecting showroom experience.
+              {data.recoveryPlan.body ||
+                `Recovering this pipeline starts with immediate coverage and fast lead handling. Based on your current model, this is a practical rollout designed to recover ${formatCurrency(data.revenueModel.monthlyLossMin)} to ${formatCurrency(data.revenueModel.monthlyLossMax)} in monthly leakage while protecting showroom experience.`}
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <div className={`rounded-xl border p-3 ${isDarkMode ? 'border-white/10 bg-white/[0.03]' : 'border-navy-200 bg-white/80'}`}>
@@ -774,8 +841,29 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
               Book a 15-Minute Strategy Call
             </button>
           </div>
+          {data.compliance.disclaimerShort ? (
+            <p className={`mt-5 text-[10px] uppercase tracking-[0.18em] ${isDarkMode ? 'text-slate-500' : 'text-navy-500'}`}>
+              {data.compliance.disclaimerShort}
+            </p>
+          ) : null}
         </section>
       </div>
+
+      {!showIntroSplash && (
+        <div className="fixed inset-x-0 bottom-20 z-30 flex justify-center px-4 md:hidden pointer-events-none">
+          <button
+            type="button"
+            onClick={onGetLive}
+            className={`pointer-events-auto rounded-full px-5 py-3 text-[10px] font-bold uppercase tracking-[0.2em] shadow-2xl ${
+              isDarkMode
+                ? 'bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 text-black'
+                : 'bg-navy-900 text-white'
+            }`}
+          >
+            Recover {formatCurrency(data.revenueModel.monthlyLossMidpoint)} / mo
+          </button>
+        </div>
+      )}
     </div>
   );
 };

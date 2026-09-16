@@ -9,7 +9,7 @@ export interface ValueCalculatorProps {
 
 export const ValueCalculator: React.FC<ValueCalculatorProps> = ({
   isDarkMode = true,
-  businessName = 'PLACEHOLDER Business',
+  businessName = 'PLACEHOLDER Business', // Neuro token — do not rename
 }) => {
   const [avgValue, setAvgValue] = useState(5000);
   const [missedCalls, setMissedCalls] = useState(20);

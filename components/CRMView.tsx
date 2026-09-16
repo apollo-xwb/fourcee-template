@@ -6,6 +6,10 @@ interface CRMViewProps {
   isDarkMode?: boolean;
   /** Same source as audit (`content.json` → `business.name`). */
   businessName?: string;
+  /** Optional `auditMeta.reportId` from content.json. */
+  reportId?: string;
+  /** Optional `business.location` from content.json. */
+  location?: string;
 }
 
 type TranscriptLine = { speaker: string; line: string; at: string };
@@ -63,7 +67,12 @@ const GridWash: React.FC<{ style: React.CSSProperties; opacity?: string }> = ({ 
   <div className={`pointer-events-none absolute inset-0 ${opacity}`} style={style} aria-hidden />
 );
 
-export const CRMView: React.FC<CRMViewProps> = ({ isDarkMode = true, businessName = 'PLACEHOLDER Business' }) => {
+export const CRMView: React.FC<CRMViewProps> = ({
+  isDarkMode = true,
+  businessName = 'PLACEHOLDER Business',
+  reportId,
+  location,
+}) => {
   const [activeTab, setActiveTab] = useState<PortalTab>('simulation');
   const [revenueSaved, setRevenueSaved] = useState(125500);
   const [appointmentsBooked, setAppointmentsBooked] = useState(48);
@@ -71,6 +80,8 @@ export const CRMView: React.FC<CRMViewProps> = ({ isDarkMode = true, businessNam
   const [liveSeconds, setLiveSeconds] = useState(98);
   const [waveHeights, setWaveHeights] = useState<number[]>([12, 20, 15, 25, 14, 22, 10, 24, 16, 19, 12, 21]);
   const [selectedKey, setSelectedKey] = useState<string>('call-1');
+  const [opsClock, setOpsClock] = useState(() => new Date());
+  const [channelLoad, setChannelLoad] = useState({ voice: 2, sms: 1, web: 0 });
 
   const simulatedNames = useMemo(
     () => [
@@ -263,6 +274,22 @@ export const CRMView: React.FC<CRMViewProps> = ({ isDarkMode = true, businessNam
     return () => clearInterval(waveInterval);
   }, []);
 
+  useEffect(() => {
+    const clock = setInterval(() => setOpsClock(new Date()), 1000);
+    return () => clearInterval(clock);
+  }, []);
+
+  useEffect(() => {
+    const channels = setInterval(() => {
+      setChannelLoad({
+        voice: 1 + Math.floor(Math.random() * 3),
+        sms: Math.floor(Math.random() * 3),
+        web: Math.floor(Math.random() * 2),
+      });
+    }, 4200);
+    return () => clearInterval(channels);
+  }, []);
+
   const liveDuration = `${String(Math.floor(liveSeconds / 60)).padStart(2, '0')}:${String(liveSeconds % 60).padStart(2, '0')}`;
 
   const pageClass = isDarkMode ? 'text-[#E7E7E7]' : 'text-navy-900';
@@ -287,8 +314,8 @@ export const CRMView: React.FC<CRMViewProps> = ({ isDarkMode = true, businessNam
     ? 'relative z-10 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl'
     : 'relative z-10 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3';
   const syncLabelClass = isDarkMode ? 'text-white/60' : 'text-navy-500';
-  const onlineClass = isDarkMode ? 'text-[#CCFF00]' : 'text-emerald-700';
-  const onlineDotClass = isDarkMode ? 'bg-[#CCFF00]' : 'bg-emerald-600';
+  const onlineClass = isDarkMode ? 'text-sky-200' : 'text-emerald-700';
+  const onlineDotClass = isDarkMode ? 'bg-sky-300' : 'bg-emerald-600';
 
   const panelClass = isDarkMode
     ? 'relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
@@ -349,16 +376,23 @@ export const CRMView: React.FC<CRMViewProps> = ({ isDarkMode = true, businessNam
   return (
     <div className={`min-h-screen px-4 py-8 md:px-8 md:py-10 ${pageClass}`}>
       <div className="mx-auto w-full max-w-7xl">
-        <p
-          className={`text-center text-[10px] font-bold uppercase tracking-[0.42em] md:text-left ${
-            isDarkMode ? 'text-slate-500' : 'text-navy-600'
-          }`}
-        >
-          {businessDisplay}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p
+            className={`text-[10px] font-bold uppercase tracking-[0.42em] ${
+              isDarkMode ? 'text-slate-500' : 'text-navy-600'
+            }`}
+          >
+            {businessDisplay}
+            {location ? ` · ${location.toUpperCase()}` : ''}
+          </p>
+          <p className={`font-mono text-[10px] tabular-nums tracking-[0.18em] ${isDarkMode ? 'text-sky-200/80' : 'text-navy-600'}`}>
+            {opsClock.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} UTC-OPS
+          </p>
+        </div>
         <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className={`text-center text-xs font-semibold uppercase tracking-[0.35em] sm:text-left ${portalTitleClass}`}>
             Concierge Intelligence Portal
+            {reportId ? <span className="ml-3 tracking-[0.18em] opacity-70">{reportId}</span> : null}
           </h1>
           <div className={`mx-auto sm:mx-0 ${tabShellClass}`}>
             {(['simulation', 'overview'] as const).map((tab) => (
@@ -513,7 +547,24 @@ export const CRMView: React.FC<CRMViewProps> = ({ isDarkMode = true, businessNam
             <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <img src={isDarkMode ? fcWhite : fcBlack} alt="Fourcee" className="mt-2 h-10 w-auto object-contain md:h-12" />
-                <p className={`mt-2 text-sm font-medium tracking-wide md:text-base ${engineSubClass}`}>Concierge Intelligence Engine</p>
+                <p className={`mt-2 text-sm font-medium tracking-wide md:text-base ${engineSubClass}`}>Live ops HUD · {businessName}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {[
+                    { id: 'VOICE', load: channelLoad.voice },
+                    { id: 'SMS', load: channelLoad.sms },
+                    { id: 'WEB', load: channelLoad.web },
+                  ].map((ch) => (
+                    <span
+                      key={ch.id}
+                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[9px] font-bold uppercase tracking-[0.18em] ${
+                        isDarkMode ? 'border-white/15 bg-black/40 text-slate-200' : 'border-navy-200 bg-white text-navy-800'
+                      }`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${ch.load > 0 ? onlineDotClass : 'bg-slate-500'}`} />
+                      {ch.id} {ch.load.toString().padStart(2, '0')}
+                    </span>
+                  ))}
+                </div>
               </div>
               <div className={syncBoxClass}>
                 <p className={`text-[10px] uppercase tracking-[0.28em] ${syncLabelClass}`}>Concierge Brain Sync</p>
@@ -521,6 +572,7 @@ export const CRMView: React.FC<CRMViewProps> = ({ isDarkMode = true, businessNam
                   <span className={`h-2.5 w-2.5 rounded-full animate-pulse ${onlineDotClass}`} />
                   Online
                 </div>
+                <p className={`mt-2 font-mono text-[10px] tabular-nums ${syncLabelClass}`}>{liveDuration} live handle</p>
               </div>
             </div>
           </header>

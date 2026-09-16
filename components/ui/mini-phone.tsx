@@ -23,6 +23,10 @@ export interface MiniPhoneProps {
   isDarkMode?: boolean;
   businessName?: string;
   leadId?: string;
+  /** From content.json → liveDemo.phoneCountryDefault (e.g. "+1"). */
+  phoneCountryDefault?: string;
+  ctaLabel?: string;
+  helperCopy?: string;
   onCallCompleted?: () => void;
 }
 
@@ -31,12 +35,21 @@ export function MiniPhone({
   isDarkMode = true,
   businessName = 'PLACEHOLDER Business',
   leadId,
+  phoneCountryDefault,
+  ctaLabel,
+  helperCopy,
   onCallCompleted,
 }: MiniPhoneProps) {
-  const [selectedCountry, setSelectedCountry] = React.useState(COUNTRIES[0]);
+  const matchedDefault = COUNTRIES.find((c) => c.code === phoneCountryDefault) ?? COUNTRIES[0];
+  const [selectedCountry, setSelectedCountry] = React.useState(matchedDefault);
   const [phone, setPhone] = React.useState('');
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [status, setStatus] = React.useState<'idle' | 'calling' | 'success'>('idle');
+
+  React.useEffect(() => {
+    const next = COUNTRIES.find((c) => c.code === phoneCountryDefault);
+    if (next) setSelectedCountry(next);
+  }, [phoneCountryDefault]);
 
   const handleCall = async () => {
     if (!phone.trim()) return;
@@ -100,8 +113,8 @@ export function MiniPhone({
               <Phone className={cn('w-5 h-5', textClass)} />
             </div>
             <div>
-              <p className={cn('text-sm font-bold', textClass)}>{businessName} demo</p>
-              <p className={cn('text-[10px] uppercase tracking-wider', mutedClass)}>We&apos;ll call you</p>
+              <p className={cn('text-sm font-bold', textClass)}>{ctaLabel || `${businessName} demo`}</p>
+              <p className={cn('text-[10px] uppercase tracking-wider', mutedClass)}>{helperCopy || "We'll call you"}</p>
             </div>
           </div>
 
