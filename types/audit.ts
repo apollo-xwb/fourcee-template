@@ -1,3 +1,19 @@
+export interface RingSwatch {
+  id: string;
+  label: string;
+  color: string;
+}
+
+export interface RingBuilderConfig {
+  enabled?: boolean;
+  headline?: string;
+  subhead?: string;
+  metals?: RingSwatch[];
+  gems?: RingSwatch[];
+  defaultMetalId?: string;
+  defaultGemId?: string;
+}
+
 export interface AuditData {
   lead_id?: string;
   auditMeta: {
@@ -105,7 +121,14 @@ export interface AuditData {
     helperCopy: string;
     phoneCountryDefault: string;
     demoDurationHint: string;
+    /** Optional alias. Prefer top-level `ringBuilder`. */
+    ringBuilder?: RingBuilderConfig;
   };
+  /**
+   * Optional. Neuro payloads that omit this still work.
+   * Set `enabled: false` to hide the studio. See DYNAMIC-JSON.md.
+   */
+  ringBuilder?: RingBuilderConfig;
   branding: {
     theme: {
       primary: string;

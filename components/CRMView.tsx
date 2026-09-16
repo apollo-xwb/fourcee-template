@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import fcWhite from '../public/assets/fcwhite.png';
 import fcBlack from '../public/assets/fcblack.png';
+import type { RingBuilderConfig } from '../types/audit';
+import { LazyRingBuilderSection } from './RingBuilder';
 
 interface CRMViewProps {
   isDarkMode?: boolean;
@@ -10,6 +12,7 @@ interface CRMViewProps {
   reportId?: string;
   /** Optional `business.location` from content.json. */
   location?: string;
+  ringBuilder?: Required<RingBuilderConfig>;
 }
 
 type TranscriptLine = { speaker: string; line: string; at: string };
@@ -72,6 +75,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
   businessName = 'PLACEHOLDER Business',
   reportId,
   location,
+  ringBuilder,
 }) => {
   const [activeTab, setActiveTab] = useState<PortalTab>('simulation');
   const [revenueSaved, setRevenueSaved] = useState(125500);
@@ -473,6 +477,14 @@ export const CRMView: React.FC<CRMViewProps> = ({
               isDarkMode={isDarkMode}
             />
           </div>
+          {ringBuilder ? (
+            <LazyRingBuilderSection
+              config={ringBuilder}
+              isDarkMode={isDarkMode}
+              compact
+              businessName={businessName}
+            />
+          ) : null}
 
           <div className="grid gap-4 lg:grid-cols-2">
             <div

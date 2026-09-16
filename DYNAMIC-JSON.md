@@ -84,7 +84,16 @@ Keep these exact literals in repo (values and/or source tokens):
 
 **`recoveryPlan`:** `headline`, `body`, `capabilities[]`, `supportingMediaUrl`
 
-**`liveDemo`:** `ctaLabel`, `helperCopy`, `phoneCountryDefault`, `demoDurationHint`
+**`liveDemo`:** `ctaLabel`, `helperCopy`, `phoneCountryDefault`, `demoDurationHint`  
+Optional: `liveDemo.ringBuilder` (alias of top-level `ringBuilder`)
+
+**`ringBuilder` (optional, new — old payloads omit it and still work):**
+- `enabled` (boolean) — `false` hides the studio; missing/`true` shows it with defaults
+- `headline`, `subhead`
+- `metals[]` / `gems[]`: `{ id, label, color }`
+- `defaultMetalId`, `defaultGemId`
+
+Code defaults live in `lib/ring-builder.ts`. Neuro can personalize later without a schema migration.
 
 **`branding`:** `theme.{primary,secondary,accentGold,accentSilver}`, `logoWordmarkUrl`, `clientLogoUrl`, `fontHeading`, `fontBody`
 

@@ -38,8 +38,10 @@ import { ArticleCard } from './components/ui/blog-post-card';
 import { FloatingAiAssistant } from './components/ui/glowing-ai-chat-assistant';
 import { BLOG_POSTS } from './constants';
 import { AuditPage } from './components/AuditPage';
+import { LazyRingBuilderSection } from './components/RingBuilder';
 import type { AuditData } from './types/audit';
 import { loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from './lib/audit-content';
+import { resolveRingBuilder } from './lib/ring-builder';
 
 const INTEGRATIONS_DATA = [
   {
@@ -167,6 +169,7 @@ const App: React.FC = () => {
   const [sideMenuAvgDeal, setSideMenuAvgDeal] = useState(4200);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const businessName = auditData?.business.name ?? PLACEHOLDER_BUSINESS_NAME;
+  const ringBuilder = resolveRingBuilder(auditData);
 
   // Neuro contract: always load /content.json (generator overwrites this file).
   useEffect(() => {
@@ -1051,6 +1054,14 @@ const App: React.FC = () => {
         </div>
       </section>
 
+      {ringBuilder && (
+        <section id="ring-studio" className="snap-start snap-always min-h-[80vh] flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24">
+          <div className="mx-auto w-full max-w-6xl">
+            <LazyRingBuilderSection config={ringBuilder} isDarkMode={isDarkMode} businessName={businessName} />
+          </div>
+        </section>
+      )}
+
       <section className="snap-start snap-always min-h-screen flex flex-col justify-center py-16 md:py-20 px-6 bg-transparent transition-colors relative">
         <div className="max-w-5xl mx-auto relative z-10 px-4 sm:px-6 w-full min-w-0">
           <div className="mb-5 flex justify-center">
@@ -1075,7 +1086,7 @@ const App: React.FC = () => {
 
       {showTester && <PhoneTester onClose={() => setShowTester(false)} />}
     </div>
-  ); }; }, [isDarkMode, businessName, auditData, navigate]);
+  ); }; }, [isDarkMode, businessName, auditData, navigate, ringBuilder]);
 
   const BlogPage = () => (
     <div className="pt-24 pb-12 px-6 max-w-6xl mx-auto animate-in fade-in duration-700 bg-transparent">
@@ -1452,6 +1463,7 @@ const App: React.FC = () => {
             businessName={auditData?.business.name ?? PLACEHOLDER_BUSINESS_NAME}
             reportId={auditData?.auditMeta.reportId}
             location={auditData?.business.location}
+            ringBuilder={ringBuilder ?? undefined}
           />
         )}
         {currentView === AppView.ADMIN && <AdminDashboard isDarkMode={isDarkMode} />}
