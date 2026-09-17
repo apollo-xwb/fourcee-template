@@ -297,14 +297,8 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
             )}
           </h3>
         </div>
-        <div className="mt-8 grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <div
-            ref={mountRef}
-            className="relative h-[280px] w-full overflow-hidden rounded-2xl touch-none md:h-[380px]"
-            style={{ touchAction: 'none', cursor: 'grab' }}
-            aria-label="Interactive ring preview. Drag to rotate."
-          />
-          <div className="fx-tile p-5 md:p-6">
+        <div className="mt-8 flex justify-end lg:mt-0">
+          <div className="fx-tile w-full max-w-md p-5 md:p-6 lg:translate-x-[-8%] lg:translate-y-[8%]">
             <p className="text-sm leading-relaxed text-[#8aa0b5]">{config.subhead}</p>
             <p className="mt-3 text-xs text-[#c2ccd6]">
               Showing {metal.label} · {gem.label}
