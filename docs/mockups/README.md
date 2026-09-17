@@ -1,6 +1,6 @@
-# Direction mockups (founder hold)
+# Direction mockups (shipped into live app)
 
-Visual direction only. **Neuro `content.json` wiring stays untouched conceptually** — field names, load order (`GET /content.json`), placeholders, and fallbacks do not change. Existing product code on this branch is left as-is until a frame is approved.
+Founder hold is lifted. These frames were the visual source of truth for the SpaceX × Apple × Stark chrome now in `App.tsx`, `AuditPage`, `CRMView`, `RingBuilder`, and `CheckoutFlow`. **Neuro `content.json` wiring stays frozen** — field names, load order (`GET /content.json`), placeholders, and fallbacks do not change.
 
 Open `index.html` locally, or review the exported 1440×810 frames in `frames/`.
 

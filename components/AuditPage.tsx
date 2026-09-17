@@ -105,7 +105,7 @@ const gridBgStyleLight: React.CSSProperties = {
 export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onBookCall, data }) => {
   const [showIntroSplash, setShowIntroSplash] = useState(true);
   const [showHeaderStats, setShowHeaderStats] = useState(false);
-  const headerSurface = isDarkMode ? 'white' : 'navy';
+  const headerSurface = 'navy';
   const triggerBooking = () => {
     scrollToId('audit-booking-cta');
     onBookCall();
@@ -262,7 +262,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
         <div
           className={`relative mx-auto w-full rounded-[1.8rem] border shadow-[0_18px_45px_rgba(0,0,0,0.15)] backdrop-blur-xl lg:w-[min(1120px,94vw)] ${
             isDarkMode
-              ? 'border-navy-200/70 bg-white/88 text-navy-900'
+              ? 'border-[rgba(200,181,143,0.28)] bg-[rgba(8,18,28,0.72)] text-[#e8eef4]'
               : 'border-navy-700/70 bg-[#071a2e]/82 text-white'
           }`}
           style={{
@@ -289,29 +289,27 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                     }`}
                   />
                   <div className="min-w-0">
-                    <p
-                      className={`text-[10px] font-semibold uppercase tracking-[0.28em] ${isDarkMode ? 'text-navy-500' : 'text-slate-300'}`}
-                    >
+                    <p className="fx-kicker">
                       Audit prepared for
                     </p>
-                    <p className={`truncate text-base font-semibold tracking-tight md:text-lg ${isDarkMode ? 'text-navy-900' : 'text-white'}`}>
+                    <p className={`truncate text-base font-semibold tracking-tight md:text-lg ${isDarkMode ? 'text-[#f4efe4]' : 'text-white'}`}>
                       {data.business.name}
                     </p>
-                    <p className={`truncate text-xs ${isDarkMode ? 'text-navy-600' : 'text-slate-300'}`}>{data.business.location}</p>
+                    <p className={`truncate text-xs ${isDarkMode ? 'text-[#8aa0b5]' : 'text-slate-300'}`}>{data.business.location}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex flex-col items-start gap-2 text-left sm:items-end sm:text-right">
-                    <p className={`text-[10px] font-semibold uppercase tracking-[0.25em] ${isDarkMode ? 'text-navy-500' : 'text-slate-400'}`}>Intelligence by</p>
+                    <p className={`text-[10px] font-semibold uppercase tracking-[0.25em] ${isDarkMode ? 'text-[#8aa0b5]' : 'text-slate-400'}`}>Intelligence by</p>
                     <img
-                      src={isDarkMode ? fcBlack : fcWhite}
+                      src={fcWhite}
                       alt="Fourcee"
                       className="h-8 w-auto object-contain opacity-95 sm:h-9 md:h-10"
                     />
                   </div>
                   <span
                     className={`inline-flex h-8 w-8 items-center justify-center rounded-full border ${
-                      isDarkMode ? 'border-navy-300 text-navy-700' : 'border-white/30 text-white'
+                      isDarkMode ? 'border-white/25 text-[#e8eef4]' : 'border-white/30 text-white'
                     }`}
                     aria-hidden
                   >
@@ -440,26 +438,10 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
               </div>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={onGetLive}
-                  className={`rounded-full px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] shadow-lg transition hover:scale-[1.02] active:scale-[0.98] ${
-                    isDarkMode
-                      ? 'bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 text-black shadow-amber-900/30 hover:brightness-110'
-                      : 'bg-navy-900 text-white hover:bg-navy-800'
-                  }`}
-                >
+                <button type="button" onClick={onGetLive} className="fx-btn fx-btn-primary">
                   Go live in 2 hours
                 </button>
-                <button
-                  type="button"
-                  onClick={() => scrollToId('audit-lost-revenue')}
-                  className={`rounded-full border px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] transition hover:scale-[1.02] active:scale-[0.98] ${
-                    isDarkMode
-                      ? 'border-white/20 bg-white/5 text-slate-200 hover:border-amber-500/30'
-                      : 'border-navy-300 bg-white text-navy-900 hover:border-navy-500'
-                  }`}
-                >
+                <button type="button" onClick={() => scrollToId('audit-lost-revenue')} className="fx-btn fx-btn-ghost">
                   See the proof
                 </button>
               </div>
@@ -501,43 +483,59 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
           id="audit-lost-revenue"
           className={`relative mt-8 overflow-hidden rounded-[2rem] border px-6 py-8 md:px-10 md:py-10 ${
             isDarkMode
-              ? 'border-rose-400/20 bg-gradient-to-br from-rose-950/40 via-navy-950 to-navy-950'
-              : 'border-rose-200 bg-gradient-to-br from-rose-50 via-white to-[#faf5ea]'
+              ? 'border-[rgba(200,181,143,0.22)] bg-gradient-to-br from-[#071827] via-[#051b2d] to-[#04131f]'
+              : 'border-[#c8b58f]/40 bg-gradient-to-br from-[#faf5ea] via-white to-[#f4efe4]'
           }`}
         >
-          <p className={`text-[10px] font-bold uppercase tracking-[0.32em] ${isDarkMode ? 'text-rose-200/80' : 'text-rose-800'}`}>
-            Lost revenue proof
-          </p>
-          <h2 className={`mt-3 text-3xl font-semibold leading-tight md:text-5xl ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>
-            {formatCurrency(data.revenueModel.monthlyLossMin)}–{formatCurrency(data.revenueModel.monthlyLossMax)}
-            <span className="block text-lg font-normal tracking-normal md:text-2xl">walks out every month unanswered.</span>
-          </h2>
-          <p className={`mt-4 max-w-2xl text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-navy-700'}`}>
-            Mid-range leak for {data.business.name}: {formatCurrency(data.revenueModel.monthlyLossMidpoint)} / month.
-            Six-month cumulative: {formatCurrency(data.revenueModel.sixMonthCumulativeLeak)}.
-            {data.compliance.disclaimerShort ? ` ${data.compliance.disclaimerShort}` : ''}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={onGetLive}
-              className={`rounded-full px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] shadow-lg transition hover:scale-[1.02] active:scale-[0.98] ${
-                isDarkMode
-                  ? 'bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 text-black'
-                  : 'bg-navy-900 text-white'
-              }`}
-            >
-              Recover this revenue
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollToId('audit-full-report')}
-              className={`rounded-full border px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] ${
-                isDarkMode ? 'border-white/20 text-slate-200' : 'border-navy-300 text-navy-900'
-              }`}
-            >
-              Inspect the model
-            </button>
+          <div className="fx-grid opacity-70" aria-hidden />
+          <div className="relative z-10 grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
+            <div>
+              <p className="fx-kicker">Lost revenue proof</p>
+              <h2 className={`mt-3 text-4xl font-semibold leading-[0.95] md:text-6xl ${isDarkMode ? 'text-[#f4efe4]' : 'text-navy-900'}`}>
+                {formatCurrency(data.revenueModel.monthlyLossMin)}–{formatCurrency(data.revenueModel.monthlyLossMax)}
+              </h2>
+              <p className="mt-3 text-lg md:text-2xl" style={{ color: 'var(--fourcee-accent-copper)' }}>
+                walks out every month unanswered.
+              </p>
+              <p className={`mt-4 max-w-2xl text-sm leading-relaxed ${isDarkMode ? 'text-[#8aa0b5]' : 'text-navy-700'}`}>
+                Mid-range leak for {data.business.name}: {formatCurrency(data.revenueModel.monthlyLossMidpoint)} / month.
+                Six-month cumulative: {formatCurrency(data.revenueModel.sixMonthCumulativeLeak)}.
+                {data.compliance.disclaimerShort ? ` ${data.compliance.disclaimerShort}` : ''}
+              </p>
+              <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+                <HeroMetricPill
+                  label="Inbound / week"
+                  value={formatRange(data.callModel.inboundCallsPerWeekMin, data.callModel.inboundCallsPerWeekMax)}
+                  isDarkMode={isDarkMode}
+                />
+                <HeroMetricPill
+                  label="Answer rate"
+                  value={`${formatRange(data.callModel.answerRateMin, data.callModel.answerRateMax)}%`}
+                  isDarkMode={isDarkMode}
+                />
+                <HeroMetricPill
+                  label="Missed / week"
+                  value={formatRange(data.callModel.missedCallsPerWeekMin, data.callModel.missedCallsPerWeekMax)}
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button type="button" onClick={onGetLive} className="fx-btn fx-btn-primary">
+                  Recover this revenue
+                </button>
+                <button type="button" onClick={() => scrollToId('audit-full-report')} className="fx-btn fx-btn-ghost">
+                  See the proof
+                </button>
+              </div>
+            </div>
+            <div className="fx-tile p-5">
+              <p className="fx-kicker">After-hours inquiry</p>
+              <p className={`mt-3 text-sm ${isDarkMode ? 'text-[#f2d4d0]' : 'text-rose-800'}`}>Missed · Sunday 8:14 PM</p>
+              <p className={`mt-1 text-xl ${isDarkMode ? 'text-[#f4efe4]' : 'text-navy-900'}`}>$12,000 anniversary band</p>
+              <p className={`mt-2 text-sm leading-relaxed ${isDarkMode ? 'text-[#8aa0b5]' : 'text-navy-600'}`}>
+                Caller did not wait. Next jeweler is already in the recents list.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -546,15 +544,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
           <p className={`mb-4 text-[10px] uppercase tracking-[0.28em] ${isDarkMode ? 'text-slate-400' : 'text-navy-600'}`}>Model your own numbers</p>
           <ValueCalculator isDarkMode={isDarkMode} businessName={data.business.name} />
           <div className="mt-5 flex justify-center">
-            <button
-              type="button"
-              onClick={onGetLive}
-              className={`rounded-full px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.22em] shadow-lg transition ${
-                isDarkMode
-                  ? 'bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 text-black hover:brightness-110'
-                  : 'bg-navy-900 text-white hover:bg-navy-800'
-              }`}
-            >
+            <button type="button" onClick={onGetLive} className="fx-btn fx-btn-primary">
               Launch concierge now
             </button>
           </div>
@@ -818,26 +808,10 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
             You are currently losing between {formatCurrency(data.revenueModel.monthlyLossMin)} and {formatCurrency(data.revenueModel.monthlyLossMax)} every month simply because calls are going unanswered.
           </h2>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <button
-              type="button"
-              onClick={onGetLive}
-              className={`rounded-full px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] shadow-lg transition ${
-                isDarkMode
-                  ? 'bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 text-black shadow-amber-900/30 hover:brightness-110'
-                  : 'bg-navy-900 text-white shadow-navy-900/20 hover:bg-navy-800'
-              }`}
-            >
+            <button type="button" onClick={onGetLive} className="fx-btn fx-btn-primary">
               Get Live in Under 2 Hours
             </button>
-            <button
-              type="button"
-              onClick={onBookCall}
-              className={`rounded-full border px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] transition ${
-                isDarkMode
-                  ? 'border-white/20 bg-gradient-to-r from-white/10 to-white/5 text-slate-200 hover:border-amber-500/30 hover:from-white/15'
-                  : 'border-navy-300 bg-white text-navy-900 shadow-sm hover:border-navy-500 hover:bg-slate-50'
-              }`}
-            >
+            <button type="button" onClick={onBookCall} className="fx-btn fx-btn-ghost">
               Book a 15-Minute Strategy Call
             </button>
           </div>
@@ -854,11 +828,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
           <button
             type="button"
             onClick={onGetLive}
-            className={`pointer-events-auto rounded-full px-5 py-3 text-[10px] font-bold uppercase tracking-[0.2em] shadow-2xl ${
-              isDarkMode
-                ? 'bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 text-black'
-                : 'bg-navy-900 text-white'
-            }`}
+            className="pointer-events-auto fx-btn fx-btn-primary"
           >
             Recover {formatCurrency(data.revenueModel.monthlyLossMidpoint)} / mo
           </button>

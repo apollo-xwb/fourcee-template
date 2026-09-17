@@ -108,6 +108,8 @@ Code defaults live in `lib/ring-builder.ts`. Neuro can personalize later without
 Placement: landing `#ring-studio` (lazy IntersectionObserver + `React.lazy`) and portal Overview (compact).  
 Implementation: lighter Three.js torus/prong/stone studio. **Not** a vendor of [VikasRana10/3D-app](https://github.com/VikasRana10/3D-app) — that README claims MIT but has no LICENSE file, and Crystal-Jewels uses WebGI-licensed models. Patterns only (metal/gem chips, 3D stage, rotate).
 
+Visual chrome (landing / audit / portal / ring studio / pricing) is CSS-only. It does **not** add or rename JSON keys. Omit-key still keeps April Neuro payloads working.
+
 **`branding`:** `theme.{primary,secondary,accentGold,accentSilver}`, `logoWordmarkUrl`, `clientLogoUrl`, `fontHeading`, `fontBody`
 
 **`compliance`:** `dataSourceLine`, `disclaimerShort`, `disclaimerLong`, `allowedClaims[]`

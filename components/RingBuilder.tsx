@@ -225,38 +225,50 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
     };
   }, [compact]);
 
+  const chipClass = (active: boolean, accent: 'copper' | 'ice') =>
+    `inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] ${
+      active
+        ? accent === 'copper'
+          ? 'border-[#c8b58f] bg-white/10 text-[#f4efe4]'
+          : 'border-[#8ec8e6] bg-white/10 text-[#f4efe4]'
+        : isDarkMode
+          ? 'border-white/15 text-[#c2ccd6]'
+          : 'border-navy-200 text-navy-700'
+    }`;
+
   return (
     <div
-      className={`overflow-hidden rounded-[2rem] border ${
-        isDarkMode ? 'border-white/10 bg-black/30' : 'border-navy-200 bg-white/80'
+      className={`relative overflow-hidden rounded-[2rem] border ${
+        isDarkMode
+          ? 'border-[rgba(200,181,143,0.22)] bg-[#050910]'
+          : 'border-navy-200 bg-white/80'
       } ${compact ? 'p-4' : 'p-5 md:p-8'}`}
     >
-      <div className={`flex flex-col ${compact ? 'gap-4' : 'gap-6 lg:flex-row lg:items-center'}`}>
+      <div className="fx-grid opacity-50" aria-hidden />
+      <div className={`relative z-10 flex flex-col ${compact ? 'gap-4' : 'gap-6 lg:flex-row lg:items-center'}`}>
         <div
           ref={mountRef}
           className={`relative w-full overflow-hidden rounded-2xl touch-none ${
-            compact ? 'h-[220px]' : 'h-[280px] md:h-[360px] lg:max-w-[52%]'
-          } ${isDarkMode ? 'bg-gradient-to-b from-white/[0.04] to-transparent' : 'bg-gradient-to-b from-white to-[#f3ead6]'}`}
+            compact ? 'h-[220px]' : 'h-[300px] md:h-[420px] lg:max-w-[56%]'
+          } ${isDarkMode ? 'bg-[radial-gradient(ellipse_at_50%_40%,rgba(200,181,143,0.08),transparent_55%)]' : 'bg-gradient-to-b from-white to-[#f3ead6]'}`}
           style={{ touchAction: 'none', cursor: 'grab' }}
           aria-label="Interactive ring preview. Drag to rotate."
         />
-        <div className="min-w-0 flex-1">
-          <p className={`text-[10px] font-bold uppercase tracking-[0.28em] ${isDarkMode ? 'text-sky-200/80' : 'text-navy-500'}`}>
+        <div className={`min-w-0 flex-1 ${compact ? '' : 'fx-tile p-5 md:p-6'}`}>
+          <p className="fx-kicker">
             {businessName ? `${businessName} · ` : ''}Configurator
           </p>
-          <h3 className={`mt-2 text-xl font-semibold md:text-3xl ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>
+          <h3 className={`mt-2 text-xl font-semibold md:text-4xl ${isDarkMode ? 'text-[#f4efe4]' : 'text-navy-900'}`}>
             {config.headline}
           </h3>
-          <p className={`mt-2 text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-navy-700'}`}>
+          <p className={`mt-2 text-sm leading-relaxed ${isDarkMode ? 'text-[#8aa0b5]' : 'text-navy-700'}`}>
             {config.subhead}
           </p>
-          <p className={`mt-3 text-xs ${isDarkMode ? 'text-slate-400' : 'text-navy-600'}`}>
+          <p className={`mt-3 text-xs ${isDarkMode ? 'text-[#c2ccd6]' : 'text-navy-600'}`}>
             Showing {metal.label} · {gem.label}
           </p>
           <div className="mt-5">
-            <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-500' : 'text-navy-500'}`}>
-              Metal
-            </p>
+            <p className="fx-kicker">Metal</p>
             <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Metal">
               {config.metals.map((item) => (
                 <button
@@ -264,15 +276,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
                   type="button"
                   onClick={() => setMetalId(item.id)}
                   aria-pressed={metalId === item.id}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] ${
-                    metalId === item.id
-                      ? isDarkMode
-                        ? 'border-amber-300/50 bg-white/10 text-white'
-                        : 'border-navy-900 bg-navy-900 text-white'
-                      : isDarkMode
-                        ? 'border-white/15 text-slate-300'
-                        : 'border-navy-200 text-navy-700'
-                  }`}
+                  className={chipClass(metalId === item.id, 'copper')}
                 >
                   <span className="h-2.5 w-2.5 rounded-full border border-white/30" style={{ background: item.color }} />
                   {item.label}
@@ -281,9 +285,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
             </div>
           </div>
           <div className="mt-4">
-            <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-500' : 'text-navy-500'}`}>
-              Center stone
-            </p>
+            <p className="fx-kicker">Center stone</p>
             <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Center stone">
               {config.gems.map((item) => (
                 <button
@@ -291,15 +293,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
                   type="button"
                   onClick={() => setGemId(item.id)}
                   aria-pressed={gemId === item.id}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] ${
-                    gemId === item.id
-                      ? isDarkMode
-                        ? 'border-sky-300/40 bg-white/10 text-white'
-                        : 'border-navy-900 bg-navy-900 text-white'
-                      : isDarkMode
-                        ? 'border-white/15 text-slate-300'
-                        : 'border-navy-200 text-navy-700'
-                  }`}
+                  className={chipClass(gemId === item.id, 'ice')}
                 >
                   <span className="h-2.5 w-2.5 rounded-full border border-white/30" style={{ background: item.color }} />
                   {item.label}

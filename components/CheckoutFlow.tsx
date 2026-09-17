@@ -73,13 +73,13 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
         return (
           <div className="space-y-10 animate-in fade-in duration-500">
             <div className="text-center max-w-3xl mx-auto">
-              <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-navy-500 dark:text-sky-200/70">
+              <p className="fx-kicker">
                 Configure · {companyName}
               </p>
-              <h2 className="mt-3 text-3xl md:text-4xl font-bold serif text-navy-900 dark:text-white">
-                Get Live in 2 Hours - Choose Your Plan
+              <h2 className="mt-3 text-3xl md:text-4xl font-bold serif text-navy-900 dark:text-[#f4efe4]">
+                Get live in 2 hours
               </h2>
-              <p className="mt-3 text-sm text-navy-600 dark:text-navy-400 leading-relaxed">
+              <p className="mt-3 text-sm text-navy-600 dark:text-[#8aa0b5] leading-relaxed">
                 Setup takes less than 2 hours. Once active, you&apos;ll never lose another client to a missed call again.
               </p>
             </div>
@@ -88,14 +88,14 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
               <span className="text-[10px] font-bold uppercase tracking-widest text-navy-700 dark:text-navy-300">
                 Billing
               </span>
-              <div className="inline-flex rounded-full border border-silver-200 dark:border-navy-700 p-1">
+              <div className="inline-flex rounded-full border border-silver-200 dark:border-white/15 p-1 bg-white/40 dark:bg-black/30 backdrop-blur-md">
                 <button
                   type="button"
                   onClick={() => setState((s) => ({ ...s, billingCycle: 'monthly' }))}
                   className={`rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition ${
                     state.billingCycle === 'monthly'
-                      ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
-                      : 'text-navy-600 dark:text-navy-400'
+                      ? 'bg-gradient-to-r from-[#e8d5a8] to-[#c8b58f] text-[#1a140c]'
+                      : 'text-navy-600 dark:text-[#c2ccd6]'
                   }`}
                 >
                   Monthly
@@ -105,8 +105,8 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                   onClick={() => setState((s) => ({ ...s, billingCycle: 'annual' }))}
                   className={`rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition ${
                     state.billingCycle === 'annual'
-                      ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
-                      : 'text-navy-600 dark:text-navy-400'
+                      ? 'bg-gradient-to-r from-[#e8d5a8] to-[#c8b58f] text-[#1a140c]'
+                      : 'text-navy-600 dark:text-[#c2ccd6]'
                   }`}
                 >
                   Annual
@@ -123,7 +123,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                   <div 
                     key={pkg.id}
                     onClick={() => setState(s => ({ ...s, packageId: pkg.id }))}
-                    className={`p-6 rounded-2xl border-2 cursor-pointer transition-all ${state.packageId === pkg.id ? 'border-navy-900 dark:border-white bg-white dark:bg-navy-900 shadow-xl' : 'border-silver-200 dark:border-navy-800 hover:border-navy-300'}`}
+                    className={`p-6 rounded-2xl border-2 cursor-pointer transition-all backdrop-blur-md ${state.packageId === pkg.id ? 'border-[#c8b58f] bg-white/80 dark:bg-[rgba(8,18,28,0.72)] shadow-[0_0_0_1px_rgba(200,181,143,0.35)]' : 'border-silver-200 dark:border-white/10 bg-white/50 dark:bg-black/25 hover:border-[#c8b58f]/50'}`}
                   >
                     <p className="text-[10px] font-bold uppercase tracking-widest text-navy-700 dark:text-navy-300 mb-2">{pkg.name}</p>
                     <p className="text-2xl sm:text-3xl font-bold serif text-navy-900 dark:text-white">
@@ -188,7 +188,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                         isUnifiedChat
                           ? 'bg-gradient-to-br from-navy-50 to-white dark:from-navy-900/60 dark:to-navy-950/80 border-navy-200 dark:border-white/20'
                           : 'bg-white dark:bg-navy-900/40 border-silver-100 dark:border-navy-800'
-                      } ${isChecked ? 'ring-2 ring-navy-900 dark:ring-white ring-offset-2 dark:ring-offset-navy-950' : ''}`}
+                      } ${isChecked ? 'ring-2 ring-[#c8b58f] ring-offset-2 dark:ring-offset-navy-950' : ''}`}
                     >
                       <div className="relative flex-shrink-0 mt-0.5">
                         <input 
@@ -406,7 +406,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                 e.stopPropagation();
                 nextStep();
               }}
-              className="bg-navy-900 dark:bg-white text-white dark:text-navy-950 px-12 py-5 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0 select-none touch-manipulation"
+              className="fx-btn fx-btn-primary px-12 py-5 text-xs cursor-pointer shrink-0 select-none touch-manipulation"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               {state.step === 3 ? `Authorize $${total.toLocaleString()}` : 'Forward →'}

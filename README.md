@@ -101,7 +101,7 @@ Read:
 
 - `DYNAMIC-JSON.md` — Neuro generator contract (load path, frozen keys, fallbacks)
 - `docs/AUDIT_TEMPLATE_VARIABLES.md`
-- `docs/mockups/` — founder-hold UI direction frames (not production). Neuro `content.json` wiring stays conceptually frozen until a frame is approved.
+- `docs/mockups/` — direction frames that informed the live SpaceX × Apple × Stark chrome. Neuro `content.json` wiring stays frozen.
 - Ring studio: optional `ringBuilder` (or `liveDemo.ringBuilder`) in `content.json`. `"enabled": false` hides it. See `DYNAMIC-JSON.md`.
 
 This document explains every variable that should be dynamic, what it means, and where to inject it in the audit template.

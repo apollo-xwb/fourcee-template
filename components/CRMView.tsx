@@ -296,13 +296,13 @@ export const CRMView: React.FC<CRMViewProps> = ({
 
   const liveDuration = `${String(Math.floor(liveSeconds / 60)).padStart(2, '0')}:${String(liveSeconds % 60).padStart(2, '0')}`;
 
-  const pageClass = isDarkMode ? 'text-[#E7E7E7]' : 'text-navy-900';
-  const portalTitleClass = isDarkMode ? 'text-amber-200/90' : 'text-navy-800';
+  const pageClass = isDarkMode ? 'text-[#e8eef4]' : 'text-navy-900';
+  const portalTitleClass = isDarkMode ? 'text-[#f4efe4]' : 'text-navy-800';
   const tabShellClass = isDarkMode
     ? 'rounded-full border border-white/10 bg-black/50 p-1 backdrop-blur-xl'
     : 'rounded-full border border-slate-200 bg-slate-100/95 p-1 shadow-sm';
   const tabActiveClass = isDarkMode
-    ? 'bg-gradient-to-r from-slate-200 via-amber-200 to-slate-400 text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]'
+    ? 'bg-gradient-to-r from-[#e8d5a8] to-[#c8b58f] text-[#1a140c] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]'
     : 'bg-navy-900 text-white shadow-sm';
   const tabInactiveClass = isDarkMode ? 'text-white/70 hover:text-white' : 'text-navy-600 hover:text-navy-900';
 
@@ -378,25 +378,31 @@ export const CRMView: React.FC<CRMViewProps> = ({
   const gridForPanel = isDarkMode ? gridOnDark : gridOnLightPanel;
 
   return (
-    <div className={`min-h-screen px-4 py-8 md:px-8 md:py-10 ${pageClass}`}>
-      <div className="mx-auto w-full max-w-7xl">
+    <div className={`relative min-h-screen px-4 py-8 md:px-8 md:py-10 ${pageClass}`}>
+      {isDarkMode && (
+        <div
+          className="pointer-events-none absolute inset-0 opacity-80"
+          style={{
+            background:
+              'radial-gradient(ellipse 60% 40% at 80% 0%, rgba(200,181,143,0.08), transparent 55%), linear-gradient(180deg, rgba(4,12,20,0.35), transparent 40%)',
+          }}
+          aria-hidden
+        />
+      )}
+      <div className="relative z-10 mx-auto w-full max-w-7xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p
-            className={`text-[10px] font-bold uppercase tracking-[0.42em] ${
-              isDarkMode ? 'text-slate-500' : 'text-navy-600'
-            }`}
-          >
+          <p className="fx-kicker">
             {businessDisplay}
             {location ? ` · ${location.toUpperCase()}` : ''}
           </p>
-          <p className={`font-mono text-[10px] tabular-nums tracking-[0.18em] ${isDarkMode ? 'text-sky-200/80' : 'text-navy-600'}`}>
+          <p className={`font-mono text-[10px] tabular-nums tracking-[0.18em] ${isDarkMode ? 'text-[#8aa0b5]' : 'text-navy-600'}`}>
             {opsClock.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} UTC-OPS
+            {reportId ? ` · ${reportId}` : ''}
           </p>
         </div>
         <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className={`text-center text-xs font-semibold uppercase tracking-[0.35em] sm:text-left ${portalTitleClass}`}>
-            Concierge Intelligence Portal
-            {reportId ? <span className="ml-3 tracking-[0.18em] opacity-70">{reportId}</span> : null}
+          <h1 className={`fx-hud text-center text-sm sm:text-left md:text-lg ${portalTitleClass}`}>
+            Concierge intelligence portal
           </h1>
           <div className={`mx-auto sm:mx-0 ${tabShellClass}`}>
             {(['simulation', 'overview'] as const).map((tab) => (
@@ -416,7 +422,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
       </div>
 
       {activeTab === 'overview' ? (
-        <div className="mx-auto mt-8 w-full max-w-7xl space-y-6">
+        <div className="relative z-10 mx-auto mt-8 w-full max-w-7xl space-y-6">
           <div
             className={`relative overflow-hidden rounded-[2rem] border p-6 md:p-10 ${
               isDarkMode ? 'border-white/10 bg-white/[0.04]' : 'border-slate-200 bg-white shadow-md'
@@ -545,7 +551,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
           </div>
         </div>
       ) : (
-        <div className="mx-auto mt-8 flex w-full max-w-7xl flex-col gap-6">
+        <div className="relative z-10 mx-auto mt-8 flex w-full max-w-7xl flex-col gap-6">
           <div className="grid gap-4 md:grid-cols-3">
             <MetricCard label="Revenue Saved" value={formatMoney(revenueSaved)} isDarkMode={isDarkMode} variant="top" />
             <MetricCard label="Appointments Booked (AI)" value={appointmentsBooked.toString()} isDarkMode={isDarkMode} variant="top" />
@@ -566,16 +572,12 @@ export const CRMView: React.FC<CRMViewProps> = ({
                     { id: 'SMS', load: channelLoad.sms },
                     { id: 'WEB', load: channelLoad.web },
                   ].map((ch) => (
-                    <span
-                      key={ch.id}
-                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[9px] font-bold uppercase tracking-[0.18em] ${
-                        isDarkMode ? 'border-white/15 bg-black/40 text-slate-200' : 'border-navy-200 bg-white text-navy-800'
-                      }`}
-                    >
-                      <span className={`h-1.5 w-1.5 rounded-full ${ch.load > 0 ? onlineDotClass : 'bg-slate-500'}`} />
+                    <span key={ch.id} className="fx-chip">
+                      <span className={ch.load > 0 ? 'fx-dot' : 'h-1.5 w-1.5 rounded-full bg-slate-500'} />
                       {ch.id} {ch.load.toString().padStart(2, '0')}
                     </span>
                   ))}
+                  <span className="fx-chip">Brain sync online</span>
                 </div>
               </div>
               <div className={syncBoxClass}>
@@ -780,7 +782,7 @@ const MetricCard: React.FC<{ label: string; value: string; isDarkMode: boolean; 
     isTop && !isDarkMode
       ? 'mt-3 text-2xl font-semibold tracking-tight text-white md:text-3xl'
       : isDarkMode
-        ? 'mt-3 text-2xl font-semibold tracking-tight text-amber-200 md:text-3xl'
+        ? 'mt-3 text-2xl font-semibold tracking-tight text-[#c8b58f] md:text-3xl'
         : 'mt-3 text-2xl font-semibold tracking-tight text-navy-900 md:text-3xl';
 
   const showGrid = isTop;
@@ -814,7 +816,7 @@ const OverviewCard: React.FC<{ title: string; value: string; hint: string; isDar
     <GridWash style={isDarkMode ? gridOnDark : gridOnLightPanel} opacity={isDarkMode ? 'opacity-[0.18]' : 'opacity-[0.4]'} />
     <div className="relative z-10">
       <p className={`text-[10px] uppercase tracking-[0.28em] ${isDarkMode ? 'text-white/60' : 'text-navy-600'}`}>{title}</p>
-      <p className={`mt-3 text-3xl font-semibold tracking-tight ${isDarkMode ? 'text-amber-200' : 'text-navy-900'}`}>{value}</p>
+      <p className={`mt-3 text-3xl font-semibold tracking-tight ${isDarkMode ? 'text-[#c8b58f]' : 'text-navy-900'}`}>{value}</p>
       <p className={`mt-3 text-xs leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-navy-600'}`}>{hint}</p>
     </div>
   </div>

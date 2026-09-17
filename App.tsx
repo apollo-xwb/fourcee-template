@@ -375,9 +375,10 @@ const App: React.FC = () => {
           WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 84%, transparent 100%)',
         }}
       >
+        <div className="fx-grid z-[1]" aria-hidden />
         {isDarkMode && (
           <div
-            className="pointer-events-none absolute inset-0 opacity-35 mix-blend-soft-light"
+            className="pointer-events-none absolute inset-0 z-[1] opacity-35 mix-blend-soft-light"
             style={{
               backgroundImage:
                 'radial-gradient(rgba(255,255,255,0.18) 0.6px, transparent 0.6px), radial-gradient(rgba(255,255,255,0.12) 0.6px, transparent 0.6px)',
@@ -402,17 +403,17 @@ const App: React.FC = () => {
           {/* Hero text - mobile below 3D object, desktop top-right */}
           <div className="order-2 md:order-2 md:row-start-1 text-center mt-4 md:mt-0">
             <div className="relative z-10 max-w-2xl mx-auto">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#c8b58f]/50 bg-white/40 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.28em] text-[#5c4a2e] backdrop-blur-sm dark:border-white/15 dark:bg-white/5 dark:text-sky-100/80">
-                <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
+              <div className="fx-chip mb-4">
+                <span className="fx-dot" />
                 Concierge standby · audit compiled
               </div>
               <motion.h1
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-5xl 2xl:text-6xl font-bold mb-3 text-[#1f1b16] dark:text-white serif leading-[1.1] tracking-tight"
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-5xl 2xl:text-6xl font-bold mb-3 text-[#1f1b16] dark:text-[#f4efe4] serif leading-[0.95] tracking-tight"
               >
-                The Gold Standard <br/><span className="italic shimmer-text">of Voice AI</span>
+                The gold standard <br/><span className="italic">of voice AI</span>
               </motion.h1>
               {/* Test Fourcee — directly under h1 on mobile only */}
               <div className="mt-4 mb-4 flex justify-center md:hidden">
@@ -427,18 +428,14 @@ const App: React.FC = () => {
                   />
                 </div>
               </div>
-              <p className="text-xs sm:text-sm md:text-sm lg:text-base text-[#4f4536] dark:text-navy-300 font-medium leading-relaxed uppercase tracking-[0.25em]">
+              <p className="text-xs sm:text-sm md:text-sm lg:text-base text-[#4f4536] dark:text-[#c2ccd6] font-medium leading-relaxed uppercase tracking-[0.28em]">
                 Tailored exclusively for high-end jewelers
               </p>
-              <div className="mt-4 inline-flex flex-col items-center gap-2 rounded-2xl border border-[#c8b58f]/70 bg-[#f9f1df]/75 px-4 py-3 text-center shadow-sm backdrop-blur-sm dark:border-white/15 dark:bg-black/30">
-                <p className="text-[10px] uppercase tracking-[0.26em] text-[#7a6648] dark:text-amber-200/80">
-                  Prolific Luxury Concierge Brief
-                </p>
-                <p className="text-[11px] sm:text-xs text-[#3f3322] dark:text-slate-200">
-                  This live demo is compiled specifically for <span className="font-semibold">{businessName}</span>.
-                </p>
-                <p className="text-[11px] sm:text-xs text-[#564632] dark:text-slate-300">
-                  Fourcee acts as your custom concierge service - one recovered client can cover months of platform cost.
+              <div className="fx-tile mt-5 max-w-md mx-auto px-4 py-4 text-center">
+                <p className="fx-kicker">Prepared for</p>
+                <p className="mt-2 text-lg sm:text-xl text-[#1f1b16] dark:text-[#f4efe4]">{businessName}</p>
+                <p className="mt-2 text-[12px] leading-relaxed text-[#8aa0b5]">
+                  One recovered client can cover months of platform cost.
                 </p>
               </div>
             </div>
@@ -466,22 +463,12 @@ const App: React.FC = () => {
           </div>
           {/* Mobile ROI CTA — below phone + brief on small screens */}
           <div className="order-3 w-full flex flex-col items-center gap-2 md:hidden mt-4">
-            <button
-              type="button"
-              onClick={goToAudit}
-              className="group inline-flex items-center gap-2 rounded-full border border-[#b8a98d]/70 bg-[#f5eddc]/85 px-4 py-2 text-[9px] font-bold uppercase tracking-[0.2em] text-[#3f3628] shadow-sm hover:bg-[#fbf3e3] transition-colors dark:border-navy-300/60 dark:bg-white/80 dark:text-slate-800 dark:hover:bg-white"
-            >
-              <span>Access my custom audit</span>
+            <button type="button" onClick={goToAudit} className="fx-btn fx-btn-primary">
+              Access my custom audit
             </button>
-            <button
-              type="button"
-              onClick={scrollToRoi}
-              className="group inline-flex items-center gap-2 rounded-full border border-[#b8a98d]/70 bg-[#f5eddc]/85 px-4 py-2 text-[9px] font-bold uppercase tracking-[0.25em] text-[#3f3628] shadow-sm hover:bg-[#fbf3e3] transition-colors dark:border-navy-300/60 dark:bg-white/80 dark:text-slate-800 dark:hover:bg-white"
-            >
-              <span>Calculate ROI now</span>
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#8b7348] text-white shadow dark:bg-navy-900">
-                <ChevronDown className="w-3 h-3 group-hover:translate-y-0.5 transition-transform" />
-              </span>
+            <button type="button" onClick={scrollToRoi} className="fx-btn fx-btn-ghost">
+              <span>Calculate ROI</span>
+              <ChevronDown className="ml-2 w-3 h-3" />
             </button>
           </div>
 
@@ -500,23 +487,13 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-10 md:mt-12 hidden md:flex flex-col items-center gap-3">
-          <button
-            type="button"
-            onClick={goToAudit}
-            className="group inline-flex items-center gap-3 rounded-full border border-[#b8a98d]/70 dark:border-navy-600/60 bg-[#f5eddc]/85 dark:bg-white/5 px-6 py-2.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.21em] text-[#4f4536] dark:text-navy-100 shadow-sm hover:bg-[#fbf3e3] dark:hover:bg-white/10 transition-colors"
-          >
-            <span>Access my custom audit</span>
+        <div className="mt-10 md:mt-12 hidden md:flex flex-row items-center justify-center gap-3">
+          <button type="button" onClick={goToAudit} className="fx-btn fx-btn-primary">
+            Access my custom audit
           </button>
-          <button
-            type="button"
-            onClick={scrollToRoi}
-            className="group inline-flex items-center gap-3 rounded-full border border-[#b8a98d]/70 dark:border-navy-600/60 bg-[#f5eddc]/85 dark:bg-white/5 px-6 py-2.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.25em] text-[#4f4536] dark:text-navy-100 shadow-sm hover:bg-[#fbf3e3] dark:hover:bg-white/10 transition-colors"
-          >
-            <span>Calculate ROI now</span>
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#8b7348] text-white dark:bg-white dark:text-navy-950 shadow">
-              <ChevronDown className="w-3 h-3 group-hover:translate-y-0.5 transition-transform" />
-            </span>
+          <button type="button" onClick={scrollToRoi} className="fx-btn fx-btn-ghost">
+            <span>Calculate ROI</span>
+            <ChevronDown className="ml-2 w-3 h-3" />
           </button>
         </div>
       </section>
@@ -1057,6 +1034,7 @@ const App: React.FC = () => {
       {ringBuilder && (
         <section id="ring-studio" className="snap-start snap-always min-h-[80vh] flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24">
           <div className="mx-auto w-full max-w-6xl">
+            <p className="fx-kicker mb-4 text-center">Private viewing · optional JSON</p>
             <LazyRingBuilderSection config={ringBuilder} isDarkMode={isDarkMode} businessName={businessName} />
           </div>
         </section>
