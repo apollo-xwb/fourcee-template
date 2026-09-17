@@ -67,8 +67,9 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
     const width = container.clientWidth || 320;
     const height = container.clientHeight || 280;
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 50);
-    camera.position.set(0.2, 0.62, 3.35);
+    const camera = new THREE.PerspectiveCamera(28, width / height, 0.1, 50);
+    camera.position.set(1.55, 1.35, 2.15);
+    camera.lookAt(0, 0.52, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, compact ? 1.2 : 1.6));
@@ -115,12 +116,12 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
     const geometries: THREE.BufferGeometry[] = [];
 
     const band = new THREE.Mesh(new THREE.TorusGeometry(0.74, 0.13, 40, 96), metalMat);
-    band.rotation.x = Math.PI / 2.12;
+    band.rotation.x = Math.PI / 2.35;
     group.add(band);
     geometries.push(band.geometry);
 
     const inner = new THREE.Mesh(new THREE.TorusGeometry(0.74, 0.045, 16, 64), metalMat);
-    inner.rotation.x = Math.PI / 2.12;
+    inner.rotation.x = Math.PI / 2.35;
     inner.scale.set(1, 1, 0.92);
     group.add(inner);
     geometries.push(inner.geometry);
@@ -159,6 +160,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
       geometries.push(accent.geometry);
     }
 
+    group.rotation.y = -0.45;
     scene.add(group);
 
     let frame = 0;
