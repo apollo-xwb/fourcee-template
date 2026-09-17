@@ -76,7 +76,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
               <p className="fx-kicker">
                 Configure · {companyName}
               </p>
-              <h2 className="mt-3 text-3xl md:text-4xl font-bold serif text-navy-900 dark:text-[#f4efe4]">
+              <h2 className="fx-display mt-3 text-4xl md:text-5xl text-navy-900 dark:text-[#f4efe4]">
                 Get live in 2 hours
               </h2>
               <p className="mt-3 text-sm text-navy-600 dark:text-[#8aa0b5] leading-relaxed">

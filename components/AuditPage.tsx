@@ -481,45 +481,53 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
 
         <section
           id="audit-lost-revenue"
-          className={`relative mt-8 overflow-hidden rounded-[2rem] border px-6 py-8 md:px-10 md:py-10 ${
-            isDarkMode
-              ? 'border-[rgba(200,181,143,0.22)] bg-gradient-to-br from-[#071827] via-[#051b2d] to-[#04131f]'
-              : 'border-[#c8b58f]/40 bg-gradient-to-br from-[#faf5ea] via-white to-[#f4efe4]'
-          }`}
+          className="relative mt-8 min-h-[72vh] overflow-hidden rounded-[2rem] border border-[rgba(200,181,143,0.22)] bg-[#051b2d] px-5 py-8 md:px-10 md:py-10"
         >
-          <div className="fx-grid opacity-70" aria-hidden />
-          <div className="relative z-10 grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
+          <div className="fx-grid opacity-80" aria-hidden />
+          <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
+            <div className="fx-tile px-4 py-3">
+              <p className="fx-kicker">Audit prepared for</p>
+              <p className="mt-1 text-sm text-[#f4efe4]">
+                {data.business.name} · {data.business.location}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {generatedDate ? <span className="fx-chip">Generated {generatedDate}</span> : null}
+              {reportId ? <span className="fx-chip">Report {reportId}</span> : null}
+            </div>
+          </div>
+          <div className="relative z-10 mt-8 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
             <div>
               <p className="fx-kicker">Lost revenue proof</p>
-              <h2 className={`mt-3 text-4xl font-semibold leading-[0.95] md:text-6xl ${isDarkMode ? 'text-[#f4efe4]' : 'text-navy-900'}`}>
+              <h2 className="fx-display mt-3 text-5xl leading-[0.95] text-[#f4efe4] md:text-7xl">
                 {formatCurrency(data.revenueModel.monthlyLossMin)}–{formatCurrency(data.revenueModel.monthlyLossMax)}
               </h2>
-              <p className="mt-3 text-lg md:text-2xl" style={{ color: 'var(--fourcee-accent-copper)' }}>
+              <p className="mt-3 text-xl md:text-2xl" style={{ color: 'var(--fourcee-accent-copper)' }}>
                 walks out every month unanswered.
               </p>
-              <p className={`mt-4 max-w-2xl text-sm leading-relaxed ${isDarkMode ? 'text-[#8aa0b5]' : 'text-navy-700'}`}>
+              <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#8aa0b5]">
                 Mid-range leak for {data.business.name}: {formatCurrency(data.revenueModel.monthlyLossMidpoint)} / month.
                 Six-month cumulative: {formatCurrency(data.revenueModel.sixMonthCumulativeLeak)}.
                 {data.compliance.disclaimerShort ? ` ${data.compliance.disclaimerShort}` : ''}
               </p>
-              <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+              <div className="mt-7 grid grid-cols-3 gap-2 sm:max-w-lg sm:gap-3">
                 <HeroMetricPill
                   label="Inbound / week"
                   value={formatRange(data.callModel.inboundCallsPerWeekMin, data.callModel.inboundCallsPerWeekMax)}
-                  isDarkMode={isDarkMode}
+                  isDarkMode
                 />
                 <HeroMetricPill
                   label="Answer rate"
                   value={`${formatRange(data.callModel.answerRateMin, data.callModel.answerRateMax)}%`}
-                  isDarkMode={isDarkMode}
+                  isDarkMode
                 />
                 <HeroMetricPill
                   label="Missed / week"
                   value={formatRange(data.callModel.missedCallsPerWeekMin, data.callModel.missedCallsPerWeekMax)}
-                  isDarkMode={isDarkMode}
+                  isDarkMode
                 />
               </div>
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-7 flex flex-wrap gap-3">
                 <button type="button" onClick={onGetLive} className="fx-btn fx-btn-primary">
                   Recover this revenue
                 </button>
@@ -528,13 +536,21 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                 </button>
               </div>
             </div>
-            <div className="fx-tile p-5">
-              <p className="fx-kicker">After-hours inquiry</p>
-              <p className={`mt-3 text-sm ${isDarkMode ? 'text-[#f2d4d0]' : 'text-rose-800'}`}>Missed · Sunday 8:14 PM</p>
-              <p className={`mt-1 text-xl ${isDarkMode ? 'text-[#f4efe4]' : 'text-navy-900'}`}>$12,000 anniversary band</p>
-              <p className={`mt-2 text-sm leading-relaxed ${isDarkMode ? 'text-[#8aa0b5]' : 'text-navy-600'}`}>
-                Caller did not wait. Next jeweler is already in the recents list.
-              </p>
+            <div className="relative min-h-[320px] sm:min-h-[420px]">
+              <img
+                src="/assets/plates/plate_missed_call_phone.png"
+                alt=""
+                className="pointer-events-none mx-auto h-[min(58vh,520px)] w-auto max-w-full object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.45)]"
+                aria-hidden
+              />
+              <div className="fx-tile absolute bottom-2 right-0 w-[min(100%,300px)] p-4 sm:bottom-6 sm:right-4">
+                <p className="fx-kicker">After-hours inquiry</p>
+                <p className="mt-3 text-sm text-[#f2d4d0]">Missed · Sunday 8:14 PM</p>
+                <p className="mt-1 text-xl text-[#f4efe4]">$12,000 anniversary band</p>
+                <p className="mt-2 text-sm leading-relaxed text-[#8aa0b5]">
+                  Caller did not wait. Next jeweler is already in the recents list.
+                </p>
+              </div>
             </div>
           </div>
         </section>

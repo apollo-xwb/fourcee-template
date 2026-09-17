@@ -236,56 +236,97 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
           : 'border-navy-200 text-navy-700'
     }`;
 
+  if (compact) {
+    return (
+      <div className="relative overflow-hidden rounded-[2rem] border border-[rgba(200,181,143,0.22)] bg-[#050910] p-4">
+        <div className="relative z-10 flex flex-col gap-4">
+          <p className="fx-kicker">{businessName ? `${businessName} · ` : ''}Configurator</p>
+          <div
+            ref={mountRef}
+            className="relative h-[220px] w-full overflow-hidden rounded-2xl touch-none"
+            style={{ touchAction: 'none', cursor: 'grab' }}
+            aria-label="Interactive ring preview. Drag to rotate."
+          />
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Metal">
+            {config.metals.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setMetalId(item.id)}
+                aria-pressed={metalId === item.id}
+                className={chipClass(metalId === item.id, 'copper')}
+              >
+                <span className="h-2.5 w-2.5 rounded-full" style={{ background: item.color }} />
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={`relative overflow-hidden rounded-[2rem] border ${
-        isDarkMode
-          ? 'border-[rgba(200,181,143,0.22)] bg-[#050910]'
-          : 'border-navy-200 bg-white/80'
-      } ${compact ? 'p-4' : 'p-5 md:p-8'}`}
-    >
-      <div className="fx-grid opacity-50" aria-hidden />
-      <div className={`relative z-10 flex flex-col ${compact ? 'gap-4' : 'gap-6 lg:flex-row lg:items-center'}`}>
-        <div
-          ref={mountRef}
-          className={`relative w-full overflow-hidden rounded-2xl touch-none ${
-            compact ? 'h-[220px]' : 'h-[300px] md:h-[420px] lg:max-w-[56%]'
-          } ${isDarkMode ? 'bg-[radial-gradient(ellipse_at_50%_40%,rgba(200,181,143,0.08),transparent_55%)]' : 'bg-gradient-to-b from-white to-[#f3ead6]'}`}
-          style={{ touchAction: 'none', cursor: 'grab' }}
-          aria-label="Interactive ring preview. Drag to rotate."
-        />
-        <div className={`min-w-0 flex-1 ${compact ? '' : 'fx-tile p-5 md:p-6'}`}>
-          <p className="fx-kicker">
-            {businessName ? `${businessName} · ` : ''}Configurator
-          </p>
-          <h3 className={`mt-2 text-xl font-semibold md:text-4xl ${isDarkMode ? 'text-[#f4efe4]' : 'text-navy-900'}`}>
-            {config.headline}
+    <div className="relative min-h-[80vh] overflow-hidden rounded-[2rem] border border-[rgba(200,181,143,0.18)] bg-black">
+      <img
+        src="/assets/plates/plate_ring_studio.png"
+        alt=""
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(90deg, rgba(5,10,16,0.28) 0%, rgba(5,10,16,0.08) 38%, rgba(5,10,16,0.55) 62%, rgba(5,10,16,0.2) 100%)',
+        }}
+        aria-hidden
+      />
+      <div className="relative z-10 flex min-h-[80vh] flex-col justify-between p-6 md:p-10">
+        <div className="max-w-sm">
+          <p className="fx-kicker">{businessName ? `${businessName} · ` : ''}Configurator</p>
+          <h3 className="fx-display mt-3 text-5xl leading-[0.95] text-[#f4efe4] md:text-6xl">
+            {config.headline.includes(' ') ? (
+              <>
+                {config.headline.split(' ').slice(0, -1).join(' ')}
+                <br />
+                {config.headline.split(' ').slice(-1)}
+              </>
+            ) : (
+              config.headline
+            )}
           </h3>
-          <p className={`mt-2 text-sm leading-relaxed ${isDarkMode ? 'text-[#8aa0b5]' : 'text-navy-700'}`}>
-            {config.subhead}
-          </p>
-          <p className={`mt-3 text-xs ${isDarkMode ? 'text-[#c2ccd6]' : 'text-navy-600'}`}>
-            Showing {metal.label} · {gem.label}
-          </p>
-          <div className="mt-5">
-            <p className="fx-kicker">Metal</p>
-            <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Metal">
+        </div>
+        <div className="mt-8 grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <div
+            ref={mountRef}
+            className="relative h-[280px] w-full overflow-hidden rounded-2xl touch-none md:h-[380px]"
+            style={{ touchAction: 'none', cursor: 'grab' }}
+            aria-label="Interactive ring preview. Drag to rotate."
+          />
+          <div className="fx-tile p-5 md:p-6">
+            <p className="text-sm leading-relaxed text-[#8aa0b5]">{config.subhead}</p>
+            <p className="mt-3 text-xs text-[#c2ccd6]">
+              Showing {metal.label} · {gem.label}
+            </p>
+            <p className="fx-kicker mt-5">Metal</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3" role="group" aria-label="Metal">
               {config.metals.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setMetalId(item.id)}
                   aria-pressed={metalId === item.id}
-                  className={chipClass(metalId === item.id, 'copper')}
-                >
-                  <span className="h-2.5 w-2.5 rounded-full border border-white/30" style={{ background: item.color }} />
-                  {item.label}
-                </button>
+                  aria-label={item.label}
+                  title={item.label}
+                  className={`h-11 w-11 rounded-full border transition ${
+                    metalId === item.id ? 'border-[#c8b58f] scale-110' : 'border-white/20'
+                  }`}
+                  style={{ background: item.color, boxShadow: '0 8px 18px rgba(0,0,0,0.35)' }}
+                />
               ))}
             </div>
-          </div>
-          <div className="mt-4">
-            <p className="fx-kicker">Center stone</p>
+            <p className="fx-kicker mt-5">Center stone</p>
             <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Center stone">
               {config.gems.map((item) => (
                 <button
@@ -295,7 +336,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
                   aria-pressed={gemId === item.id}
                   className={chipClass(gemId === item.id, 'ice')}
                 >
-                  <span className="h-2.5 w-2.5 rounded-full border border-white/30" style={{ background: item.color }} />
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: item.color }} />
                   {item.label}
                 </button>
               ))}

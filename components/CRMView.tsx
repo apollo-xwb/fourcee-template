@@ -306,21 +306,6 @@ export const CRMView: React.FC<CRMViewProps> = ({
     : 'bg-navy-900 text-white shadow-sm';
   const tabInactiveClass = isDarkMode ? 'text-white/70 hover:text-white' : 'text-navy-600 hover:text-navy-900';
 
-  const heroClass = isDarkMode
-    ? 'relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-black via-[#111111] to-[#1C1C1C] p-6 md:p-8 shadow-[0_20px_100px_rgba(0,0,0,0.65)]'
-    : 'relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-[0_12px_40px_rgba(15,23,42,0.06)] md:p-8';
-  const heroWashClass = isDarkMode
-    ? 'absolute inset-0 bg-[radial-gradient(circle_at_85%_20%,rgba(212,175,55,0.16),transparent_38%)]'
-    : 'absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_80%_-10%,rgba(15,23,42,0.05),transparent_50%)]';
-
-  const engineSubClass = isDarkMode ? 'text-slate-200' : 'text-navy-600';
-  const syncBoxClass = isDarkMode
-    ? 'relative z-10 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-xl'
-    : 'relative z-10 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3';
-  const syncLabelClass = isDarkMode ? 'text-white/60' : 'text-navy-500';
-  const onlineClass = isDarkMode ? 'text-sky-200' : 'text-emerald-700';
-  const onlineDotClass = isDarkMode ? 'bg-sky-300' : 'bg-emerald-600';
-
   const panelClass = isDarkMode
     ? 'relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
     : 'relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.05)]';
@@ -379,16 +364,16 @@ export const CRMView: React.FC<CRMViewProps> = ({
 
   return (
     <div className={`relative min-h-screen px-4 py-8 md:px-8 md:py-10 ${pageClass}`}>
-      {isDarkMode && (
-        <div
-          className="pointer-events-none absolute inset-0 opacity-80"
-          style={{
-            background:
-              'radial-gradient(ellipse 60% 40% at 80% 0%, rgba(200,181,143,0.08), transparent 55%), linear-gradient(180deg, rgba(4,12,20,0.35), transparent 40%)',
-          }}
-          aria-hidden
-        />
-      )}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: isDarkMode
+            ? 'linear-gradient(180deg, rgba(4,12,20,0.55), rgba(4,12,20,0.78)), url("/assets/plates/plate_hud_atmosphere.png") center / cover no-repeat'
+            : undefined,
+        }}
+        aria-hidden
+      />
+      {isDarkMode && <div className="fx-grid z-0" aria-hidden />}
       <div className="relative z-10 mx-auto w-full max-w-7xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="fx-kicker">
@@ -551,52 +536,32 @@ export const CRMView: React.FC<CRMViewProps> = ({
           </div>
         </div>
       ) : (
-        <div className="relative z-10 mx-auto mt-8 flex w-full max-w-7xl flex-col gap-6">
-          <div className="grid gap-4 md:grid-cols-3">
-            <MetricCard label="Revenue Saved" value={formatMoney(revenueSaved)} isDarkMode={isDarkMode} variant="top" />
-            <MetricCard label="Appointments Booked (AI)" value={appointmentsBooked.toString()} isDarkMode={isDarkMode} variant="top" />
-            <MetricCard label="Average Handling Time" value="1.2 Mins" isDarkMode={isDarkMode} variant="top" />
+        <div className="relative z-10 mx-auto mt-6 flex w-full max-w-7xl flex-col gap-4">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'VOICE', load: channelLoad.voice },
+              { id: 'SMS', load: channelLoad.sms },
+              { id: 'WEB', load: channelLoad.web },
+            ].map((ch) => (
+              <span key={ch.id} className="fx-chip">
+                <span className={ch.load > 0 ? 'fx-dot' : 'h-1.5 w-1.5 rounded-full bg-slate-500'} />
+                {ch.id} {ch.load.toString().padStart(2, '0')}
+              </span>
+            ))}
+            <span className="fx-chip">Brain sync online</span>
           </div>
-
-          <header className={`${heroClass} relative overflow-hidden`}>
-            <div className={heroWashClass} />
-            <GridWash style={gridOnDark} opacity={isDarkMode ? 'opacity-[0.12]' : 'opacity-0'} />
-            {!isDarkMode && <GridWash style={gridOnLightPanel} opacity="opacity-[0.25]" />}
-            <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <img src={isDarkMode ? fcWhite : fcBlack} alt="Fourcee" className="mt-2 h-10 w-auto object-contain md:h-12" />
-                <p className={`mt-2 text-sm font-medium tracking-wide md:text-base ${engineSubClass}`}>Live ops HUD · {businessName}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {[
-                    { id: 'VOICE', load: channelLoad.voice },
-                    { id: 'SMS', load: channelLoad.sms },
-                    { id: 'WEB', load: channelLoad.web },
-                  ].map((ch) => (
-                    <span key={ch.id} className="fx-chip">
-                      <span className={ch.load > 0 ? 'fx-dot' : 'h-1.5 w-1.5 rounded-full bg-slate-500'} />
-                      {ch.id} {ch.load.toString().padStart(2, '0')}
-                    </span>
-                  ))}
-                  <span className="fx-chip">Brain sync online</span>
-                </div>
-              </div>
-              <div className={syncBoxClass}>
-                <p className={`text-[10px] uppercase tracking-[0.28em] ${syncLabelClass}`}>Concierge Brain Sync</p>
-                <div className={`mt-2 flex items-center gap-2 text-sm font-semibold ${onlineClass}`}>
-                  <span className={`h-2.5 w-2.5 rounded-full animate-pulse ${onlineDotClass}`} />
-                  Online
-                </div>
-                <p className={`mt-2 font-mono text-[10px] tabular-nums ${syncLabelClass}`}>{liveDuration} live handle</p>
-              </div>
-            </div>
-          </header>
+          <div className="grid gap-3 md:grid-cols-3">
+            <MetricCard label="Revenue saved" value={formatMoney(revenueSaved)} isDarkMode={isDarkMode} variant="top" />
+            <MetricCard label="Appointments booked" value={appointmentsBooked.toString()} isDarkMode={isDarkMode} variant="top" />
+            <MetricCard label="Avg handle" value="1.2 min" isDarkMode={isDarkMode} variant="top" />
+          </div>
 
           <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
             <section className={panelClass}>
               <GridWash style={gridForPanel} />
               <div className="relative z-10">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className={`text-sm font-semibold uppercase tracking-[0.3em] ${sectionHeadingClass}`}>Current Concierge Calls</h3>
+                  <h3 className={`text-[10px] font-semibold uppercase tracking-[0.3em] ${sectionHeadingClass}`}>Live calls</h3>
                   <p className={`text-[10px] uppercase tracking-[0.25em] ${mutedClass}`}>{activeCalls.length} live</p>
                 </div>
                 <div className="space-y-3">
@@ -671,7 +636,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
             <aside className={asideClass}>
               <GridWash style={gridForPanel} />
               <div className="relative z-10">
-                <h3 className={`text-sm font-semibold uppercase tracking-[0.3em] ${sectionHeadingClass}`}>AI Concierge Conversation Transcript</h3>
+                <h3 className={`text-[10px] font-semibold uppercase tracking-[0.3em] ${sectionHeadingClass}`}>Transcript · live {liveDuration}</h3>
                 <div className={transcriptShellClass}>
                   <div className={transcriptHeaderClass}>
                     <div>

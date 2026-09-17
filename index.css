@@ -100,6 +100,13 @@ a,
 }
 
 /* SpaceX × Apple × Stark mission chrome — live surfaces */
+.fx-display {
+  font-family: "Cormorant Garamond", "Times New Roman", serif !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.02em !important;
+  text-transform: none !important;
+}
+
 .fx-hud {
   font-family: Michroma, "SphereNextThin", Inter, ui-sans-serif, system-ui, sans-serif;
   text-transform: uppercase;
