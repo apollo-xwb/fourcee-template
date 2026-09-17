@@ -85,7 +85,7 @@ Keep these exact literals in repo (values and/or source tokens):
 **`recoveryPlan`:** `headline`, `body`, `capabilities[]`, `supportingMediaUrl`
 
 **`liveDemo`:** `ctaLabel`, `helperCopy`, `phoneCountryDefault`, `demoDurationHint`  
-Optional: `liveDemo.ringBuilder` (alias of top-level `ringBuilder`)
+Optional: `liveDemo.ringBuilder` (alias of top-level `ringBuilder`). `normalizeAuditData` spreads `liveDemo` so this alias is not stripped.
 
 **`ringBuilder` (optional, new — old payloads omit it and still work):**
 - `enabled` (boolean) — `false` hides the studio; missing/`true` shows it with defaults
@@ -94,6 +94,19 @@ Optional: `liveDemo.ringBuilder` (alias of top-level `ringBuilder`)
 - `defaultMetalId`, `defaultGemId`
 
 Code defaults live in `lib/ring-builder.ts`. Neuro can personalize later without a schema migration.
+
+### Toggle / configure the ring studio
+
+| Goal | JSON |
+| --- | --- |
+| Show with defaults | omit `ringBuilder`, or `"ringBuilder": { "enabled": true }` |
+| Hide | `"ringBuilder": { "enabled": false }` |
+| Personalize copy | `"headline"`, `"subhead"` |
+| Personalize swatches | `"metals"` / `"gems"` arrays of `{ id, label, color }` |
+| Alias | same object under `liveDemo.ringBuilder` (top-level wins if both exist) |
+
+Placement: landing `#ring-studio` (lazy IntersectionObserver + `React.lazy`) and portal Overview (compact).  
+Implementation: lighter Three.js torus/prong/stone studio. **Not** a vendor of [VikasRana10/3D-app](https://github.com/VikasRana10/3D-app) — that README claims MIT but has no LICENSE file, and Crystal-Jewels uses WebGI-licensed models. Patterns only (metal/gem chips, 3D stage, rotate).
 
 **`branding`:** `theme.{primary,secondary,accentGold,accentSilver}`, `logoWordmarkUrl`, `clientLogoUrl`, `fontHeading`, `fontBody`
 

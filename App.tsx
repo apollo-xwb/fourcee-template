@@ -38,7 +38,7 @@ import { ArticleCard } from './components/ui/blog-post-card';
 import { FloatingAiAssistant } from './components/ui/glowing-ai-chat-assistant';
 import { BLOG_POSTS } from './constants';
 import { AuditPage } from './components/AuditPage';
-import { LazyRingBuilderSection } from './components/RingBuilder';
+import { LazyRingBuilderSection } from './components/LazyRingBuilderSection';
 import type { AuditData } from './types/audit';
 import { loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from './lib/audit-content';
 import { resolveRingBuilder } from './lib/ring-builder';

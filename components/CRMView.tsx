@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import fcWhite from '../public/assets/fcwhite.png';
 import fcBlack from '../public/assets/fcblack.png';
 import type { RingBuilderConfig } from '../types/audit';
-import { LazyRingBuilderSection } from './RingBuilder';
+import { LazyRingBuilderSection } from './LazyRingBuilderSection';
 
 interface CRMViewProps {
   isDarkMode?: boolean;

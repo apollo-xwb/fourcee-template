@@ -13,6 +13,17 @@ function findSwatch(list: RingSwatch[], id: string, fallback: RingSwatch): RingS
   return list.find((item) => item.id === id) ?? fallback;
 }
 
+function metalParams(color: string) {
+  const hex = color.toLowerCase();
+  if (hex.includes('c9a08a') || hex.includes('e8b4')) {
+    return { metalness: 1, roughness: 0.22 };
+  }
+  if (hex.includes('e8eef4') || hex.includes('c2ccd6')) {
+    return { metalness: 1, roughness: 0.12 };
+  }
+  return { metalness: 1, roughness: 0.16 };
+}
+
 export const RingBuilder: React.FC<RingBuilderProps> = ({
   config,
   isDarkMode = true,
@@ -36,8 +47,18 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
 
   useEffect(() => {
     metalRef.current?.color.set(metal.color);
+    const shine = metalParams(metal.color);
+    if (metalRef.current) {
+      metalRef.current.metalness = shine.metalness;
+      metalRef.current.roughness = shine.roughness;
+    }
     gemRef.current?.color.set(gem.color);
-  }, [metal.color, gem.color]);
+    if (gemRef.current) {
+      const isDiamond = gem.id === 'diamond' || gem.color.toLowerCase().includes('f4fbff');
+      gemRef.current.transmission = isDiamond ? 0.72 : 0.35;
+      gemRef.current.ior = isDiamond ? 2.42 : 1.77;
+    }
+  }, [metal.color, gem.color, gem.id]);
 
   useEffect(() => {
     const container = mountRef.current;
@@ -46,61 +67,91 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
     const width = container.clientWidth || 320;
     const height = container.clientHeight || 280;
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(32, width / height, 0.1, 50);
-    camera.position.set(0.15, 0.55, 3.1);
+    const camera = new THREE.PerspectiveCamera(30, width / height, 0.1, 50);
+    camera.position.set(0.2, 0.62, 3.35);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, compact ? 1.25 : 1.75));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, compact ? 1.2 : 1.6));
     renderer.setSize(width, height);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 1.08;
     container.appendChild(renderer.domElement);
 
-    const key = new THREE.DirectionalLight(0xfff4e0, 2.1);
-    key.position.set(2.4, 3.2, 2.6);
+    const key = new THREE.DirectionalLight(0xfff4e0, 2.2);
+    key.position.set(2.6, 3.4, 2.4);
     scene.add(key);
-    const ice = new THREE.DirectionalLight(0xdbe7f3, 1.1);
-    ice.position.set(-2.2, 0.8, 1.6);
+    const ice = new THREE.DirectionalLight(0xdbe7f3, 1.15);
+    ice.position.set(-2.4, 0.9, 1.8);
     scene.add(ice);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+    const rim = new THREE.PointLight(0xffffff, 1.4, 8);
+    rim.position.set(0.1, 1.4, 1.2);
+    scene.add(rim);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.28));
 
     const metalMat = new THREE.MeshStandardMaterial({
       color: metal.color,
       metalness: 1,
-      roughness: 0.18,
+      roughness: 0.16,
     });
     const gemMat = new THREE.MeshPhysicalMaterial({
       color: gem.color,
-      metalness: 0.05,
-      roughness: 0.04,
-      transmission: 0.55,
-      thickness: 0.6,
+      metalness: 0.04,
+      roughness: 0.03,
+      transmission: 0.62,
+      thickness: 0.55,
       ior: 2.4,
       clearcoat: 1,
-      clearcoatRoughness: 0.05,
+      clearcoatRoughness: 0.04,
     });
     metalRef.current = metalMat;
     gemRef.current = gemMat;
 
     const group = new THREE.Group();
-    const band = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.14, 32, 80), metalMat);
-    band.rotation.x = Math.PI / 2.15;
+    const geometries: THREE.BufferGeometry[] = [];
+
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.74, 0.13, 40, 96), metalMat);
+    band.rotation.x = Math.PI / 2.12;
     group.add(band);
+    geometries.push(band.geometry);
 
-    const setting = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.12, 12), metalMat);
-    setting.position.y = 0.68;
-    group.add(setting);
+    const inner = new THREE.Mesh(new THREE.TorusGeometry(0.74, 0.045, 16, 64), metalMat);
+    inner.rotation.x = Math.PI / 2.12;
+    inner.scale.set(1, 1, 0.92);
+    group.add(inner);
+    geometries.push(inner.geometry);
 
-    const stone = new THREE.Mesh(new THREE.OctahedronGeometry(0.28, 0), gemMat);
-    stone.position.y = 0.92;
-    stone.rotation.y = Math.PI / 4;
-    group.add(stone);
+    const gallery = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.22, 0.1, 16), metalMat);
+    gallery.position.y = 0.7;
+    group.add(gallery);
+    geometries.push(gallery.geometry);
 
     for (let i = 0; i < 6; i += 1) {
-      const accent = new THREE.Mesh(new THREE.OctahedronGeometry(0.055, 0), gemMat);
+      const prong = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.012, 0.2, 8), metalMat);
       const angle = (i / 6) * Math.PI * 2;
-      accent.position.set(Math.cos(angle) * 0.34, 0.74, Math.sin(angle) * 0.18);
+      prong.position.set(Math.cos(angle) * 0.16, 0.82, Math.sin(angle) * 0.16);
+      prong.rotation.z = Math.cos(angle) * -0.35;
+      prong.rotation.x = Math.sin(angle) * 0.35;
+      group.add(prong);
+      geometries.push(prong.geometry);
+    }
+
+    const stone = new THREE.Mesh(new THREE.OctahedronGeometry(0.26, 1), gemMat);
+    stone.position.y = 0.94;
+    stone.rotation.y = Math.PI / 4;
+    group.add(stone);
+    geometries.push(stone.geometry);
+
+    const table = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 0.03, 8), gemMat);
+    table.position.y = 1.12;
+    group.add(table);
+    geometries.push(table.geometry);
+
+    for (let i = 0; i < 8; i += 1) {
+      const accent = new THREE.Mesh(new THREE.OctahedronGeometry(0.042, 0), gemMat);
+      const angle = (i / 8) * Math.PI * 2;
+      accent.position.set(Math.cos(angle) * 0.36, 0.72, Math.sin(angle) * 0.16);
       group.add(accent);
+      geometries.push(accent.geometry);
     }
 
     scene.add(group);
@@ -111,9 +162,13 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
     const onPointerDown = (event: PointerEvent) => {
       dragging = true;
       lastX = event.clientX;
+      renderer.domElement.setPointerCapture(event.pointerId);
     };
-    const onPointerUp = () => {
+    const onPointerUp = (event: PointerEvent) => {
       dragging = false;
+      if (renderer.domElement.hasPointerCapture(event.pointerId)) {
+        renderer.domElement.releasePointerCapture(event.pointerId);
+      }
     };
     const onPointerMove = (event: PointerEvent) => {
       if (!dragging) return;
@@ -121,13 +176,13 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
       lastX = event.clientX;
     };
     renderer.domElement.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointerup', onPointerUp);
-    window.addEventListener('pointermove', onPointerMove);
+    renderer.domElement.addEventListener('pointerup', onPointerUp);
+    renderer.domElement.addEventListener('pointermove', onPointerMove);
 
     const animate = () => {
       frame = requestAnimationFrame(animate);
-      if (!dragging) group.rotation.y += 0.006;
-      group.rotation.x = Math.sin(performance.now() / 2400) * 0.08;
+      if (!dragging) group.rotation.y += 0.005;
+      group.rotation.x = Math.sin(performance.now() / 2600) * 0.07;
       renderer.render(scene, camera);
     };
     animate();
@@ -144,16 +199,16 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener('resize', onResize);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('pointermove', onPointerMove);
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+      renderer.domElement.removeEventListener('pointerup', onPointerUp);
+      renderer.domElement.removeEventListener('pointermove', onPointerMove);
       renderer.dispose();
-      band.geometry.dispose();
-      setting.geometry.dispose();
-      stone.geometry.dispose();
+      geometries.forEach((geo) => geo.dispose());
       metalMat.dispose();
       gemMat.dispose();
-      container.removeChild(renderer.domElement);
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
     };
   }, [compact]);
 
@@ -169,7 +224,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
           className={`relative w-full overflow-hidden rounded-2xl ${
             compact ? 'h-[220px]' : 'h-[280px] md:h-[360px] lg:max-w-[52%]'
           } ${isDarkMode ? 'bg-gradient-to-b from-white/[0.04] to-transparent' : 'bg-gradient-to-b from-white to-[#f3ead6]'}`}
-          aria-label="Interactive ring preview"
+          aria-label="Interactive ring preview. Drag to rotate."
         />
         <div className="min-w-0 flex-1">
           <p className={`text-[10px] font-bold uppercase tracking-[0.28em] ${isDarkMode ? 'text-sky-200/80' : 'text-navy-500'}`}>
@@ -181,16 +236,20 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
           <p className={`mt-2 text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-navy-700'}`}>
             {config.subhead}
           </p>
+          <p className={`mt-3 text-xs ${isDarkMode ? 'text-slate-400' : 'text-navy-600'}`}>
+            Showing {metal.label} · {gem.label}
+          </p>
           <div className="mt-5">
             <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-500' : 'text-navy-500'}`}>
               Metal
             </p>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Metal">
               {config.metals.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setMetalId(item.id)}
+                  aria-pressed={metalId === item.id}
                   className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] ${
                     metalId === item.id
                       ? isDarkMode
@@ -211,12 +270,13 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
             <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-500' : 'text-navy-500'}`}>
               Center stone
             </p>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Center stone">
               {config.gems.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setGemId(item.id)}
+                  aria-pressed={gemId === item.id}
                   className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] ${
                     gemId === item.id
                       ? isDarkMode
@@ -235,51 +295,6 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-export const LazyRingBuilderSection: React.FC<RingBuilderProps> = (props) => {
-  const hostRef = useRef<HTMLDivElement | null>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const node = hostRef.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '160px' }
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div ref={hostRef} className="min-h-[240px]">
-      {visible ? (
-        <React.Suspense
-          fallback={
-            <div className={`rounded-[2rem] border px-6 py-16 text-center text-xs uppercase tracking-[0.22em] ${
-              props.isDarkMode ? 'border-white/10 text-slate-500' : 'border-navy-200 text-navy-500'
-            }`}>
-              Loading studio
-            </div>
-          }
-        >
-          <RingBuilder {...props} />
-        </React.Suspense>
-      ) : (
-        <div className={`rounded-[2rem] border px-6 py-16 text-center text-xs uppercase tracking-[0.22em] ${
-          props.isDarkMode ? 'border-white/10 text-slate-500' : 'border-navy-200 text-navy-500'
-        }`}>
-          Ring studio on approach
-        </div>
-      )}
     </div>
   );
 };
