@@ -169,7 +169,7 @@ const App: React.FC = () => {
   const [sideMenuAvgDeal, setSideMenuAvgDeal] = useState(4200);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const businessName = auditData?.business.name ?? PLACEHOLDER_BUSINESS_NAME;
-  const ringBuilder = resolveRingBuilder(auditData);
+  const ringBuilder = useMemo(() => resolveRingBuilder(auditData), [auditData]);
 
   // Neuro contract: always load /content.json (generator overwrites this file).
   useEffect(() => {

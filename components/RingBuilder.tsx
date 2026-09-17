@@ -75,6 +75,11 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
     renderer.setSize(width, height);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.08;
+    renderer.domElement.style.touchAction = 'none';
+    renderer.domElement.style.cursor = 'grab';
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
     container.appendChild(renderer.domElement);
 
     const key = new THREE.DirectionalLight(0xfff4e0, 2.2);
@@ -160,18 +165,24 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
     let dragging = false;
     let lastX = 0;
     const onPointerDown = (event: PointerEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
       dragging = true;
       lastX = event.clientX;
+      renderer.domElement.style.cursor = 'grabbing';
       renderer.domElement.setPointerCapture(event.pointerId);
     };
     const onPointerUp = (event: PointerEvent) => {
       dragging = false;
+      renderer.domElement.style.cursor = 'grab';
       if (renderer.domElement.hasPointerCapture(event.pointerId)) {
         renderer.domElement.releasePointerCapture(event.pointerId);
       }
     };
     const onPointerMove = (event: PointerEvent) => {
       if (!dragging) return;
+      event.preventDefault();
+      event.stopPropagation();
       group.rotation.y += (event.clientX - lastX) * 0.01;
       lastX = event.clientX;
     };
@@ -221,9 +232,10 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
       <div className={`flex flex-col ${compact ? 'gap-4' : 'gap-6 lg:flex-row lg:items-center'}`}>
         <div
           ref={mountRef}
-          className={`relative w-full overflow-hidden rounded-2xl ${
+          className={`relative w-full overflow-hidden rounded-2xl touch-none ${
             compact ? 'h-[220px]' : 'h-[280px] md:h-[360px] lg:max-w-[52%]'
           } ${isDarkMode ? 'bg-gradient-to-b from-white/[0.04] to-transparent' : 'bg-gradient-to-b from-white to-[#f3ead6]'}`}
+          style={{ touchAction: 'none', cursor: 'grab' }}
           aria-label="Interactive ring preview. Drag to rotate."
         />
         <div className="min-w-0 flex-1">
