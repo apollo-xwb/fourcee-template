@@ -219,7 +219,7 @@ export const CrystalRingCanvas: React.FC<CrystalRingCanvasProps> = ({
           const size = box.getSize(new THREE.Vector3()).length();
           const center = box.getCenter(new THREE.Vector3());
           model.position.sub(center);
-          model.scale.setScalar(1.85 / Math.max(size, 0.001));
+          model.scale.setScalar(2.55 / Math.max(size, 0.001));
         }
         root.add(model);
         indexMeshes(model);

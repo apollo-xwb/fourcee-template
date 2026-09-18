@@ -543,6 +543,7 @@ function parsePlainEnglish(text: string) {
     { title: 'Inventory · Nivoda', state: 'Mapped · token at handover', hit: /nivoda|stone|inventory/i },
     { title: 'After-hours · SMS + escalate', state: 'Rule drafted', hit: /after|6|sms|text|10k|owner/i },
     { title: 'WhatsApp', state: 'Scoped if mentioned', hit: /whatsapp|miami/i },
+    { title: 'Website · storefront', state: 'Noted', hit: /shopify|website|storefront/i },
   ];
   const matched = cards.filter((card) => card.hit.test(text));
   return matched.length ? matched : [{ title: 'Needs a first paragraph', state: 'Waiting', hit: /./ }];

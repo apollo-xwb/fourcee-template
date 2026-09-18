@@ -89,10 +89,11 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
       <div className="relative overflow-hidden rounded-[2rem] border border-[rgba(200,181,143,0.22)] bg-[#050910] p-4">
         <p className="fx-kicker">{businessName ? `${businessName} · ` : ''}Showroom demo</p>
         <p className="mt-1 text-[11px] text-[#8aa0b5]">3D ring · not the voice SOP</p>
-        <div className="relative mt-3 h-[220px] w-full overflow-hidden rounded-2xl">
+        <div className="relative mt-3 h-[340px] w-full overflow-hidden rounded-2xl">
           <CrystalRingCanvas metalColor={metal.color} gemColor={gem.color} mode="orbit" />
         </div>
-        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Metal">
+        <p className="fx-kicker mt-4">Metal</p>
+        <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Metal">
           {config.metals.map((item) => (
             <button
               key={item.id}
@@ -100,6 +101,21 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
               onClick={() => setMetalId(item.id)}
               aria-pressed={metalId === item.id}
               className={chipClass(metalId === item.id, 'copper')}
+            >
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: item.color }} />
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <p className="fx-kicker mt-4">Center stone</p>
+        <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Center stone">
+          {config.gems.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setGemId(item.id)}
+              aria-pressed={gemId === item.id}
+              className={chipClass(gemId === item.id, 'ice')}
             >
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: item.color }} />
               {item.label}
