@@ -409,9 +409,23 @@ export const CRMView: React.FC<CRMViewProps> = ({
               <p className="fx-kicker">
                 Client onboarding · {onboardStep + 1} of {ONBOARD_STEPS.length}
               </p>
-              <h2 className="fx-display mt-2 text-2xl md:text-3xl">Tell us how the store actually works.</h2>
+              <h2 className="fx-display mt-2 text-2xl md:text-3xl">
+                {onboardStep === 0
+                  ? 'When does the line pick up?'
+                  : onboardStep === 1
+                    ? 'Which tools does the store already live in?'
+                    : onboardStep === 2
+                      ? 'What should the voice never do?'
+                      : 'Read it back. Correct anything.'}
+              </h2>
               <p className={`mt-2 max-w-xl text-[13px] leading-relaxed ${muted}`}>
-                No API keys on day one. Write it like a text to the manager. We turn the paragraph into integration cards you can correct.
+                {onboardStep === 0
+                  ? 'Hours, after-hours, and who owns the phone when the floor is busy. Write it like a text to the manager.'
+                  : onboardStep === 1
+                    ? 'Calendar, CRM, inventory, WhatsApp, SMS — name the tools in plain English. No API keys on day one.'
+                    : onboardStep === 2
+                      ? 'Escalate rules, dollar thresholds, languages, and the greeting that must stay in the store’s voice.'
+                      : 'We turn the paragraph into integration cards. Wrong card? Edit the paragraph. The original stays in the developer packet.'}
               </p>
               <textarea
                 value={plainEnglish}

@@ -109,7 +109,7 @@ The onboarding flow turns that paragraph into integration cards. Staff can corre
 
 ## 10. Ring builder (out of SOP)
 
-The ring studio (Three.js, GLB from the 3D-app ring, scroll camera, metal/gem build) is a **showroom demo**. It must never:
+The ring studio (Three.js + Draco, GLB from the 3D-app ring, scroll camera, metal/gem build) is a **showroom demo**. It must never:
 
 - replace a live inventory lookup
 - be described as “the Fourcee product”

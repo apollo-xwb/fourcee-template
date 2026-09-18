@@ -1,14 +1,19 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment';
 
 const RING_URL = '/assets/3D/ring_webgi.glb';
+const DRACO_PATH = '/draco/gltf/';
 
 type Vec3 = [number, number, number];
 
+/** Camera / ring keys from VikasRana10/3D-app Crystal-Jewels (ringModel == 1). */
 const SCROLL_KEYS: { pos: Vec3; target: Vec3; rot: Vec3 }[] = [
   { pos: [1.28, -1.7, 5.86], target: [0.91, 0.03, -0.25], rot: [0, 0, 0] },
   { pos: [-1.83, -0.14, 6.15], target: [-0.78, -0.03, -0.12], rot: [0, 0, Math.PI / 2] },
+  { pos: [-0.06, -1.15, 4.42], target: [-0.01, 0.9, 0.07], rot: [0, 0, -Math.PI / 2] },
   { pos: [-0.17, -0.25, 8.5], target: [0, 0, 0], rot: [-Math.PI / 2, 0, -Math.PI / 2] },
 ];
 
@@ -34,47 +39,57 @@ function sampleScroll(progress: number) {
   };
 }
 
-function classifyMesh(name: string, material: THREE.Material | THREE.Material[]) {
+function classifyMesh(name: string) {
   const n = name.toLowerCase();
   if (n.includes('diamond') || n.includes('gem') || n === 'object') return 'gem';
   if (n.includes('gold') || n.includes('entourage') || n.includes('yellow')) return 'gold';
-  if (n.includes('silver') || n.includes('alliance') || n.includes('white') || n.includes('plat')) return 'silver';
-  const mats = Array.isArray(material) ? material : [material];
-  const metal = mats.find((m) => 'metalness' in m && (m as THREE.MeshStandardMaterial).metalness > 0.5);
-  return metal ? 'metal' : 'other';
+  if (n.includes('silver') || n.includes('alliance') || n.includes('white') || n.includes('plat')) {
+    return 'silver';
+  }
+  return 'other';
 }
 
-function applyColor(mesh: THREE.Mesh, hex: string) {
+function isPaleMetal(hex: string) {
+  const c = new THREE.Color(hex);
+  return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b > 0.62;
+}
+
+function makeMetalMaterial(hex: string) {
+  return new THREE.MeshStandardMaterial({
+    color: hex,
+    metalness: 1,
+    roughness: 0.14,
+    envMapIntensity: 1.35,
+  });
+}
+
+function makeGemMaterial(hex: string) {
+  return new THREE.MeshPhysicalMaterial({
+    color: hex,
+    metalness: 0,
+    roughness: 0.04,
+    transmission: 0.72,
+    thickness: 0.55,
+    ior: 2.4,
+    reflectivity: 0.55,
+    clearcoat: 1,
+    clearcoatRoughness: 0.03,
+    attenuationColor: hex,
+    attenuationDistance: 0.85,
+    envMapIntensity: 1.2,
+  });
+}
+
+function applyHex(mesh: THREE.Mesh, hex: string) {
   const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
   mats.forEach((mat) => {
     if ('color' in mat && mat.color instanceof THREE.Color) {
       mat.color.set(hex);
     }
+    if ('attenuationColor' in mat && (mat as THREE.MeshPhysicalMaterial).attenuationColor) {
+      (mat as THREE.MeshPhysicalMaterial).attenuationColor.set(hex);
+    }
   });
-}
-
-function buildFallbackRing(metalHex: string, gemHex: string) {
-  const group = new THREE.Group();
-  const metalMat = new THREE.MeshStandardMaterial({ color: metalHex, metalness: 1, roughness: 0.16 });
-  const gemMat = new THREE.MeshPhysicalMaterial({
-    color: gemHex,
-    metalness: 0.04,
-    roughness: 0.03,
-    transmission: 0.62,
-    thickness: 0.55,
-    ior: 2.4,
-    clearcoat: 1,
-    clearcoatRoughness: 0.04,
-  });
-  const band = new THREE.Mesh(new THREE.TorusGeometry(0.74, 0.13, 40, 96), metalMat);
-  band.rotation.x = Math.PI / 2.35;
-  band.name = 'gold';
-  group.add(band);
-  const stone = new THREE.Mesh(new THREE.OctahedronGeometry(0.26, 1), gemMat);
-  stone.position.y = 0.94;
-  stone.name = 'diamonds';
-  group.add(stone);
-  return group;
 }
 
 interface CrystalRingCanvasProps {
@@ -96,6 +111,7 @@ export const CrystalRingCanvas: React.FC<CrystalRingCanvasProps> = ({
   const metalColorRef = useRef(metalColor);
   const gemColorRef = useRef(gemColor);
   const applyMaterialsRef = useRef<() => void>(() => {});
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
 
   metalColorRef.current = metalColor;
   gemColorRef.current = gemColor;
@@ -108,18 +124,27 @@ export const CrystalRingCanvas: React.FC<CrystalRingCanvasProps> = ({
     const container = mountRef.current;
     if (!container) return;
 
+    let cancelled = false;
+    setLoadState('loading');
+
     const width = container.clientWidth || 320;
     const height = container.clientHeight || 280;
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(mode === 'scroll' ? 32 : 28, width / height, 0.1, 80);
-    camera.position.set(1.55, 1.35, 2.15);
-    camera.lookAt(0, 0.2, 0);
+    const camera = new THREE.PerspectiveCamera(mode === 'scroll' ? 25 : 28, width / height, 0.08, 80);
+    if (mode === 'scroll') {
+      camera.position.set(...SCROLL_KEYS[0].pos);
+      camera.lookAt(...SCROLL_KEYS[0].target);
+    } else {
+      camera.position.set(1.55, 1.15, 2.05);
+      camera.lookAt(0, 0.08, 0);
+    }
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
     renderer.setSize(width, height);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
+    renderer.toneMappingExposure = 1.08;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.domElement.style.touchAction = 'none';
     renderer.domElement.style.cursor = 'grab';
     renderer.domElement.style.display = 'block';
@@ -127,16 +152,21 @@ export const CrystalRingCanvas: React.FC<CrystalRingCanvasProps> = ({
     renderer.domElement.style.height = '100%';
     container.appendChild(renderer.domElement);
 
-    const key = new THREE.DirectionalLight(0xfff4e0, 2.1);
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const room = new RoomEnvironment();
+    scene.environment = pmrem.fromScene(room, 0.04).texture;
+    room.dispose();
+
+    const key = new THREE.DirectionalLight(0xfff4e0, 1.7);
     key.position.set(2.6, 3.4, 2.4);
     scene.add(key);
-    const fill = new THREE.DirectionalLight(0xdbe7f3, 1.1);
+    const fill = new THREE.DirectionalLight(0xdbe7f3, 0.85);
     fill.position.set(-2.4, 0.9, 1.8);
     scene.add(fill);
-    const rim = new THREE.PointLight(0xffffff, 1.3, 10);
+    const rim = new THREE.PointLight(0xffffff, 0.9, 12);
     rim.position.set(0.1, 1.4, 1.2);
     scene.add(rim);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.32));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.18));
 
     const root = new THREE.Group();
     scene.add(root);
@@ -144,58 +174,70 @@ export const CrystalRingCanvas: React.FC<CrystalRingCanvasProps> = ({
     const buckets = {
       gold: [] as THREE.Mesh[],
       silver: [] as THREE.Mesh[],
-      metal: [] as THREE.Mesh[],
       gem: [] as THREE.Mesh[],
     };
 
     const paint = () => {
-      buckets.gold.forEach((mesh) => applyColor(mesh, metalColorRef.current));
-      buckets.silver.forEach((mesh) => applyColor(mesh, metalColorRef.current));
-      buckets.metal.forEach((mesh) => applyColor(mesh, metalColorRef.current));
-      buckets.gem.forEach((mesh) => applyColor(mesh, gemColorRef.current));
+      const metal = metalColorRef.current;
+      const accent = isPaleMetal(metal) ? metal : '#f3f1ec';
+      buckets.gold.forEach((mesh) => applyHex(mesh, metal));
+      buckets.silver.forEach((mesh) => applyHex(mesh, accent));
+      buckets.gem.forEach((mesh) => applyHex(mesh, gemColorRef.current));
     };
     applyMaterialsRef.current = paint;
 
     const indexMeshes = (group: THREE.Object3D) => {
       group.traverse((obj) => {
         if (!(obj instanceof THREE.Mesh)) return;
-        const kind = classifyMesh(obj.name, obj.material);
-        if (kind === 'gem') buckets.gem.push(obj);
-        else if (kind === 'gold') buckets.gold.push(obj);
-        else if (kind === 'silver') buckets.silver.push(obj);
-        else if (kind === 'metal') buckets.metal.push(obj);
+        const kind = classifyMesh(obj.name);
+        if (kind === 'gem') {
+          obj.material = makeGemMaterial(gemColorRef.current);
+          buckets.gem.push(obj);
+        } else if (kind === 'gold') {
+          obj.material = makeMetalMaterial(metalColorRef.current);
+          buckets.gold.push(obj);
+        } else if (kind === 'silver') {
+          obj.material = makeMetalMaterial('#f3f1ec');
+          buckets.silver.push(obj);
+        }
       });
       paint();
     };
 
+    const draco = new DRACOLoader();
+    draco.setDecoderPath(DRACO_PATH);
     const loader = new GLTFLoader();
+    loader.setDRACOLoader(draco);
+
     loader.load(
       RING_URL,
       (gltf) => {
+        if (cancelled) return;
         const model = gltf.scene;
-        const box = new THREE.Box3().setFromObject(model);
-        const size = box.getSize(new THREE.Vector3()).length();
-        const center = box.getCenter(new THREE.Vector3());
-        model.position.sub(center);
-        const scale = 2.4 / Math.max(size, 0.001);
-        model.scale.setScalar(scale);
+        if (mode === 'orbit') {
+          const box = new THREE.Box3().setFromObject(model);
+          const size = box.getSize(new THREE.Vector3()).length();
+          const center = box.getCenter(new THREE.Vector3());
+          model.position.sub(center);
+          model.scale.setScalar(1.85 / Math.max(size, 0.001));
+        }
         root.add(model);
         indexMeshes(model);
+        setLoadState('ready');
       },
       undefined,
-      () => {
-        const fallback = buildFallbackRing(metalColorRef.current, gemColorRef.current);
-        root.add(fallback);
-        indexMeshes(fallback);
+      (err) => {
+        console.error('[CrystalRingCanvas] GLB load failed', err);
+        if (!cancelled) setLoadState('error');
       }
     );
 
     let dragging = false;
     let lastX = 0;
     let lastY = 0;
-    let orbitY = -0.45;
+    let orbitY = mode === 'scroll' ? 0 : -0.45;
     let orbitX = 0;
-    root.rotation.y = orbitY;
+    if (mode !== 'scroll') root.rotation.y = orbitY;
 
     const onPointerDown = (event: PointerEvent) => {
       event.preventDefault();
@@ -259,11 +301,21 @@ export const CrystalRingCanvas: React.FC<CrystalRingCanvasProps> = ({
     window.addEventListener('resize', onResize);
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(frame);
       window.removeEventListener('resize', onResize);
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       renderer.domElement.removeEventListener('pointerup', onPointerUp);
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
+      draco.dispose();
+      scene.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          obj.geometry.dispose();
+          const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+          mats.forEach((mat) => mat.dispose());
+        }
+      });
+      pmrem.dispose();
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
@@ -272,11 +324,22 @@ export const CrystalRingCanvas: React.FC<CrystalRingCanvasProps> = ({
   }, [mode, scrollRoot]);
 
   return (
-    <div
-      ref={mountRef}
-      className={className}
-      style={{ touchAction: 'none', cursor: 'grab', width: '100%', height: '100%' }}
-      aria-label="Interactive 3D ring. Drag to rotate."
-    />
+    <div className={`relative ${className}`} style={{ width: '100%', height: '100%' }}>
+      <div
+        ref={mountRef}
+        style={{ touchAction: 'none', cursor: 'grab', width: '100%', height: '100%' }}
+        aria-label="Interactive 3D ring. Drag to rotate."
+      />
+      {loadState === 'loading' ? (
+        <p className="pointer-events-none absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-[0.18em] text-[#c8b58f]">
+          Loading ring
+        </p>
+      ) : null}
+      {loadState === 'error' ? (
+        <p className="pointer-events-none absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-[0.18em] text-rose-300">
+          Ring mesh failed
+        </p>
+      ) : null}
+    </div>
   );
 };
