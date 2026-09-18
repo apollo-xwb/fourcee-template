@@ -1,13 +1,16 @@
 # Fourcee - AI Concierge Growth Engine
 
-Fourcee is a conversion system for high-end jewelers that combines:
+Fourcee is the **AI voice agent that answers calls** for high-end jewelers. The conversion system around it includes:
 
 - a premium marketing site,
 - an interactive "free audit" lead magnet,
 - package selection and checkout,
-- and a concierge intelligence portal simulation.
+- a voice-ops portal (call logs, transcripts, actions, statuses, onboarding, developer handover),
+- and an optional 3D ring studio (merchandising demo — not the SOP).
 
 The core business model is simple: use a hyper-personalized free audit to show each showroom exactly how much revenue is being lost to missed calls, then convert qualified leads into monthly or annual concierge plans.
+
+Operating procedure: `docs/sop/voice-agent.md`.
 
 ---
 
@@ -99,7 +102,10 @@ The audit is intended to be data-driven and generated per prospect account.
 
 Read:
 
+- `DYNAMIC-JSON.md` — Neuro generator contract (load path, frozen keys, fallbacks)
 - `docs/AUDIT_TEMPLATE_VARIABLES.md`
+- `docs/mockups/` — direction frames that informed the live SpaceX × Apple × Stark chrome. Neuro `content.json` wiring stays frozen.
+- Ring studio: optional `ringBuilder` (or `liveDemo.ringBuilder`) in `content.json`. `"enabled": false` hides it. See `DYNAMIC-JSON.md`.
 
 This document explains every variable that should be dynamic, what it means, and where to inject it in the audit template.
 

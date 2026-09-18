@@ -12,7 +12,6 @@ import { ValueCalculator } from './components/ValueCalculator';
 import { EtherealShadow } from './components/ui/etheral-shadow';
 import { DottedSurface } from './components/ui/dotted-surface';
 import DisplayCards from './components/ui/display-cards';
-import { PendantFBX } from './components/PendantFBX';
 import { IncomingCallPhone } from './components/ui/incoming-call-phone';
 import { MiniPhone } from './components/ui/mini-phone';
 import {
@@ -38,7 +37,10 @@ import { ArticleCard } from './components/ui/blog-post-card';
 import { FloatingAiAssistant } from './components/ui/glowing-ai-chat-assistant';
 import { BLOG_POSTS } from './constants';
 import { AuditPage } from './components/AuditPage';
+import { LazyRingBuilderSection } from './components/LazyRingBuilderSection';
 import type { AuditData } from './types/audit';
+import { loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from './lib/audit-content';
+import { resolveRingBuilder } from './lib/ring-builder';
 
 const INTEGRATIONS_DATA = [
   {
@@ -165,12 +167,12 @@ const App: React.FC = () => {
   const [sideMenuCallsPerMonth, setSideMenuCallsPerMonth] = useState(12);
   const [sideMenuAvgDeal, setSideMenuAvgDeal] = useState(4200);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const businessName = auditData?.business.name ?? 'PLACEHOLDER Business';
+  const businessName = auditData?.business.name ?? PLACEHOLDER_BUSINESS_NAME;
+  const ringBuilder = useMemo(() => resolveRingBuilder(auditData), [auditData]);
 
-  // Load audit data from content.json
+  // Neuro contract: always load /content.json (generator overwrites this file).
   useEffect(() => {
-    fetch('/content.json')
-      .then(res => res.json())
+    loadAuditContent()
       .then((data: AuditData) => {
         setAuditData(data);
         setAuditDataLoading(false);
@@ -180,6 +182,16 @@ const App: React.FC = () => {
         setAuditDataLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    const theme = auditData?.branding?.theme;
+    if (!theme) return;
+    const root = document.documentElement;
+    if (theme.primary) root.style.setProperty('--fourcee-brand-primary', theme.primary);
+    if (theme.secondary) root.style.setProperty('--fourcee-brand-secondary', theme.secondary);
+    if (theme.accentGold) root.style.setProperty('--fourcee-accent-copper', theme.accentGold);
+    if (theme.accentSilver) root.style.setProperty('--fourcee-accent-ice', theme.accentSilver);
+  }, [auditData]);
 
   useEffect(() => {
     const el = scrollContainerRef.current;
@@ -352,143 +364,69 @@ const App: React.FC = () => {
 
     return (
     <div className="animate-in fade-in duration-1000 pb-32 md:pb-40">
-      {/* Hero: ring left (between hero text and Test Fourcee), text + form right; mobile: text → ring → form */}
-      <section
-        className={`fourcee-surface-bg snap-start snap-always min-h-screen relative flex flex-col items-center justify-center px-4 sm:px-6 pt-12 min-[400px]:pt-10 min-[430px]:pt-8 sm:pt-16 pb-8 md:pt-24 md:pb-24 overflow-x-hidden overflow-y-visible transition-colors ${
-          isDarkMode ? 'bg-transparent' : 'bg-[#f7f2e5]'
-        }`}
-        style={{
-          maskImage: 'linear-gradient(to bottom, black 0%, black 84%, transparent 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 84%, transparent 100%)',
-        }}
-      >
-        {isDarkMode && (
-          <div
-            className="pointer-events-none absolute inset-0 opacity-35 mix-blend-soft-light"
-            style={{
-              backgroundImage:
-                'radial-gradient(rgba(255,255,255,0.18) 0.6px, transparent 0.6px), radial-gradient(rgba(255,255,255,0.12) 0.6px, transparent 0.6px)',
-              backgroundSize: '3px 3px, 5px 5px',
-              backgroundPosition: '0 0, 1px 2px',
-            }}
-          />
-        )}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[220px] md:h-[260px]">
-          <div
-            className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-transparent"
-          />
-          <DottedSurface
-            isDarkMode={isDarkMode}
-            className={`bottom-0 h-full w-full [mask-image:linear-gradient(to_top,black,transparent)] ${
-              isDarkMode ? 'opacity-80' : 'opacity-50'
-            }`}
-          />
-        </div>
-
-        <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-x-20 lg:gap-x-28 md:gap-y-10 items-center">
-          {/* Hero text - mobile below 3D object, desktop top-right */}
-          <div className="order-2 md:order-2 md:row-start-1 text-center mt-4 md:mt-0">
-            <div className="relative z-10 max-w-2xl mx-auto">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-5xl 2xl:text-6xl font-bold mb-3 text-[#1f1b16] dark:text-white serif leading-[1.1] tracking-tight">
-                The Gold Standard <br/><span className="italic shimmer-text">of Voice AI</span>
-              </h1>
-              {/* Test Fourcee — directly under h1 on mobile only */}
-              <div className="mt-4 mb-4 flex justify-center md:hidden">
-                <div className="w-full max-w-[130px] min-[340px]:max-w-[160px] min-[375px]:max-w-[200px] sm:max-w-[280px]">
-                  <MiniPhone isDarkMode={isDarkMode} businessName={businessName} leadId={auditData?.lead_id} />
-                </div>
-              </div>
-              <p className="text-xs sm:text-sm md:text-sm lg:text-base text-[#4f4536] dark:text-navy-300 font-medium leading-relaxed uppercase tracking-[0.25em]">
-                Tailored exclusively for high-end jewelers
-              </p>
-              <div className="mt-4 inline-flex flex-col items-center gap-2 rounded-2xl border border-[#c8b58f]/70 bg-[#f9f1df]/75 px-4 py-3 text-center shadow-sm backdrop-blur-sm dark:border-white/15 dark:bg-black/30">
-                <p className="text-[10px] uppercase tracking-[0.26em] text-[#7a6648] dark:text-amber-200/80">
-                  Prolific Luxury Concierge Brief
-                </p>
-                <p className="text-[11px] sm:text-xs text-[#3f3322] dark:text-slate-200">
-                  This live demo is compiled specifically for <span className="font-semibold">{businessName}</span>.
-                </p>
-                <p className="text-[11px] sm:text-xs text-[#564632] dark:text-slate-300">
-                  Fourcee acts as your custom concierge service - one recovered client can cover months of platform cost.
-                </p>
-              </div>
+      {/* Hero: cinematic ring plate + right-rail copy — matches founder frame 01 */}
+      <section className="snap-start snap-always relative min-h-screen overflow-hidden bg-[#051b2d]">
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(90deg, rgba(5,27,45,0.08) 0%, rgba(5,27,45,0.16) 40%, rgba(5,27,45,0.78) 66%, rgba(5,27,45,0.94) 100%), url("/assets/plates/plate_hero_ring.png") center / cover no-repeat',
+          }}
+          aria-hidden
+        />
+        <div className="fx-grid z-[1]" aria-hidden />
+        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center px-5 py-24 sm:px-8 md:px-12 lg:items-end">
+          <div className="w-full max-w-xl text-left">
+            <div className="fx-chip mb-5">
+              <span className="fx-dot" />
+              Concierge standby · audit compiled
             </div>
-          </div>
-          {/* Ring - mobile above text (under logo), desktop left; sized to stay fully visible (no crop) */}
-          <div className="order-1 md:order-1 md:row-span-2 md:self-center flex justify-center w-full min-w-0 relative -mt-1 min-[430px]:-mt-2">
-            <div className="relative aspect-square w-[min(58vw,220px)] min-[375px]:w-[min(56vw,240px)] min-[430px]:w-[min(52vw,280px)] sm:w-[min(48vw,320px)] md:w-[min(42vw,520px)] lg:w-[min(40vw,640px)] xl:w-[min(38vw,720px)] 2xl:w-[min(36vw,800px)] overflow-visible [contain:layout]">
-              <PendantFBX className="relative z-10 h-full w-full" isDarkMode={isDarkMode} />
-              {/* Object shadow beneath 3D so it appears grounded */}
-              <div
-                className="absolute left-1/2 -translate-x-1/2 z-0 pointer-events-none"
-                style={{
-                  bottom: '-8%',
-                  width: '82%',
-                  height: '28%',
-                  background: isDarkMode
-                    ? 'radial-gradient(ellipse 80% 50% at 50% 50%, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.34) 45%, transparent 78%)'
-                    : 'radial-gradient(ellipse 80% 50% at 50% 50%, rgba(98,76,45,0.42) 0%, rgba(98,76,45,0.2) 45%, transparent 78%)',
-                  filter: 'blur(10px)',
-                  borderRadius: '50%',
-                }}
-                aria-hidden
+            <motion.h1
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              className="fx-display text-[32px] leading-[0.95] text-[#f4efe4] sm:text-4xl md:text-5xl"
+            >
+              The gold standard
+              <br />
+              of voice AI
+            </motion.h1>
+            <p className="mt-4 text-[11px] uppercase tracking-[0.28em] text-[#c2ccd6]">
+              Tailored exclusively for high-end jewelers
+            </p>
+            <div className="fx-tile mt-7 max-w-[440px] px-5 py-4">
+              <p className="fx-kicker">Prepared for</p>
+              <p className="mt-2 text-xl text-[#f4efe4]">{businessName}</p>
+              <p className="mt-2 text-[13px] leading-relaxed text-[#8aa0b5]">
+                One recovered client can cover months of platform cost.
+              </p>
+            </div>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <button type="button" onClick={goToAudit} className="fx-btn fx-btn-primary">
+                Access my custom audit
+              </button>
+              <button type="button" onClick={scrollToRoi} className="fx-btn fx-btn-ghost">
+                Calculate ROI
+              </button>
+            </div>
+            <div className="mt-8 max-w-sm opacity-90">
+              <MiniPhone
+                isDarkMode
+                businessName={businessName}
+                leadId={auditData?.lead_id}
+                phoneCountryDefault={auditData?.liveDemo.phoneCountryDefault}
+                ctaLabel={auditData?.liveDemo.ctaLabel}
+                helperCopy={auditData?.liveDemo.helperCopy}
               />
             </div>
           </div>
-          {/* Mobile ROI CTA — below phone + brief on small screens */}
-          <div className="order-3 w-full flex flex-col items-center gap-2 md:hidden mt-4">
-            <button
-              type="button"
-              onClick={goToAudit}
-              className="group inline-flex items-center gap-2 rounded-full border border-[#b8a98d]/70 bg-[#f5eddc]/85 px-4 py-2 text-[9px] font-bold uppercase tracking-[0.2em] text-[#3f3628] shadow-sm hover:bg-[#fbf3e3] transition-colors dark:border-navy-300/60 dark:bg-white/80 dark:text-slate-800 dark:hover:bg-white"
-            >
-              <span>Access my custom audit</span>
-            </button>
-            <button
-              type="button"
-              onClick={scrollToRoi}
-              className="group inline-flex items-center gap-2 rounded-full border border-[#b8a98d]/70 bg-[#f5eddc]/85 px-4 py-2 text-[9px] font-bold uppercase tracking-[0.25em] text-[#3f3628] shadow-sm hover:bg-[#fbf3e3] transition-colors dark:border-navy-300/60 dark:bg-white/80 dark:text-slate-800 dark:hover:bg-white"
-            >
-              <span>Calculate ROI now</span>
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#8b7348] text-white shadow dark:bg-navy-900">
-                <ChevronDown className="w-3 h-3 group-hover:translate-y-0.5 transition-transform" />
-              </span>
-            </button>
-          </div>
-
-          {/* Test Fourcee — desktop bottom-right under headline */}
-          <div className="hidden md:flex order-3 md:row-start-2 md:self-end justify-center">
-            <div className="w-full max-w-sm">
-              <MiniPhone isDarkMode={isDarkMode} businessName={businessName} leadId={auditData?.lead_id} />
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-10 md:mt-12 hidden md:flex flex-col items-center gap-3">
-          <button
-            type="button"
-            onClick={goToAudit}
-            className="group inline-flex items-center gap-3 rounded-full border border-[#b8a98d]/70 dark:border-navy-600/60 bg-[#f5eddc]/85 dark:bg-white/5 px-6 py-2.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.21em] text-[#4f4536] dark:text-navy-100 shadow-sm hover:bg-[#fbf3e3] dark:hover:bg-white/10 transition-colors"
-          >
-            <span>Access my custom audit</span>
-          </button>
-          <button
-            type="button"
-            onClick={scrollToRoi}
-            className="group inline-flex items-center gap-3 rounded-full border border-[#b8a98d]/70 dark:border-navy-600/60 bg-[#f5eddc]/85 dark:bg-white/5 px-6 py-2.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.25em] text-[#4f4536] dark:text-navy-100 shadow-sm hover:bg-[#fbf3e3] dark:hover:bg-white/10 transition-colors"
-          >
-            <span>Calculate ROI now</span>
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#8b7348] text-white dark:bg-white dark:text-navy-950 shadow">
-              <ChevronDown className="w-3 h-3 group-hover:translate-y-0.5 transition-transform" />
-            </span>
-          </button>
         </div>
       </section>
 
       {/* Demo Video Section - now directly after hero; 9:16 portrait on mobile */}
       <section ref={demoRef} id="demo" className="snap-start snap-always min-h-screen flex flex-col justify-center py-24 md:py-32 px-4 sm:px-6 bg-transparent relative">
         <div className="max-w-6xl mx-auto flex flex-col items-center w-full min-w-0">
-          <h2 className="text-3xl md:text-5xl font-bold serif text-navy-900 dark:text-white mb-8 md:mb-12 text-center tracking-tighter">
+          <h2 className="text-2xl md:text-3xl font-bold serif text-navy-900 dark:text-white mb-8 md:mb-12 text-center tracking-tighter">
             <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-emerald-700 dark:from-white dark:via-slate-200 dark:to-emerald-300 bg-clip-text text-transparent">
               Experience the Demo
             </span>
@@ -496,7 +434,7 @@ const App: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowDemoCallModal(true)}
-            className="mb-6 h-12 md:h-14 px-5 md:px-8 bg-emerald-500/90 backdrop-blur-md rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all border border-emerald-200/60 text-white text-[10px] md:text-xs uppercase tracking-[0.22em] font-bold shadow-xl"
+            className="mb-6 h-12 md:h-14 px-5 md:px-8 bg-navy-900/90 dark:bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all border border-[#c8b58f]/50 text-white dark:text-navy-950 text-[10px] md:text-xs uppercase tracking-[0.22em] font-bold shadow-xl"
           >
             Call me
           </button>
@@ -548,6 +486,9 @@ const App: React.FC = () => {
                 isDarkMode={isDarkMode}
                 businessName={businessName}
                 leadId={auditData?.lead_id}
+                phoneCountryDefault={auditData?.liveDemo.phoneCountryDefault}
+                ctaLabel={auditData?.liveDemo.ctaLabel}
+                helperCopy={auditData?.liveDemo.helperCopy}
                 onCallCompleted={handleDemoCallCompleted}
               />
             </div>
@@ -578,7 +519,7 @@ const App: React.FC = () => {
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-navy-400 dark:text-navy-300">
               See if the numbers make sense
             </p>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold serif text-navy-900 dark:text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif text-navy-900 dark:text-white tracking-tight">
               Is Fourcee actually worth it
               <br className="hidden md:block" /> for your showroom?
             </h2>
@@ -640,7 +581,7 @@ const App: React.FC = () => {
         </div>
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20 items-center relative z-10">
           <div className="space-y-10">
-            <h2 className="text-3xl md:text-6xl font-bold serif leading-tight">
+            <h2 className="text-2xl md:text-4xl font-bold serif leading-tight">
               Silence is <br/><span className="italic text-silver-400">Expensive</span>
             </h2>
             <p className="text-xl text-silver-300 font-light leading-relaxed max-w-lg">
@@ -648,11 +589,11 @@ const App: React.FC = () => {
             </p>
             <div className="flex gap-12">
               <div>
-                <p className="text-5xl font-bold mb-1 serif">$50k</p>
+                <p className="text-3xl font-bold mb-1 serif">$50k</p>
                 <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-silver-500">Annual Opportunity Loss</p>
               </div>
               <div>
-                <p className="text-5xl font-bold mb-1 serif">0</p>
+                <p className="text-3xl font-bold mb-1 serif">0</p>
                 <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-silver-500">Missed Opportunities with AI</p>
               </div>
             </div>
@@ -734,7 +675,7 @@ const App: React.FC = () => {
         </div>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-20 relative z-10">
           <div className="order-2 md:order-1 flex-1 space-y-8 animate-in slide-in-from-left duration-1000">
-            <h2 className="text-3xl md:text-6xl font-bold serif leading-[1.1] text-slate-900 dark:text-white">Proactive <br/><span className="italic shimmer-text">Reach</span></h2>
+            <h2 className="text-2xl md:text-4xl font-bold serif leading-[1.1] text-slate-900 dark:text-white">Proactive <br/><span className="italic shimmer-text">Reach</span></h2>
             <p className="text-xl text-navy-600 dark:text-navy-300 font-light leading-relaxed">
               Fourcee doesn't just wait for customers. It actively nurtures your pipeline with high-fidelity outbound reminders and follow-ups.
             </p>
@@ -766,7 +707,7 @@ const App: React.FC = () => {
       <section className="snap-start snap-always min-h-screen flex flex-col justify-center pt-32 pb-16 overflow-x-hidden bg-transparent transition-colors">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 min-w-0">
           <div className="text-center mb-16 md:mb-24 max-w-3xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl md:text-6xl font-bold serif text-slate-900 dark:text-white mb-6 md:mb-8 tracking-tighter break-words">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold serif text-slate-900 dark:text-white mb-6 md:mb-8 tracking-tighter break-words">
               <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-amber-700 dark:from-white dark:via-slate-200 dark:to-amber-200 bg-clip-text text-transparent">
                 Unified Workflow
               </span>
@@ -987,7 +928,7 @@ const App: React.FC = () => {
           }}
         />
         <div className="max-w-4xl mx-auto text-center relative z-10 px-4">
-          <h2 className="text-4xl md:text-7xl font-bold serif text-navy-900 dark:text-white mb-6 tracking-tighter">Boutique Intelligence</h2>
+          <h2 className="text-3xl md:text-4xl font-bold serif text-navy-900 dark:text-white mb-6 tracking-tighter">Boutique Intelligence</h2>
           <div className="grid md:grid-cols-3 gap-3 md:gap-4 mt-2">
             {[
               { title: "Voice Cloning", desc: "Your actual voice, scaled across 100 simultaneous calls." },
@@ -1007,13 +948,21 @@ const App: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowDemoCallModal(true)}
-              className="inline-flex items-center gap-2 rounded-full bg-emerald-600 text-white px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.22em] shadow-xl hover:brightness-110 transition-all"
+              className="inline-flex items-center gap-2 rounded-full bg-navy-900 dark:bg-white text-white dark:text-navy-950 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.22em] shadow-xl hover:scale-[1.03] active:scale-95 transition-all"
             >
               Get a concierge callback
             </button>
           </div>
         </div>
       </section>
+
+      {ringBuilder && (
+        <section id="ring-studio" className="snap-start snap-always min-h-screen flex flex-col justify-center px-3 sm:px-6 py-10 md:py-16">
+          <div className="mx-auto w-full max-w-6xl">
+            <LazyRingBuilderSection config={ringBuilder} isDarkMode={isDarkMode} businessName={businessName} />
+          </div>
+        </section>
+      )}
 
       <section className="snap-start snap-always min-h-screen flex flex-col justify-center py-16 md:py-20 px-6 bg-transparent transition-colors relative">
         <div className="max-w-5xl mx-auto relative z-10 px-4 sm:px-6 w-full min-w-0">
@@ -1039,7 +988,7 @@ const App: React.FC = () => {
 
       {showTester && <PhoneTester onClose={() => setShowTester(false)} />}
     </div>
-  ); }; }, [isDarkMode, businessName, auditData, navigate]);
+  ); }; }, [isDarkMode, businessName, auditData, navigate, ringBuilder]);
 
   const BlogPage = () => (
     <div className="pt-24 pb-12 px-6 max-w-6xl mx-auto animate-in fade-in duration-700 bg-transparent">
@@ -1050,7 +999,7 @@ const App: React.FC = () => {
           className="h-16 w-auto object-contain sm:h-20 md:h-24"
         />
       </div>
-      <h1 className="text-6xl font-bold serif mb-4 text-center tracking-tighter text-slate-900 dark:text-white">The Ledger</h1>
+      <h1 className="text-4xl font-bold serif mb-4 text-center tracking-tighter text-slate-900 dark:text-white">The Ledger</h1>
       <p className="text-center text-slate-600 dark:text-navy-300 uppercase tracking-[0.3em] text-[10px] font-bold mb-20">Strategic Insights for Luxury Retailers</p>
       
       <div className="grid md:grid-cols-2 gap-10 md:gap-16">
@@ -1199,17 +1148,16 @@ const App: React.FC = () => {
       </div>
 
       {currentView === AppView.LANDING && (
-        <div className="fixed top-6 sm:top-7 md:top-10 left-0 right-0 z-[100] flex justify-center pointer-events-none">
-          <img
-            src={isDarkMode ? fcWhite : fcBlack}
-            alt="Fourcee"
-            className="h-16 sm:h-20 md:h-24 w-auto drop-shadow-[0_18px_45px_rgba(0,0,0,0.65)] opacity-100 mx-auto"
-          />
+        <div className="pointer-events-none fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-6 py-5 sm:px-10">
+          <div className="fx-hud flex items-center gap-3 text-[11px] text-[#f4efe4]">
+            <span className="h-[18px] w-[18px] rounded-full border border-[#c8b58f] bg-[radial-gradient(circle_at_35%_30%,#f7e7b8,#b8913f_60%,#5c4318)]" />
+            Fourcee · Concierge
+          </div>
         </div>
       )}
       
       {isSideMenuOpen && (
-        <div className="fixed inset-0 z-[170]">
+        <div className="fixed inset-0 z-[1200]">
           <button
             type="button"
             className="absolute inset-0 bg-black/45 backdrop-blur-sm"
@@ -1246,13 +1194,13 @@ const App: React.FC = () => {
             </div>
             <div className="mt-4 rounded-2xl border border-[#d9c39a]/70 bg-[#fbf4e7]/90 dark:bg-white/5 dark:border-white/10 p-4">
               <p className="text-[11px] font-semibold text-navy-900 dark:text-white">{businessName}</p>
-              <p className="mt-1 text-xs text-navy-700 dark:text-slate-200">Fourcee custom concierge workspace with ROI-first navigation.</p>
+              <p className="mt-1 text-xs text-navy-700 dark:text-slate-200">Voice agent ops: call logs, transcripts, actions, onboarding, handover.</p>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
               {[
                 { label: 'Home', sub: 'Main journey', icon: <House className="h-4 w-4" />, action: () => setCurrentView(AppView.LANDING) },
                 { label: 'Audit', sub: 'Custom report', icon: <FileSearch className="h-4 w-4" />, action: () => setCurrentView(AppView.LEAD_MAGNET) },
-                { label: 'Portal', sub: 'CRM intelligence', icon: <LayoutDashboard className="h-4 w-4" />, action: () => setCurrentView(AppView.DASHBOARD) },
+                { label: 'Fourcee', sub: 'Voice ops', icon: <LayoutDashboard className="h-4 w-4" />, action: () => setCurrentView(AppView.DASHBOARD) },
                 { label: 'Checkout', sub: 'Plans and pricing', icon: <CreditCard className="h-4 w-4" />, action: () => setCurrentView(AppView.CHECKOUT) },
                 { label: 'Insights', sub: 'Content library', icon: <Newspaper className="h-4 w-4" />, action: () => setCurrentView(AppView.BLOG) },
                 { label: 'Book Call', sub: 'Strategy meeting', icon: <CalendarDays className="h-4 w-4" />, action: () => openCalendarBooking() },
@@ -1355,6 +1303,7 @@ const App: React.FC = () => {
           </aside>
         </div>
       )}
+      {!isSideMenuOpen && (
       <FloatingNav
         onNavigate={setCurrentView}
         currentView={currentView}
@@ -1371,6 +1320,7 @@ const App: React.FC = () => {
         }}
         onReopenPortalGuide={reopenPortalGuide}
       />
+      )}
 
       <main className="relative z-10">
         {currentView === AppView.LANDING && <LandingPage scrollContainerRef={scrollContainerRef} />}
@@ -1397,7 +1347,7 @@ const App: React.FC = () => {
            <div className="pt-24 animate-in fade-in duration-700">
               <button onClick={() => navigate(AppView.BLOG)} className="px-6 py-12 text-navy-300 hover:text-navy-900 dark:hover:text-white uppercase text-[10px] font-bold tracking-widest transition-colors">← Back to Ledger</button>
               <div className="max-w-3xl mx-auto px-6 pb-12">
-                <h1 className="text-5xl md:text-7xl font-bold serif mb-12 leading-none dark:text-white">{selectedPost.title}</h1>
+                <h1 className="text-3xl md:text-4xl font-bold serif mb-12 leading-none dark:text-white">{selectedPost.title}</h1>
                 <div className="prose prose-navy dark:prose-invert max-w-none space-y-8 text-lg text-navy-800 dark:text-navy-100 font-light leading-relaxed">
                   {selectedPost.content.split('\n').map((line, i) => <p key={i}>{line}</p>)}
                 </div>
@@ -1411,7 +1361,13 @@ const App: React.FC = () => {
           />
         )}
         {currentView === AppView.DASHBOARD && (
-          <CRMView isDarkMode={isDarkMode} businessName={auditData?.business.name ?? 'PLACEHOLDER Business'} />
+          <CRMView
+            isDarkMode={isDarkMode}
+            businessName={auditData?.business.name ?? PLACEHOLDER_BUSINESS_NAME}
+            reportId={auditData?.auditMeta.reportId}
+            location={auditData?.business.location}
+            ringBuilder={ringBuilder ?? undefined}
+          />
         )}
         {currentView === AppView.ADMIN && <AdminDashboard isDarkMode={isDarkMode} />}
         {currentView === AppView.TERMS && <TermsPage />}

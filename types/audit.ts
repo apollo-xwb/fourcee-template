@@ -1,3 +1,19 @@
+export interface RingSwatch {
+  id: string;
+  label: string;
+  color: string;
+}
+
+export interface RingBuilderConfig {
+  enabled?: boolean;
+  headline?: string;
+  subhead?: string;
+  metals?: RingSwatch[];
+  gems?: RingSwatch[];
+  defaultMetalId?: string;
+  defaultGemId?: string;
+}
+
 export interface AuditData {
   lead_id?: string;
   auditMeta: {
@@ -13,7 +29,10 @@ export interface AuditData {
     name: string;
     location: string;
     logoUrl: string;
-    /** Scraped storefront / business cover used as the audit brief intro hero. */
+    /**
+     * Optional apollo-only cover image. Neuro payloads omit this.
+     * UI must fall back to branding.clientLogoUrl then business.logoUrl.
+     */
     heroImageUrl?: string;
     industry: string;
     storeCount: number;
@@ -102,7 +121,14 @@ export interface AuditData {
     helperCopy: string;
     phoneCountryDefault: string;
     demoDurationHint: string;
+    /** Optional alias. Prefer top-level `ringBuilder`. */
+    ringBuilder?: RingBuilderConfig;
   };
+  /**
+   * Optional. Neuro payloads that omit this still work.
+   * Set `enabled: false` to hide the studio. See DYNAMIC-JSON.md.
+   */
+  ringBuilder?: RingBuilderConfig;
   branding: {
     theme: {
       primary: string;

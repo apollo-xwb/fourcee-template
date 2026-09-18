@@ -254,7 +254,14 @@ export function BeforeAfterCards({ comparison, currencySymbol, isDarkMode = true
   );
 }
 
-export function GbpSnapshotMockup({ reviews, isDarkMode = true }: { reviews: { rating: number; count: number; starsDisplay: string; quote1: string; quote2: string }; isDarkMode?: boolean }) {
+export function GbpSnapshotMockup({
+  reviews,
+  isDarkMode = true,
+}: {
+  reviews: { rating: number; count: number; starsDisplay: string; quote1: string; quote2: string; themes?: string[] };
+  isDarkMode?: boolean;
+}) {
+  const themes = reviews.themes?.filter(Boolean) ?? [];
   return (
     <div className={`rounded-[2rem] border p-6 md:p-8 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950 to-black' : 'border-navy-200 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'}`}>
       <div className="flex items-center gap-2">
@@ -276,7 +283,31 @@ export function GbpSnapshotMockup({ reviews, isDarkMode = true }: { reviews: { r
           <span className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-navy-900'}`}>{reviews.rating.toFixed(1)} out of 5</span>
           <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-navy-500'}`}>({reviews.count.toLocaleString()} reviews)</span>
         </div>
+        {reviews.quote1 ? (
+          <p className={`mt-4 text-sm italic leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-navy-700'}`}>
+            &ldquo;{reviews.quote1}&rdquo;
+          </p>
+        ) : null}
+        {reviews.quote2 ? (
+          <p className={`mt-2 text-sm italic leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-navy-600'}`}>
+            &ldquo;{reviews.quote2}&rdquo;
+          </p>
+        ) : null}
         <p className={`mt-3 text-[10px] uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-600' : 'text-navy-500'}`}>Representative themes from public reviews</p>
+        {themes.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {themes.map((theme) => (
+              <span
+                key={theme}
+                className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                  isDarkMode ? 'border-white/15 text-slate-300' : 'border-navy-200 text-navy-700'
+                }`}
+              >
+                {theme}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

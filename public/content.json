@@ -135,6 +135,13 @@
     "phoneCountryDefault": "+1",
     "demoDurationHint": "~60–90s"
   },
+  "ringBuilder": {
+    "enabled": true,
+    "headline": "Private ring studio",
+    "subhead": "Show a buyer the stone and metal before they ever reach the showroom.",
+    "defaultMetalId": "yellow-gold",
+    "defaultGemId": "diamond"
+  },
   "branding": {
     "theme": {
       "primary": "#d4af37",
