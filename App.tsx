@@ -13,6 +13,7 @@ import { EtherealShadow } from './components/ui/etheral-shadow';
 import { DottedSurface } from './components/ui/dotted-surface';
 import DisplayCards from './components/ui/display-cards';
 import { PendantFBX } from './components/PendantFBX';
+import { RingBuilderShowcase } from './components/RingBuilderShowcase';
 import { IncomingCallPhone } from './components/ui/incoming-call-phone';
 import { MiniPhone } from './components/ui/mini-phone';
 import {
@@ -389,7 +390,7 @@ const App: React.FC = () => {
           {/* Hero text - mobile below 3D object, desktop top-right */}
           <div className="order-2 md:order-2 md:row-start-1 text-center mt-4 md:mt-0">
             <div className="relative z-10 max-w-2xl mx-auto">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-5xl 2xl:text-6xl font-bold mb-3 text-[#1f1b16] dark:text-white serif leading-[1.1] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-4xl 2xl:text-5xl font-bold mb-3 text-[#1f1b16] dark:text-white serif leading-[1.1] tracking-tight">
                 The Gold Standard <br/><span className="italic shimmer-text">of Voice AI</span>
               </h1>
               {/* Test Fourcee — directly under h1 on mobile only */}
@@ -488,7 +489,7 @@ const App: React.FC = () => {
       {/* Demo Video Section - now directly after hero; 9:16 portrait on mobile */}
       <section ref={demoRef} id="demo" className="snap-start snap-always min-h-screen flex flex-col justify-center py-24 md:py-32 px-4 sm:px-6 bg-transparent relative">
         <div className="max-w-6xl mx-auto flex flex-col items-center w-full min-w-0">
-          <h2 className="text-3xl md:text-5xl font-bold serif text-navy-900 dark:text-white mb-8 md:mb-12 text-center tracking-tighter">
+          <h2 className="text-2xl md:text-4xl font-bold serif text-navy-900 dark:text-white mb-8 md:mb-12 text-center tracking-tighter">
             <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-emerald-700 dark:from-white dark:via-slate-200 dark:to-emerald-300 bg-clip-text text-transparent">
               Experience the Demo
             </span>
@@ -554,6 +555,9 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Ring builder showcase — Crystal-Jewels WebGi inside template */}
+      <RingBuilderShowcase isDarkMode={isDarkMode} />
 
       {/* Value Calculator Section - before ROI messaging; its own snap after demo */}
       <section id="roi-calculator" className="snap-start snap-always min-h-screen flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent">
@@ -640,7 +644,7 @@ const App: React.FC = () => {
         </div>
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20 items-center relative z-10">
           <div className="space-y-10">
-            <h2 className="text-3xl md:text-6xl font-bold serif leading-tight">
+            <h2 className="text-2xl md:text-4xl font-bold serif leading-tight">
               Silence is <br/><span className="italic text-silver-400">Expensive</span>
             </h2>
             <p className="text-xl text-silver-300 font-light leading-relaxed max-w-lg">
@@ -648,11 +652,11 @@ const App: React.FC = () => {
             </p>
             <div className="flex gap-12">
               <div>
-                <p className="text-5xl font-bold mb-1 serif">$50k</p>
+                <p className="text-3xl md:text-4xl font-bold mb-1 serif">$50k</p>
                 <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-silver-500">Annual Opportunity Loss</p>
               </div>
               <div>
-                <p className="text-5xl font-bold mb-1 serif">0</p>
+                <p className="text-3xl md:text-4xl font-bold mb-1 serif">0</p>
                 <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-silver-500">Missed Opportunities with AI</p>
               </div>
             </div>
@@ -734,7 +738,7 @@ const App: React.FC = () => {
         </div>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-20 relative z-10">
           <div className="order-2 md:order-1 flex-1 space-y-8 animate-in slide-in-from-left duration-1000">
-            <h2 className="text-3xl md:text-6xl font-bold serif leading-[1.1] text-slate-900 dark:text-white">Proactive <br/><span className="italic shimmer-text">Reach</span></h2>
+            <h2 className="text-2xl md:text-4xl font-bold serif leading-[1.1] text-slate-900 dark:text-white">Proactive <br/><span className="italic shimmer-text">Reach</span></h2>
             <p className="text-xl text-navy-600 dark:text-navy-300 font-light leading-relaxed">
               Fourcee doesn't just wait for customers. It actively nurtures your pipeline with high-fidelity outbound reminders and follow-ups.
             </p>
@@ -766,7 +770,7 @@ const App: React.FC = () => {
       <section className="snap-start snap-always min-h-screen flex flex-col justify-center pt-32 pb-16 overflow-x-hidden bg-transparent transition-colors">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 min-w-0">
           <div className="text-center mb-16 md:mb-24 max-w-3xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl md:text-6xl font-bold serif text-slate-900 dark:text-white mb-6 md:mb-8 tracking-tighter break-words">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold serif text-slate-900 dark:text-white mb-6 md:mb-8 tracking-tighter break-words">
               <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-amber-700 dark:from-white dark:via-slate-200 dark:to-amber-200 bg-clip-text text-transparent">
                 Unified Workflow
               </span>
@@ -987,7 +991,7 @@ const App: React.FC = () => {
           }}
         />
         <div className="max-w-4xl mx-auto text-center relative z-10 px-4">
-          <h2 className="text-4xl md:text-7xl font-bold serif text-navy-900 dark:text-white mb-6 tracking-tighter">Boutique Intelligence</h2>
+          <h2 className="text-3xl md:text-5xl font-bold serif text-navy-900 dark:text-white mb-6 tracking-tighter">Boutique Intelligence</h2>
           <div className="grid md:grid-cols-3 gap-3 md:gap-4 mt-2">
             {[
               { title: "Voice Cloning", desc: "Your actual voice, scaled across 100 simultaneous calls." },
@@ -1050,7 +1054,7 @@ const App: React.FC = () => {
           className="h-16 w-auto object-contain sm:h-20 md:h-24"
         />
       </div>
-      <h1 className="text-6xl font-bold serif mb-4 text-center tracking-tighter text-slate-900 dark:text-white">The Ledger</h1>
+      <h1 className="text-3xl md:text-4xl font-bold serif mb-4 text-center tracking-tighter text-slate-900 dark:text-white">The Ledger</h1>
       <p className="text-center text-slate-600 dark:text-navy-300 uppercase tracking-[0.3em] text-[10px] font-bold mb-20">Strategic Insights for Luxury Retailers</p>
       
       <div className="grid md:grid-cols-2 gap-10 md:gap-16">
@@ -1397,7 +1401,7 @@ const App: React.FC = () => {
            <div className="pt-24 animate-in fade-in duration-700">
               <button onClick={() => navigate(AppView.BLOG)} className="px-6 py-12 text-navy-300 hover:text-navy-900 dark:hover:text-white uppercase text-[10px] font-bold tracking-widest transition-colors">← Back to Ledger</button>
               <div className="max-w-3xl mx-auto px-6 pb-12">
-                <h1 className="text-5xl md:text-7xl font-bold serif mb-12 leading-none dark:text-white">{selectedPost.title}</h1>
+                <h1 className="text-3xl md:text-5xl font-bold serif mb-12 leading-none dark:text-white">{selectedPost.title}</h1>
                 <div className="prose prose-navy dark:prose-invert max-w-none space-y-8 text-lg text-navy-800 dark:text-navy-100 font-light leading-relaxed">
                   {selectedPost.content.split('\n').map((line, i) => <p key={i}>{line}</p>)}
                 </div>
