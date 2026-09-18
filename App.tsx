@@ -25,6 +25,7 @@ import {
   CreditCard,
   Newspaper,
   CalendarDays,
+  Gem,
 } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { CheckoutFlow } from './components/CheckoutFlow';
@@ -152,7 +153,7 @@ const FAQ_ITEMS = [
 ];
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<AppView>(AppView.LEAD_MAGNET);
+  const [currentView, setCurrentView] = useState<AppView>(AppView.LANDING);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -244,6 +245,17 @@ const App: React.FC = () => {
       if (el) el.scrollTo({ top: 0, behavior: 'instant' });
       else window.scrollTo({ top: 0, behavior: 'instant' });
     } else setPreSelectedPackageId(null);
+  }, []);
+
+  const goToRingBuilder = useCallback(() => {
+    setCurrentView(AppView.LANDING);
+    window.setTimeout(() => {
+      const container = scrollContainerRef.current;
+      const target = container?.querySelector<HTMLElement>('#ring-studio');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 280);
   }, []);
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
@@ -354,6 +366,7 @@ const App: React.FC = () => {
     const scrollToRoi = () => scrollToSectionById('roi-calculator');
     const scrollToPricing = () => navigate(AppView.CHECKOUT);
     const goToAudit = () => navigate(AppView.LEAD_MAGNET);
+    const scrollToRingStudio = () => scrollToSectionById('ring-studio');
 
     const handleDemoCallCompleted = () => {
       window.setTimeout(() => {
@@ -402,7 +415,10 @@ const App: React.FC = () => {
               </p>
             </div>
             <div className="mt-7 flex flex-wrap gap-3">
-              <button type="button" onClick={goToAudit} className="fx-btn fx-btn-primary">
+              <button type="button" onClick={scrollToRingStudio} className="fx-btn fx-btn-primary">
+                Try the Ring Builder
+              </button>
+              <button type="button" onClick={goToAudit} className="fx-btn fx-btn-ghost">
                 Access my custom audit
               </button>
               <button type="button" onClick={scrollToRoi} className="fx-btn fx-btn-ghost">
@@ -422,6 +438,23 @@ const App: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {ringBuilder && (
+        <section id="ring-studio" className="snap-start snap-always min-h-screen flex flex-col justify-center px-3 sm:px-6 py-10 md:py-16 bg-[#07080c]">
+          <div className="mx-auto mb-6 w-full max-w-6xl px-1 text-center sm:text-left">
+            <p className="fx-kicker text-[#c8b58f]">Lead magnet · private showroom</p>
+            <h2 className="fx-display mt-3 text-3xl leading-[0.95] text-[#f4efe4] md:text-4xl">
+              Ring Builder
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#8aa0b5]">
+              Let buyers play with metal and stone in 3D — a polished entry to the concierge experience, not a raw tool dump.
+            </p>
+          </div>
+          <div className="mx-auto w-full max-w-6xl">
+            <LazyRingBuilderSection config={ringBuilder} isDarkMode={isDarkMode} businessName={businessName} />
+          </div>
+        </section>
+      )}
 
       {/* Demo Video Section - now directly after hero; 9:16 portrait on mobile */}
       <section ref={demoRef} id="demo" className="snap-start snap-always min-h-screen flex flex-col justify-center py-24 md:py-32 px-4 sm:px-6 bg-transparent relative">
@@ -956,14 +989,6 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {ringBuilder && (
-        <section id="ring-studio" className="snap-start snap-always min-h-screen flex flex-col justify-center px-3 sm:px-6 py-10 md:py-16">
-          <div className="mx-auto w-full max-w-6xl">
-            <LazyRingBuilderSection config={ringBuilder} isDarkMode={isDarkMode} businessName={businessName} />
-          </div>
-        </section>
-      )}
-
       <section className="snap-start snap-always min-h-screen flex flex-col justify-center py-16 md:py-20 px-6 bg-transparent transition-colors relative">
         <div className="max-w-5xl mx-auto relative z-10 px-4 sm:px-6 w-full min-w-0">
           <div className="mb-5 flex justify-center">
@@ -1199,6 +1224,7 @@ const App: React.FC = () => {
             <div className="mt-5 grid grid-cols-2 gap-3">
               {[
                 { label: 'Home', sub: 'Main journey', icon: <House className="h-4 w-4" />, action: () => setCurrentView(AppView.LANDING) },
+                { label: 'Ring Builder', sub: '3D lead magnet', icon: <Gem className="h-4 w-4" />, action: () => goToRingBuilder() },
                 { label: 'Audit', sub: 'Custom report', icon: <FileSearch className="h-4 w-4" />, action: () => setCurrentView(AppView.LEAD_MAGNET) },
                 { label: 'Fourcee', sub: 'Voice ops', icon: <LayoutDashboard className="h-4 w-4" />, action: () => setCurrentView(AppView.DASHBOARD) },
                 { label: 'Checkout', sub: 'Plans and pricing', icon: <CreditCard className="h-4 w-4" />, action: () => setCurrentView(AppView.CHECKOUT) },
