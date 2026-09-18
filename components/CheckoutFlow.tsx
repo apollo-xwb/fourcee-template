@@ -76,7 +76,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
               <p className="fx-kicker">
                 Configure · {companyName}
               </p>
-              <h2 className="fx-display mt-3 text-4xl md:text-5xl text-navy-900 dark:text-[#f4efe4]">
+              <h2 className="fx-display mt-3 text-3xl md:text-4xl text-navy-900 dark:text-[#f4efe4]">
                 Get live in 2 hours
               </h2>
               <p className="mt-3 text-sm text-navy-600 dark:text-[#8aa0b5] leading-relaxed">
@@ -305,7 +305,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
             <div className="bg-white dark:bg-navy-900/40 p-8 sm:p-10 rounded-3xl shadow-xl border border-silver-100 dark:border-navy-800">
               <div className="mb-8 pb-6 border-b border-navy-100 dark:border-navy-800">
                 <p className="text-[10px] font-bold uppercase text-navy-700 dark:text-navy-300 mb-1">Due Today</p>
-                <p className="text-4xl sm:text-5xl font-bold serif text-navy-900 dark:text-white">${total.toLocaleString()}</p>
+                <p className="text-3xl sm:text-4xl font-bold serif text-navy-900 dark:text-white">${total.toLocaleString()}</p>
                 <p className="text-xs text-navy-700 dark:text-navy-400 mt-2">
                   {state.billingCycle === 'annual' ? (
                     <>Setup fee waived · yearly subscription</>

@@ -1,6 +1,8 @@
-# Hero 3D assets
+# 3D assets
 
-The hero section loads **one random model per session** from the folders listed here.
+`ring_webgi.glb` is the ring mesh from [VikasRana10/3D-app](https://github.com/VikasRana10/3D-app) (Crystal-Jewels). We load it with Three.js — not WebGI — and only reuse camera/rotation/build. Their site chrome is not in this repo.
+
+The hero section can still load **one random model per session** from the folders listed here.
 
 **Convention:** Each subfolder should contain a **`scene.gltf`** (or `scene.glb`) file.
 

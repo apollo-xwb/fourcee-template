@@ -13,6 +13,10 @@ SCREENS = [
     ("02-audit.html", "02-audit-lost-revenue.png"),
     ("03-portal.html", "03-portal-hud.png"),
     ("04-ring-studio.html", "04-ring-studio.png"),
+    ("05-ops-calls.html", "05-ops-calls.png"),
+    ("06-onboarding.html", "06-onboarding.png"),
+    ("07-handover.html", "07-handover.png"),
+    ("08-ring-scroll.html", "08-ring-scroll.png"),
 ]
 
 

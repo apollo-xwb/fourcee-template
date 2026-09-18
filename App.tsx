@@ -385,7 +385,7 @@ const App: React.FC = () => {
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              className="fx-display text-[42px] leading-[0.92] text-[#f4efe4] sm:text-6xl md:text-7xl"
+              className="fx-display text-[32px] leading-[0.95] text-[#f4efe4] sm:text-4xl md:text-5xl"
             >
               The gold standard
               <br />
@@ -426,7 +426,7 @@ const App: React.FC = () => {
       {/* Demo Video Section - now directly after hero; 9:16 portrait on mobile */}
       <section ref={demoRef} id="demo" className="snap-start snap-always min-h-screen flex flex-col justify-center py-24 md:py-32 px-4 sm:px-6 bg-transparent relative">
         <div className="max-w-6xl mx-auto flex flex-col items-center w-full min-w-0">
-          <h2 className="text-3xl md:text-5xl font-bold serif text-navy-900 dark:text-white mb-8 md:mb-12 text-center tracking-tighter">
+          <h2 className="text-2xl md:text-3xl font-bold serif text-navy-900 dark:text-white mb-8 md:mb-12 text-center tracking-tighter">
             <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-emerald-700 dark:from-white dark:via-slate-200 dark:to-emerald-300 bg-clip-text text-transparent">
               Experience the Demo
             </span>
@@ -519,7 +519,7 @@ const App: React.FC = () => {
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-navy-400 dark:text-navy-300">
               See if the numbers make sense
             </p>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold serif text-navy-900 dark:text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif text-navy-900 dark:text-white tracking-tight">
               Is Fourcee actually worth it
               <br className="hidden md:block" /> for your showroom?
             </h2>
@@ -581,7 +581,7 @@ const App: React.FC = () => {
         </div>
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20 items-center relative z-10">
           <div className="space-y-10">
-            <h2 className="text-3xl md:text-6xl font-bold serif leading-tight">
+            <h2 className="text-2xl md:text-4xl font-bold serif leading-tight">
               Silence is <br/><span className="italic text-silver-400">Expensive</span>
             </h2>
             <p className="text-xl text-silver-300 font-light leading-relaxed max-w-lg">
@@ -589,11 +589,11 @@ const App: React.FC = () => {
             </p>
             <div className="flex gap-12">
               <div>
-                <p className="text-5xl font-bold mb-1 serif">$50k</p>
+                <p className="text-3xl font-bold mb-1 serif">$50k</p>
                 <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-silver-500">Annual Opportunity Loss</p>
               </div>
               <div>
-                <p className="text-5xl font-bold mb-1 serif">0</p>
+                <p className="text-3xl font-bold mb-1 serif">0</p>
                 <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-silver-500">Missed Opportunities with AI</p>
               </div>
             </div>
@@ -675,7 +675,7 @@ const App: React.FC = () => {
         </div>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-20 relative z-10">
           <div className="order-2 md:order-1 flex-1 space-y-8 animate-in slide-in-from-left duration-1000">
-            <h2 className="text-3xl md:text-6xl font-bold serif leading-[1.1] text-slate-900 dark:text-white">Proactive <br/><span className="italic shimmer-text">Reach</span></h2>
+            <h2 className="text-2xl md:text-4xl font-bold serif leading-[1.1] text-slate-900 dark:text-white">Proactive <br/><span className="italic shimmer-text">Reach</span></h2>
             <p className="text-xl text-navy-600 dark:text-navy-300 font-light leading-relaxed">
               Fourcee doesn't just wait for customers. It actively nurtures your pipeline with high-fidelity outbound reminders and follow-ups.
             </p>
@@ -707,7 +707,7 @@ const App: React.FC = () => {
       <section className="snap-start snap-always min-h-screen flex flex-col justify-center pt-32 pb-16 overflow-x-hidden bg-transparent transition-colors">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 min-w-0">
           <div className="text-center mb-16 md:mb-24 max-w-3xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl md:text-6xl font-bold serif text-slate-900 dark:text-white mb-6 md:mb-8 tracking-tighter break-words">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold serif text-slate-900 dark:text-white mb-6 md:mb-8 tracking-tighter break-words">
               <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-amber-700 dark:from-white dark:via-slate-200 dark:to-amber-200 bg-clip-text text-transparent">
                 Unified Workflow
               </span>
@@ -928,7 +928,7 @@ const App: React.FC = () => {
           }}
         />
         <div className="max-w-4xl mx-auto text-center relative z-10 px-4">
-          <h2 className="text-4xl md:text-7xl font-bold serif text-navy-900 dark:text-white mb-6 tracking-tighter">Boutique Intelligence</h2>
+          <h2 className="text-3xl md:text-4xl font-bold serif text-navy-900 dark:text-white mb-6 tracking-tighter">Boutique Intelligence</h2>
           <div className="grid md:grid-cols-3 gap-3 md:gap-4 mt-2">
             {[
               { title: "Voice Cloning", desc: "Your actual voice, scaled across 100 simultaneous calls." },
@@ -999,7 +999,7 @@ const App: React.FC = () => {
           className="h-16 w-auto object-contain sm:h-20 md:h-24"
         />
       </div>
-      <h1 className="text-6xl font-bold serif mb-4 text-center tracking-tighter text-slate-900 dark:text-white">The Ledger</h1>
+      <h1 className="text-4xl font-bold serif mb-4 text-center tracking-tighter text-slate-900 dark:text-white">The Ledger</h1>
       <p className="text-center text-slate-600 dark:text-navy-300 uppercase tracking-[0.3em] text-[10px] font-bold mb-20">Strategic Insights for Luxury Retailers</p>
       
       <div className="grid md:grid-cols-2 gap-10 md:gap-16">
@@ -1157,7 +1157,7 @@ const App: React.FC = () => {
       )}
       
       {isSideMenuOpen && (
-        <div className="fixed inset-0 z-[170]">
+        <div className="fixed inset-0 z-[1200]">
           <button
             type="button"
             className="absolute inset-0 bg-black/45 backdrop-blur-sm"
@@ -1194,13 +1194,13 @@ const App: React.FC = () => {
             </div>
             <div className="mt-4 rounded-2xl border border-[#d9c39a]/70 bg-[#fbf4e7]/90 dark:bg-white/5 dark:border-white/10 p-4">
               <p className="text-[11px] font-semibold text-navy-900 dark:text-white">{businessName}</p>
-              <p className="mt-1 text-xs text-navy-700 dark:text-slate-200">Fourcee custom concierge workspace with ROI-first navigation.</p>
+              <p className="mt-1 text-xs text-navy-700 dark:text-slate-200">Voice agent ops: call logs, transcripts, actions, onboarding, handover.</p>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
               {[
                 { label: 'Home', sub: 'Main journey', icon: <House className="h-4 w-4" />, action: () => setCurrentView(AppView.LANDING) },
                 { label: 'Audit', sub: 'Custom report', icon: <FileSearch className="h-4 w-4" />, action: () => setCurrentView(AppView.LEAD_MAGNET) },
-                { label: 'Portal', sub: 'CRM intelligence', icon: <LayoutDashboard className="h-4 w-4" />, action: () => setCurrentView(AppView.DASHBOARD) },
+                { label: 'Fourcee', sub: 'Voice ops', icon: <LayoutDashboard className="h-4 w-4" />, action: () => setCurrentView(AppView.DASHBOARD) },
                 { label: 'Checkout', sub: 'Plans and pricing', icon: <CreditCard className="h-4 w-4" />, action: () => setCurrentView(AppView.CHECKOUT) },
                 { label: 'Insights', sub: 'Content library', icon: <Newspaper className="h-4 w-4" />, action: () => setCurrentView(AppView.BLOG) },
                 { label: 'Book Call', sub: 'Strategy meeting', icon: <CalendarDays className="h-4 w-4" />, action: () => openCalendarBooking() },
@@ -1303,6 +1303,7 @@ const App: React.FC = () => {
           </aside>
         </div>
       )}
+      {!isSideMenuOpen && (
       <FloatingNav
         onNavigate={setCurrentView}
         currentView={currentView}
@@ -1319,6 +1320,7 @@ const App: React.FC = () => {
         }}
         onReopenPortalGuide={reopenPortalGuide}
       />
+      )}
 
       <main className="relative z-10">
         {currentView === AppView.LANDING && <LandingPage scrollContainerRef={scrollContainerRef} />}
@@ -1345,7 +1347,7 @@ const App: React.FC = () => {
            <div className="pt-24 animate-in fade-in duration-700">
               <button onClick={() => navigate(AppView.BLOG)} className="px-6 py-12 text-navy-300 hover:text-navy-900 dark:hover:text-white uppercase text-[10px] font-bold tracking-widest transition-colors">← Back to Ledger</button>
               <div className="max-w-3xl mx-auto px-6 pb-12">
-                <h1 className="text-5xl md:text-7xl font-bold serif mb-12 leading-none dark:text-white">{selectedPost.title}</h1>
+                <h1 className="text-3xl md:text-4xl font-bold serif mb-12 leading-none dark:text-white">{selectedPost.title}</h1>
                 <div className="prose prose-navy dark:prose-invert max-w-none space-y-8 text-lg text-navy-800 dark:text-navy-100 font-light leading-relaxed">
                   {selectedPost.content.split('\n').map((line, i) => <p key={i}>{line}</p>)}
                 </div>
