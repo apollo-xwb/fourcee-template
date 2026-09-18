@@ -66,7 +66,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
     },
     {
       view: AppView.DASHBOARD,
-      label: 'CRM',
+      label: 'Ops',
       icon: (
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path

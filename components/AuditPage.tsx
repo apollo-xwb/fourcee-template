@@ -416,7 +416,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                   aria-hidden
                 />
                 <div>
-                  <h1 className={`text-3xl font-semibold leading-tight md:text-5xl ${isDarkMode ? 'text-slate-100' : 'text-navy-900'}`}>
+                  <h1 className={`text-2xl font-semibold leading-tight md:text-3xl ${isDarkMode ? 'text-slate-100' : 'text-navy-900'}`}>
                     Phone Performance Audit Report
                   </h1>
                   <p className={`mt-2 text-lg ${isDarkMode ? 'text-slate-200' : 'text-navy-700'}`}>
@@ -499,10 +499,10 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
           <div className="relative z-10 mt-8 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
             <div>
               <p className="fx-kicker">Lost revenue proof</p>
-              <h2 className="fx-display mt-3 text-5xl leading-[0.95] text-[#f4efe4] md:text-7xl">
+              <h2 className="fx-display mt-3 text-4xl leading-[0.95] text-[#f4efe4] md:text-5xl">
                 {formatCurrency(data.revenueModel.monthlyLossMin)}–{formatCurrency(data.revenueModel.monthlyLossMax)}
               </h2>
-              <p className="mt-3 text-xl md:text-2xl" style={{ color: 'var(--fourcee-accent-copper)' }}>
+              <p className="mt-3 text-base md:text-lg" style={{ color: 'var(--fourcee-accent-copper)' }}>
                 walks out every month unanswered.
               </p>
               <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#8aa0b5]">

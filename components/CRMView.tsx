@@ -1,21 +1,28 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import fcWhite from '../public/assets/fcwhite.png';
-import fcBlack from '../public/assets/fcblack.png';
 import type { RingBuilderConfig } from '../types/audit';
 import { LazyRingBuilderSection } from './LazyRingBuilderSection';
+import {
+  HANDOVER_ITEMS,
+  ONBOARD_STEPS,
+  SOP_CHECKS,
+  STATUS_LABEL,
+  buildHistoryTranscript,
+  seedCalls,
+  type ActionState,
+  type CallStatus,
+  type OpsCall,
+  type TranscriptLine,
+} from '../lib/voice-ops';
 
 interface CRMViewProps {
   isDarkMode?: boolean;
-  /** Same source as audit (`content.json` → `business.name`). */
   businessName?: string;
-  /** Optional `auditMeta.reportId` from content.json. */
   reportId?: string;
-  /** Optional `business.location` from content.json. */
   location?: string;
   ringBuilder?: Required<RingBuilderConfig>;
 }
 
-type TranscriptLine = { speaker: string; line: string; at: string };
+type PortalTab = 'calls' | 'onboard' | 'handover' | 'studio';
 
 interface LeadLog {
   id: string;
@@ -26,49 +33,21 @@ interface LeadLog {
   transcript: TranscriptLine[];
 }
 
-interface SimulatedCall {
-  id: string;
-  customerName: string;
-  phone: string;
-  intent: string;
-  status: 'active' | 'resolved';
-  impact: string;
-  startedAgo: string;
-  transcript: TranscriptLine[];
-}
-
-type PortalTab = 'simulation' | 'overview';
-
 const formatMoney = (value: number) =>
   value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
-const gridOnDark: React.CSSProperties = {
-  backgroundImage:
-    'linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)',
-  backgroundSize: '26px 26px',
-};
-
-const gridOnLightPanel: React.CSSProperties = {
-  backgroundImage:
-    'linear-gradient(rgba(15,23,42,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.07) 1px, transparent 1px)',
-  backgroundSize: '26px 26px',
-};
-
-function buildHistoryTranscript(customerName: string, intent: string, businessName: string): TranscriptLine[] {
-  return [
-    { speaker: 'Agent', line: `Thank you for calling ${businessName}. This is the concierge line.`, at: '00:01' },
-    { speaker: 'Customer', line: `Hi - ${customerName} here. I'm calling about ${intent.toLowerCase()}.`, at: '00:06' },
-    { speaker: 'Agent', line: "I've pulled your preferences from our last visit. I can hold inventory or book a specialist.", at: '00:14' },
-    { speaker: 'Customer', line: "Let's book. What's the soonest private appointment?", at: '00:22' },
-    { speaker: 'Agent', line: "I have tomorrow at 11:15 or Thursday at 3:00. I'll text you both options to confirm.", at: '00:30' },
-    { speaker: 'Customer', line: 'Tomorrow works. Please send the confirmation.', at: '00:38' },
-    { speaker: 'Agent', line: `Done - you're confirmed at ${businessName} for tomorrow 11:15. A calendar invite is on the way.`, at: '00:45' },
-  ];
+function statusTone(status: string, isDarkMode: boolean) {
+  if (status === 'live') return isDarkMode ? 'text-emerald-300' : 'text-emerald-700';
+  if (status === 'booked' || status.includes('Booked')) return isDarkMode ? 'text-[#e8d5a8]' : 'text-amber-800';
+  if (status === 'follow_up' || status === 'escalated') return isDarkMode ? 'text-sky-300' : 'text-sky-800';
+  return isDarkMode ? 'text-white/60' : 'text-navy-600';
 }
 
-const GridWash: React.FC<{ style: React.CSSProperties; opacity?: string }> = ({ style, opacity = 'opacity-[0.18]' }) => (
-  <div className={`pointer-events-none absolute inset-0 ${opacity}`} style={style} aria-hidden />
-);
+function actionTone(state: ActionState, isDarkMode: boolean) {
+  if (state === 'done') return isDarkMode ? 'text-emerald-300' : 'text-emerald-700';
+  if (state === 'pending') return isDarkMode ? 'text-[#e8d5a8]' : 'text-amber-800';
+  return isDarkMode ? 'text-white/40' : 'text-navy-400';
+}
 
 export const CRMView: React.FC<CRMViewProps> = ({
   isDarkMode = true,
@@ -77,7 +56,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
   location,
   ringBuilder,
 }) => {
-  const [activeTab, setActiveTab] = useState<PortalTab>('simulation');
+  const [activeTab, setActiveTab] = useState<PortalTab>('calls');
   const [revenueSaved, setRevenueSaved] = useState(125500);
   const [appointmentsBooked, setAppointmentsBooked] = useState(48);
   const [logEntries, setLogEntries] = useState<LeadLog[]>([]);
@@ -86,21 +65,20 @@ export const CRMView: React.FC<CRMViewProps> = ({
   const [selectedKey, setSelectedKey] = useState<string>('call-1');
   const [opsClock, setOpsClock] = useState(() => new Date());
   const [channelLoad, setChannelLoad] = useState({ voice: 2, sms: 1, web: 0 });
+  const [onboardStep, setOnboardStep] = useState(1);
+  const [plainEnglish, setPlainEnglish] = useState(
+    'We answer on the front-desk iPhone. Bridal sits on Jane’s Google Calendar. Stones are looked up in Nivoda. After 6, text the client — only call the owner if it looks over 10k. WhatsApp is on for the Miami store only.'
+  );
+  const [signed, setSigned] = useState(true);
+
+  const calls = useMemo(() => seedCalls(businessName), [businessName]);
+  const liveCalls = useMemo(() => calls.filter((call) => call.status === 'live'), [calls]);
+  const closedCalls = useMemo(() => calls.filter((call) => call.status !== 'live'), [calls]);
 
   const simulatedNames = useMemo(
-    () => [
-      'Amelia Stone',
-      'Noah Patel',
-      'Harper Wellington',
-      'Mason Brooks',
-      'Sophia Vale',
-      'Ethan Rhodes',
-      'Olivia Sterling',
-      'Liam Carter',
-    ],
+    () => ['Amelia Stone', 'Noah Patel', 'Harper Wellington', 'Mason Brooks', 'Sophia Vale', 'Ethan Rhodes'],
     []
   );
-
   const simulatedIntents = useMemo(
     () => [
       'Oval Diamond Query',
@@ -108,111 +86,43 @@ export const CRMView: React.FC<CRMViewProps> = ({
       'Emerald Cut Upgrade',
       'Lab-Grown Bridal Request',
       'Custom Setting Appointment',
-      'Eye-Clean Diamond Clarification',
-      '2.5ct Comparison Request',
     ],
     []
   );
 
-  const calls = useMemo<SimulatedCall[]>(
-    () => [
-      {
-        id: 'call-1',
-        customerName: 'Amelia Stone',
-        phone: '+1 (212) 555-0191',
-        intent: 'Oval diamond comparison',
-        status: 'active',
-        impact: '$$$',
-        startedAgo: '01:38',
-        transcript: [
-          { speaker: 'Agent', line: `Thank you for calling ${businessName}. How may I assist you?`, at: '00:02' },
-          { speaker: 'Customer', line: 'I am looking for eye-clean ovals around 2 carats.', at: '00:08' },
-          { speaker: 'Agent', line: 'Great choice. I can compare premium options for you right now.', at: '00:14' },
-          { speaker: 'Customer', line: 'Can I come in today to view them in person?', at: '00:28' },
-          { speaker: 'Agent', line: 'Yes. We have a 2 PM private slot available. Shall I secure it?', at: '00:38' },
-          { speaker: 'Customer', line: 'Please do.', at: '00:45' },
-          { speaker: 'Agent', line: "Wonderful - I've reserved 2 PM under your name. You'll receive a confirmation text shortly.", at: '00:52' },
-          { speaker: 'Customer', line: 'Perfect. Thank you.', at: '00:58' },
-          { speaker: 'Agent', line: `We'll have the stones ready in the private viewing room. We look forward to seeing you at ${businessName}.`, at: '01:04' },
-          { speaker: 'Customer', line: 'See you then.', at: '01:10' },
-        ],
-      },
-      {
-        id: 'call-2',
-        customerName: 'Noah Patel',
-        phone: '+1 (917) 555-0107',
-        intent: 'Custom halo redesign',
-        status: 'active',
-        impact: '$$',
-        startedAgo: '00:52',
-        transcript: [
-          { speaker: 'Agent', line: `${businessName} concierge desk, how can I help?`, at: '00:01' },
-          { speaker: 'Customer', line: 'I want to redesign my engagement ring into a halo setting.', at: '00:11' },
-          { speaker: 'Agent', line: 'Understood. I can book you with our custom design specialist.', at: '00:19' },
-          { speaker: 'Customer', line: 'This week if possible.', at: '00:26' },
-          { speaker: 'Agent', line: 'I have Wednesday at 10 AM. Shall I lock that in?', at: '00:33' },
-          { speaker: 'Customer', line: 'Yes, please.', at: '00:40' },
-          { speaker: 'Agent', line: "You're set for Wednesday 10 AM with design. I'll email the prep checklist.", at: '00:48' },
-        ],
-      },
-      {
-        id: 'call-3',
-        customerName: 'Harper Wellington',
-        phone: '+1 (646) 555-0169',
-        intent: 'Appointment booking',
-        status: 'resolved',
-        impact: '$',
-        startedAgo: 'Resolved',
-        transcript: [
-          { speaker: 'Agent', line: `Welcome to ${businessName}, how may I assist?`, at: '00:02' },
-          { speaker: 'Customer', line: 'I would like to book a viewing for Saturday.', at: '00:06' },
-          { speaker: 'Agent', line: 'Done. You are confirmed for Saturday at 11 AM.', at: '00:15' },
-        ],
-      },
-      {
-        id: 'call-4',
-        customerName: 'Sophia Vale',
-        phone: '+1 (332) 555-0188',
-        intent: 'Lab-grown bridal request',
-        status: 'resolved',
-        impact: '$$',
-        startedAgo: 'Resolved',
-        transcript: [
-          { speaker: 'Agent', line: `Thank you for calling ${businessName}.`, at: '00:01' },
-          { speaker: 'Customer', line: 'I am looking for a lab-grown bridal set under 15k.', at: '00:09' },
-          { speaker: 'Agent', line: 'Perfect. I can shortlist options and send them over today.', at: '00:18' },
-        ],
-      },
-    ],
-    [businessName]
-  );
+  const selectedCall: OpsCall | null = useMemo(() => {
+    if (selectedKey.startsWith('log:')) return null;
+    return calls.find((call) => call.id === selectedKey) ?? calls[0];
+  }, [selectedKey, calls]);
 
-  const activeCalls = useMemo(() => calls.filter((call) => call.status === 'active'), [calls]);
-  const callHistory = useMemo(() => calls.filter((call) => call.status !== 'active'), [calls]);
+  const selectedLog = useMemo(() => {
+    if (!selectedKey.startsWith('log:')) return null;
+    return logEntries.find((entry) => entry.id === selectedKey.slice(4)) ?? null;
+  }, [selectedKey, logEntries]);
 
   const displayConversation = useMemo(() => {
-    if (selectedKey.startsWith('log:')) {
-      const logId = selectedKey.slice(4);
-      const entry = logEntries.find((e) => e.id === logId);
-      if (entry) {
-        return {
-          id: entry.id,
-          customerName: entry.customerName,
-          intent: entry.intent,
-          isLive: false,
-          transcript: entry.transcript,
-        };
-      }
+    if (selectedLog) {
+      return {
+        id: selectedLog.id,
+        customerName: selectedLog.customerName,
+        intent: selectedLog.intent,
+        status: selectedLog.status,
+        isLive: false,
+        transcript: selectedLog.transcript,
+        actions: [] as OpsCall['actions'],
+      };
     }
-    const call = calls.find((c) => c.id === selectedKey && !selectedKey.startsWith('log:')) ?? calls[0];
+    const call = selectedCall ?? calls[0];
     return {
       id: call.id,
       customerName: call.customerName,
       intent: call.intent,
-      isLive: call.status === 'active',
+      status: STATUS_LABEL[call.status as CallStatus] ?? call.status,
+      isLive: call.status === 'live',
       transcript: call.transcript,
+      actions: call.actions,
     };
-  }, [selectedKey, logEntries, calls]);
+  }, [selectedLog, selectedCall, calls]);
 
   useEffect(() => {
     const pushLead = () => {
@@ -220,7 +130,6 @@ export const CRMView: React.FC<CRMViewProps> = ({
       const customerName = simulatedNames[Math.floor(Math.random() * simulatedNames.length)];
       const intent = simulatedIntents[Math.floor(Math.random() * simulatedIntents.length)];
       const id = `${now.getTime()}-${Math.random()}`;
-
       setLogEntries((prev) =>
         [
           {
@@ -228,19 +137,17 @@ export const CRMView: React.FC<CRMViewProps> = ({
             time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
             customerName,
             intent,
-            status: '✅ Qualified & Booked',
+            status: 'booked',
             transcript: buildHistoryTranscript(customerName, intent, businessName),
           },
           ...prev,
         ].slice(0, 12)
       );
     };
-
     pushLead();
     const startDelayMs = 10000 + Math.floor(Math.random() * 5001);
     let nextTimeout: ReturnType<typeof setTimeout>;
     let timeoutCancelled = false;
-
     const schedule = (delayMs: number) => {
       nextTimeout = setTimeout(() => {
         if (timeoutCancelled) return;
@@ -248,7 +155,6 @@ export const CRMView: React.FC<CRMViewProps> = ({
         schedule(10000 + Math.floor(Math.random() * 5001));
       }, delayMs);
     };
-
     schedule(startDelayMs);
     return () => {
       timeoutCancelled = true;
@@ -265,9 +171,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
   }, []);
 
   useEffect(() => {
-    const liveTicker = setInterval(() => {
-      setLiveSeconds((prev) => prev + 1);
-    }, 1000);
+    const liveTicker = setInterval(() => setLiveSeconds((prev) => prev + 1), 1000);
     return () => clearInterval(liveTicker);
   }, []);
 
@@ -295,75 +199,24 @@ export const CRMView: React.FC<CRMViewProps> = ({
   }, []);
 
   const liveDuration = `${String(Math.floor(liveSeconds / 60)).padStart(2, '0')}:${String(liveSeconds % 60).padStart(2, '0')}`;
+  const heard = useMemo(() => parsePlainEnglish(plainEnglish), [plainEnglish]);
 
   const pageClass = isDarkMode ? 'text-[#e8eef4]' : 'text-navy-900';
-  const portalTitleClass = isDarkMode ? 'text-[#f4efe4]' : 'text-navy-800';
   const tabShellClass = isDarkMode
     ? 'rounded-full border border-white/10 bg-black/50 p-1 backdrop-blur-xl'
     : 'rounded-full border border-slate-200 bg-slate-100/95 p-1 shadow-sm';
   const tabActiveClass = isDarkMode
-    ? 'bg-gradient-to-r from-[#e8d5a8] to-[#c8b58f] text-[#1a140c] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]'
-    : 'bg-navy-900 text-white shadow-sm';
+    ? 'bg-gradient-to-r from-[#e8d5a8] to-[#c8b58f] text-[#1a140c]'
+    : 'bg-navy-900 text-white';
   const tabInactiveClass = isDarkMode ? 'text-white/70 hover:text-white' : 'text-navy-600 hover:text-navy-900';
-
   const panelClass = isDarkMode
-    ? 'relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
-    : 'relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.05)]';
-  const sectionHeadingClass = isDarkMode ? 'text-slate-200' : 'text-navy-800';
-  const mutedClass = isDarkMode ? 'text-white/55' : 'text-navy-500';
-  const callCardBase = isDarkMode
-    ? 'border-white/10 bg-black/40 hover:border-white/20'
-    : 'border-slate-200 bg-slate-50 hover:border-slate-300';
-  const callCardSelected = isDarkMode ? 'border-amber-300/35 bg-amber-100/5' : 'border-navy-400 bg-navy-50';
-  const callNameClass = isDarkMode ? 'text-white' : 'text-navy-900';
-  const callIntentClass = isDarkMode ? 'text-white/70' : 'text-navy-600';
-  const callPhoneClass = isDarkMode ? 'text-white/50' : 'text-navy-500';
-  const impactLabelClass = isDarkMode ? 'text-white/50' : 'text-navy-500';
-  const impactValueClass = isDarkMode ? 'text-amber-200' : 'text-navy-800';
-
-  const historyRowClass = isDarkMode
-    ? 'border-white/10 bg-black/40'
-    : 'border-slate-200 bg-slate-50/90';
-  const historyMutedClass = isDarkMode ? 'text-white/60' : 'text-navy-500';
-  const historyNameClass = isDarkMode ? 'text-white' : 'text-navy-900';
-  const historyIntentClass = isDarkMode ? 'text-white/80' : 'text-navy-700';
-  const statusClass = isDarkMode ? 'text-emerald-300' : 'text-emerald-700';
-
-  const asideClass = isDarkMode
-    ? 'relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-2xl'
-    : 'relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.05)]';
-  const transcriptShellClass = isDarkMode
-    ? 'relative z-10 mt-4 rounded-2xl border border-white/10 bg-black/50 p-4'
-    : 'relative z-10 mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4';
-  const transcriptHeaderClass = isDarkMode
-    ? 'flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2'
-    : 'flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2';
-  const transcriptMetaClass = isDarkMode ? 'text-white/60' : 'text-navy-500';
-  const liveBadgeClass = isDarkMode ? 'text-emerald-300' : 'text-emerald-700';
-
-  const voicePanelClass = isDarkMode
-    ? 'mt-3 rounded-xl border border-white/10 bg-black/60 px-3 py-2'
-    : 'mt-3 rounded-xl border border-slate-200 bg-white px-3 py-2';
-  const voiceLabelClass = isDarkMode ? 'text-white/50' : 'text-navy-500';
-
-  const scrollAreaClass = isDarkMode
-    ? 'mt-3 max-h-[340px] space-y-2 overflow-auto rounded-xl border border-white/10 bg-black/40 p-3'
-    : 'mt-3 max-h-[340px] space-y-2 overflow-auto rounded-xl border border-slate-200 bg-white p-3';
-
-  const bubbleLatestClass = isDarkMode
-    ? 'border-emerald-300/35 bg-emerald-100/[0.04] shadow-[0_0_18px_rgba(16,185,129,0.2)]'
-    : 'border-emerald-300/60 bg-emerald-50/90 shadow-sm';
-  const bubbleDefaultClass = isDarkMode ? 'border-white/5 bg-white/[0.02]' : 'border-slate-100 bg-slate-50';
-  const agentLabelClass = isDarkMode ? 'text-slate-100' : 'text-navy-900';
-  const customerLabelClass = isDarkMode ? 'text-blue-300' : 'text-blue-700';
-  const timeSmallClass = isDarkMode ? 'text-white/45' : 'text-navy-400';
-  const lineTextClass = isDarkMode ? 'text-white/85' : 'text-navy-800';
-
-  const businessDisplay = businessName.toUpperCase();
-  const gridForPanel = isDarkMode ? gridOnDark : gridOnLightPanel;
+    ? 'relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-2xl'
+    : 'relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-4 shadow-sm';
+  const muted = isDarkMode ? 'text-white/55' : 'text-navy-500';
+  const ink = isDarkMode ? 'text-white' : 'text-navy-900';
 
   return (
-    <div className={`relative min-h-screen px-4 py-8 md:px-8 md:py-10 ${pageClass}`}>
+    <div className={`relative min-h-screen px-4 py-6 md:px-8 md:py-8 ${pageClass}`}>
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -374,415 +227,366 @@ export const CRMView: React.FC<CRMViewProps> = ({
         aria-hidden
       />
       {isDarkMode && <div className="fx-grid z-0" aria-hidden />}
+
       <div className="relative z-10 mx-auto w-full max-w-7xl">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="fx-kicker">
-            {businessDisplay}
-            {location ? ` · ${location.toUpperCase()}` : ''}
-          </p>
-          <p className={`font-mono text-[10px] tabular-nums tracking-[0.18em] ${isDarkMode ? 'text-[#8aa0b5]' : 'text-navy-600'}`}>
-            {opsClock.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} UTC-OPS
-            {reportId ? ` · ${reportId}` : ''}
-          </p>
-        </div>
-        <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className={`fx-hud text-center text-sm sm:text-left md:text-lg ${portalTitleClass}`}>
-            Concierge intelligence portal
-          </h1>
-          <div className={`mx-auto sm:mx-0 ${tabShellClass}`}>
-            {(['simulation', 'overview'] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`rounded-full px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] transition ${
-                  activeTab === tab ? tabActiveClass : tabInactiveClass
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="fx-kicker">
+              Voice agent
+              {location ? ` · ${location}` : ''}
+            </p>
+            <h1 className={`fx-hud mt-2 text-[13px] md:text-sm ${isDarkMode ? 'text-[#f4efe4]' : 'text-navy-800'}`}>
+              Fourcee ops
+            </h1>
+            <p className={`mt-1 text-[11px] ${muted}`}>
+              {businessName} · answer, qualify, act, log. Ring studio is a demo tab only.
+            </p>
           </div>
-        </div>
-      </div>
-
-      {activeTab === 'overview' ? (
-        <div className="relative z-10 mx-auto mt-8 w-full max-w-7xl space-y-6">
-          <div
-            className={`relative overflow-hidden rounded-[2rem] border p-6 md:p-10 ${
-              isDarkMode ? 'border-white/10 bg-white/[0.04]' : 'border-slate-200 bg-white shadow-md'
-            }`}
-          >
-            <GridWash style={gridForPanel} opacity={isDarkMode ? 'opacity-[0.2]' : 'opacity-[0.35]'} />
-            <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className={`text-[10px] font-bold uppercase tracking-[0.3em] ${isDarkMode ? 'text-amber-200/80' : 'text-navy-600'}`}>
-                  Executive overview
-                </p>
-                <h2 className={`mt-2 font-serif text-3xl font-semibold tracking-tight md:text-4xl ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>
-                  Concierge performance at a glance
-                </h2>
-                <p className={`mt-3 max-w-xl text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-navy-600'}`}>
-                  Live funnel health, revenue impact, and handling efficiency - synced with your showroom routing rules.
-                </p>
-              </div>
-              <div
-                className={`flex flex-wrap gap-3 rounded-2xl border px-4 py-3 ${
-                  isDarkMode ? 'border-emerald-500/25 bg-emerald-500/10' : 'border-emerald-200 bg-emerald-50'
-                }`}
-              >
-                <div>
-                  <p className={`text-[9px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-emerald-200/80' : 'text-emerald-800'}`}>
-                    Sync status
-                  </p>
-                  <p className={`mt-1 text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>All channels nominal</p>
-                </div>
-                <div className={`hidden h-10 w-px sm:block ${isDarkMode ? 'bg-white/15' : 'bg-emerald-200'}`} />
-                <div>
-                  <p className={`text-[9px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-emerald-200/80' : 'text-emerald-800'}`}>
-                    Last refresh
-                  </p>
-                  <p className={`mt-1 text-sm font-semibold tabular-nums ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>Just now</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <OverviewCard
-              title="Revenue Saved"
-              value={formatMoney(revenueSaved)}
-              hint="Attribution from recovered high-intent calls"
-              isDarkMode={isDarkMode}
-            />
-            <OverviewCard
-              title="Appointments Booked (AI)"
-              value={appointmentsBooked.toString()}
-              hint="Qualified slots confirmed without staff lift"
-              isDarkMode={isDarkMode}
-            />
-            <OverviewCard
-              title="Average Handling Time"
-              value="1.2 Mins"
-              hint="Median duration - voice + wrap-up"
-              isDarkMode={isDarkMode}
-            />
-          </div>
-          {ringBuilder ? (
-            <LazyRingBuilderSection
-              config={ringBuilder}
-              isDarkMode={isDarkMode}
-              compact
-              businessName={businessName}
-            />
-          ) : null}
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div
-              className={`relative overflow-hidden rounded-3xl border p-6 ${
-                isDarkMode ? 'border-white/10 bg-white/[0.04]' : 'border-slate-200 bg-white'
-              }`}
-            >
-              <GridWash style={gridForPanel} />
-              <div className="relative z-10">
-                <h3 className={`text-sm font-semibold uppercase tracking-[0.28em] ${sectionHeadingClass}`}>Pipeline mix</h3>
-                <p className={`mt-2 text-xs ${mutedClass}`}>Illustrative split of concierge-touched outcomes this period.</p>
-                <div className="mt-6 space-y-4">
-                  {[
-                    { label: 'Booked consults', pct: 62 },
-                    { label: 'Qualified, follow-up', pct: 24 },
-                    { label: 'Service / repair triage', pct: 14 },
-                  ].map((row) => (
-                    <div key={row.label}>
-                      <div className="flex justify-between text-xs">
-                        <span className={callNameClass}>{row.label}</span>
-                        <span className={mutedClass}>{row.pct}%</span>
-                      </div>
-                      <div className={`mt-2 h-2.5 rounded-full ${isDarkMode ? 'bg-white/10' : 'bg-slate-100'}`}>
-                        <div
-                          className={`h-full rounded-full ${isDarkMode ? 'bg-gradient-to-r from-amber-400 to-amber-200' : 'bg-gradient-to-r from-navy-800 to-navy-600'}`}
-                          style={{ width: `${row.pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div
-              className={`relative overflow-hidden rounded-3xl border p-6 ${
-                isDarkMode ? 'border-white/10 bg-white/[0.04]' : 'border-slate-200 bg-white'
-              }`}
-            >
-              <GridWash style={gridForPanel} />
-              <div className="relative z-10">
-                <h3 className={`text-sm font-semibold uppercase tracking-[0.28em] ${sectionHeadingClass}`}>Operational notes</h3>
-                <ul className={`mt-4 space-y-3 text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-navy-700'}`}>
-                  <li className="flex gap-2">
-                    <span className={isDarkMode ? 'text-amber-200' : 'text-navy-900'}>•</span>
-                    After-hours capture is outperforming weekday lunch dips - consider promoting SMS handoff.
-                  </li>
-                  <li className="flex gap-2">
-                    <span className={isDarkMode ? 'text-amber-200' : 'text-navy-900'}>•</span>
-                    Custom design intents convert highest when a specialist slot is offered within 48 hours.
-                  </li>
-                  <li className="flex gap-2">
-                    <span className={isDarkMode ? 'text-amber-200' : 'text-navy-900'}>•</span>
-                    Average handle time remains under target; no staffing alerts this week.
-                  </li>
-                </ul>
-              </div>
+          <div className="flex flex-col items-end gap-2">
+            <p className={`font-mono text-[10px] tabular-nums tracking-[0.16em] ${muted}`}>
+              {opsClock.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              {reportId ? ` · ${reportId}` : ''}
+            </p>
+            <div className={tabShellClass}>
+              {(['calls', 'onboard', 'handover', 'studio'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition ${
+                    activeTab === tab ? tabActiveClass : tabInactiveClass
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
           </div>
         </div>
-      ) : (
-        <div className="relative z-10 mx-auto mt-6 flex w-full max-w-7xl flex-col gap-4">
-          <div className="flex flex-wrap gap-2">
-            {[
-              { id: 'VOICE', load: channelLoad.voice },
-              { id: 'SMS', load: channelLoad.sms },
-              { id: 'WEB', load: channelLoad.web },
-            ].map((ch) => (
-              <span key={ch.id} className="fx-chip">
-                <span className={ch.load > 0 ? 'fx-dot' : 'h-1.5 w-1.5 rounded-full bg-slate-500'} />
-                {ch.id} {ch.load.toString().padStart(2, '0')}
-              </span>
-            ))}
-            <span className="fx-chip">Brain sync online</span>
-          </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <MetricCard label="Revenue saved" value={formatMoney(revenueSaved)} isDarkMode={isDarkMode} variant="top" />
-            <MetricCard label="Appointments booked" value={appointmentsBooked.toString()} isDarkMode={isDarkMode} variant="top" />
-            <MetricCard label="Avg handle" value="1.2 min" isDarkMode={isDarkMode} variant="top" />
-          </div>
 
-          <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-            <section className={panelClass}>
-              <GridWash style={gridForPanel} />
-              <div className="relative z-10">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className={`text-[10px] font-semibold uppercase tracking-[0.3em] ${sectionHeadingClass}`}>Live calls</h3>
-                  <p className={`text-[10px] uppercase tracking-[0.25em] ${mutedClass}`}>{activeCalls.length} live</p>
-                </div>
-                <div className="space-y-3">
-                  {activeCalls.map((call) => (
-                    <button
-                      key={call.id}
-                      type="button"
-                      onClick={() => setSelectedKey(call.id)}
-                      className={`grid w-full gap-2 rounded-2xl border p-4 text-left text-xs transition md:grid-cols-[1fr_auto] ${
-                        selectedKey === call.id ? callCardSelected : callCardBase
-                      }`}
-                    >
-                      <div>
-                        <p className={`font-semibold ${callNameClass}`}>{call.customerName}</p>
-                        <p className={`mt-1 ${callIntentClass}`}>{call.intent}</p>
-                        <p className={`mt-1 ${callPhoneClass}`}>{call.phone}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className={`text-[10px] uppercase tracking-[0.2em] ${impactLabelClass}`}>Impact</p>
-                        <p className={`mt-1 font-semibold ${impactValueClass}`}>{call.impact}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+        {activeTab === 'calls' && (
+          <div className="mt-5 space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'VOICE', load: channelLoad.voice },
+                { id: 'SMS', load: channelLoad.sms },
+                { id: 'WEB', load: channelLoad.web },
+              ].map((ch) => (
+                <span key={ch.id} className="fx-chip">
+                  <span className={ch.load > 0 ? 'fx-dot' : 'h-1.5 w-1.5 rounded-full bg-slate-500'} />
+                  {ch.id} {ch.load.toString().padStart(2, '0')}
+                </span>
+              ))}
+              <span className="fx-chip">SOP · answer → qualify → act → log</span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-4">
+              <Kpi label="Recovered" value={formatMoney(revenueSaved)} isDarkMode={isDarkMode} />
+              <Kpi label="Booked today" value={appointmentsBooked.toString()} isDarkMode={isDarkMode} />
+              <Kpi label="Avg handle" value="1.2m" isDarkMode={isDarkMode} />
+              <Kpi label="Follow-ups owed" value="3" isDarkMode={isDarkMode} />
+            </div>
 
-                <div className="mt-6 mb-4 flex items-center justify-between">
-                  <h3 className={`text-sm font-semibold uppercase tracking-[0.3em] ${sectionHeadingClass}`}>Concierge Call History</h3>
-                  <p className={`text-[10px] uppercase tracking-[0.25em] ${mutedClass}`}>Recent</p>
+            <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr_0.9fr]">
+              <section className={panelClass}>
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${ink}`}>Call log</h3>
+                  <p className={`text-[10px] uppercase tracking-[0.18em] ${muted}`}>{liveCalls.length} live</p>
                 </div>
                 <div className="space-y-2">
-                  {logEntries.map((entry) => {
-                    const logKey = `log:${entry.id}`;
-                    const selected = selectedKey === logKey;
-                    return (
-                      <button
-                        key={entry.id}
-                        type="button"
-                        onClick={() => setSelectedKey(logKey)}
-                        className={`grid w-full gap-2 rounded-2xl border p-4 text-left text-xs transition md:grid-cols-[0.7fr_1fr_1.4fr_1fr] ${
-                          selected ? callCardSelected : historyRowClass
-                        }`}
-                      >
-                        <span className={historyMutedClass}>{entry.time}</span>
-                        <span className={`font-medium ${historyNameClass}`}>{entry.customerName}</span>
-                        <span className={historyIntentClass}>{entry.intent}</span>
-                        <span className={`font-medium ${statusClass}`}>{entry.status}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="mt-3 space-y-2">
-                  {callHistory.map((call) => (
-                    <button
+                  {liveCalls.map((call) => (
+                    <LogRow
                       key={call.id}
-                      type="button"
+                      title={call.customerName}
+                      meta={`${call.intent} · ${call.startedAgo}`}
+                      status={call.status}
+                      selected={selectedKey === call.id}
+                      isDarkMode={isDarkMode}
                       onClick={() => setSelectedKey(call.id)}
-                      className={`grid w-full gap-2 rounded-2xl border p-3 text-left text-xs transition md:grid-cols-[1fr_auto] ${
-                        selectedKey === call.id ? callCardSelected : callCardBase
-                      }`}
-                    >
-                      <div>
-                        <p className={`font-medium ${callNameClass}`}>{call.customerName}</p>
-                        <p className={`mt-1 ${historyMutedClass}`}>{call.intent}</p>
-                      </div>
-                      <span className={`self-center text-[10px] uppercase tracking-[0.2em] ${impactLabelClass}`}>Resolved</span>
-                    </button>
+                    />
+                  ))}
+                  {logEntries.map((entry) => (
+                    <LogRow
+                      key={entry.id}
+                      title={entry.customerName}
+                      meta={`${entry.intent} · ${entry.time}`}
+                      status={entry.status}
+                      selected={selectedKey === `log:${entry.id}`}
+                      isDarkMode={isDarkMode}
+                      onClick={() => setSelectedKey(`log:${entry.id}`)}
+                    />
+                  ))}
+                  {closedCalls.map((call) => (
+                    <LogRow
+                      key={call.id}
+                      title={call.customerName}
+                      meta={call.intent}
+                      status={call.status}
+                      selected={selectedKey === call.id}
+                      isDarkMode={isDarkMode}
+                      onClick={() => setSelectedKey(call.id)}
+                    />
                   ))}
                 </div>
-              </div>
-            </section>
+              </section>
 
-            <aside className={asideClass}>
-              <GridWash style={gridForPanel} />
-              <div className="relative z-10">
-                <h3 className={`text-[10px] font-semibold uppercase tracking-[0.3em] ${sectionHeadingClass}`}>Transcript · live {liveDuration}</h3>
-                <div className={transcriptShellClass}>
-                  <div className={transcriptHeaderClass}>
-                    <div>
-                      <p className={`text-xs font-semibold ${callNameClass}`}>{displayConversation.customerName}</p>
-                      <p className={`text-[10px] uppercase tracking-[0.2em] ${transcriptMetaClass}`}>{displayConversation.intent}</p>
-                    </div>
-                    <span className={`text-xs font-semibold ${liveBadgeClass}`}>
-                      {displayConversation.isLive ? `LIVE ${liveDuration}` : 'ENDED'}
-                    </span>
+              <aside className={panelClass}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${ink}`}>Transcript</h3>
+                    <p className={`mt-1 text-[11px] ${muted}`}>
+                      {displayConversation.customerName} · {displayConversation.intent}
+                    </p>
                   </div>
-
-                  <div className={voicePanelClass}>
-                    <p className={`text-[10px] uppercase tracking-[0.2em] ${voiceLabelClass}`}>Voice activity</p>
-                    <div className="mt-2 flex h-10 items-end gap-1">
-                      {waveHeights.map((h, i) => (
-                        <span
-                          // eslint-disable-next-line react/no-array-index-key
-                          key={i}
-                          className={
-                            isDarkMode
-                              ? `w-1.5 rounded-full ${
-                                  i % 3 === 0
-                                    ? 'bg-gradient-to-t from-emerald-500/30 to-emerald-300'
-                                    : i % 2 === 0
-                                      ? 'bg-gradient-to-t from-amber-500/35 to-amber-300'
-                                      : 'bg-gradient-to-t from-slate-500/35 to-slate-200'
-                                }`
-                              : `w-1.5 rounded-full ${
-                                  i % 3 === 0 ? 'bg-emerald-500/70' : i % 2 === 0 ? 'bg-navy-400/60' : 'bg-slate-300'
-                                }`
-                          }
-                          style={{ height: `${h}px` }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className={scrollAreaClass}>
-                    {displayConversation.transcript.map((row, idx) => {
-                      const isLatest =
-                        displayConversation.isLive && idx === displayConversation.transcript.length - 1;
-                      return (
-                        <div
-                          key={`${displayConversation.id}-${idx}`}
-                          className={`rounded-lg border p-2.5 transition ${isLatest ? bubbleLatestClass : bubbleDefaultClass}`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span
-                              className={`text-[11px] font-semibold ${row.speaker === 'Agent' ? agentLabelClass : customerLabelClass}`}
-                            >
-                              {row.speaker}
-                            </span>
-                            <span className={`text-[10px] ${timeSmallClass}`}>{row.at}</span>
-                          </div>
-                          <p className={`mt-1 text-sm leading-relaxed ${lineTextClass}`}>
-                            {row.line}
-                            {isLatest && (
-                              <span
-                                className={`ml-1 inline-block h-2 w-2 animate-pulse rounded-full ${
-                                  isDarkMode ? 'bg-emerald-300' : 'bg-emerald-600'
-                                }`}
-                              />
-                            )}
-                          </p>
-                        </div>
-                      );
-                    })}
+                  <span className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${statusTone(displayConversation.status, isDarkMode)}`}>
+                    {displayConversation.isLive ? `LIVE ${liveDuration}` : displayConversation.status}
+                  </span>
+                </div>
+                <div className={`mt-3 rounded-xl border px-3 py-2 ${isDarkMode ? 'border-white/10 bg-black/50' : 'border-slate-200 bg-white'}`}>
+                  <p className={`text-[10px] uppercase tracking-[0.18em] ${muted}`}>Voice activity</p>
+                  <div className="mt-2 flex h-8 items-end gap-1">
+                    {waveHeights.map((h, i) => (
+                      <span
+                        key={i}
+                        className={`w-1.5 rounded-full ${isDarkMode ? 'bg-emerald-300/80' : 'bg-navy-500/70'}`}
+                        style={{ height: `${h}px` }}
+                      />
+                    ))}
                   </div>
                 </div>
-              </div>
-            </aside>
+                <div className={`mt-3 max-h-[340px] space-y-2 overflow-auto rounded-xl border p-3 ${isDarkMode ? 'border-white/10 bg-black/40' : 'border-slate-200 bg-white'}`}>
+                  {displayConversation.transcript.map((row, idx) => (
+                    <div key={`${displayConversation.id}-${idx}`} className={`rounded-lg border p-2.5 ${isDarkMode ? 'border-white/5 bg-white/[0.02]' : 'border-slate-100 bg-slate-50'}`}>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[11px] font-semibold ${row.speaker === 'Agent' ? ink : isDarkMode ? 'text-sky-300' : 'text-sky-800'}`}>
+                          {row.speaker}
+                        </span>
+                        <span className={`text-[10px] ${muted}`}>{row.at}</span>
+                      </div>
+                      <p className={`mt-1 text-[13px] leading-relaxed ${isDarkMode ? 'text-white/85' : 'text-navy-800'}`}>{row.line}</p>
+                    </div>
+                  ))}
+                </div>
+              </aside>
+
+              <section className={panelClass}>
+                <h3 className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${ink}`}>Actions · status</h3>
+                <p className={`mt-2 text-[11px] uppercase tracking-[0.16em] ${statusTone(displayConversation.status, isDarkMode)}`}>
+                  {displayConversation.status}
+                </p>
+                <div className="mt-3 space-y-2">
+                  {displayConversation.actions.length === 0 ? (
+                    <p className={`text-[12px] ${muted}`}>Closed log — actions already written to CRM.</p>
+                  ) : (
+                    displayConversation.actions.map((action) => (
+                      <div key={action.id} className="flex items-start justify-between gap-2 border-b border-white/5 py-2 last:border-0">
+                        <div>
+                          <p className={`text-[12px] ${ink}`}>{action.label}</p>
+                          {action.detail ? <p className={`text-[11px] ${muted}`}>{action.detail}</p> : null}
+                        </div>
+                        <span className={`text-[10px] uppercase tracking-[0.14em] ${actionTone(action.state, isDarkMode)}`}>
+                          {action.state}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <p className={`mt-4 text-[10px] uppercase tracking-[0.18em] ${muted}`}>SOP check</p>
+                <ul className="mt-2 space-y-1">
+                  {SOP_CHECKS.map((item) => (
+                    <li key={item} className={`text-[11px] ${isDarkMode ? 'text-white/75' : 'text-navy-700'}`}>
+                      · {item}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-};
+        )}
 
-const MetricCard: React.FC<{ label: string; value: string; isDarkMode: boolean; variant?: 'default' | 'top' }> = ({
-  label,
-  value,
-  isDarkMode,
-  variant = 'default',
-}) => {
-  const isTop = variant === 'top';
+        {activeTab === 'onboard' && (
+          <div className="mt-6 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+            <section className={panelClass}>
+              <p className="fx-kicker">
+                Client onboarding · {onboardStep + 1} of {ONBOARD_STEPS.length}
+              </p>
+              <h2 className="fx-display mt-2 text-2xl md:text-3xl">
+                {onboardStep === 0
+                  ? 'When does the line pick up?'
+                  : onboardStep === 1
+                    ? 'Which tools does the store already live in?'
+                    : onboardStep === 2
+                      ? 'What should the voice never do?'
+                      : 'Read it back. Correct anything.'}
+              </h2>
+              <p className={`mt-2 max-w-xl text-[13px] leading-relaxed ${muted}`}>
+                {onboardStep === 0
+                  ? 'Hours, after-hours, and who owns the phone when the floor is busy. Write it like a text to the manager.'
+                  : onboardStep === 1
+                    ? 'Calendar, CRM, inventory, WhatsApp, SMS — name the tools in plain English. No API keys on day one.'
+                    : onboardStep === 2
+                      ? 'Escalate rules, dollar thresholds, languages, and the greeting that must stay in the store’s voice.'
+                      : 'We turn the paragraph into integration cards. Wrong card? Edit the paragraph. The original stays in the developer packet.'}
+              </p>
+              <textarea
+                value={plainEnglish}
+                onChange={(event) => setPlainEnglish(event.target.value)}
+                rows={8}
+                className={`mt-4 w-full rounded-2xl border px-4 py-3 text-[14px] leading-relaxed outline-none ${
+                  isDarkMode ? 'border-white/10 bg-black/40 text-[#f4efe4]' : 'border-slate-200 bg-white text-navy-900'
+                }`}
+              />
+              <div className="mt-4 flex flex-wrap gap-2">
+                {ONBOARD_STEPS.map((label, index) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setOnboardStep(index)}
+                    className={`rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] ${
+                      onboardStep === index ? tabActiveClass : `border ${isDarkMode ? 'border-white/15 text-white/70' : 'border-slate-200 text-navy-600'}`
+                    }`}
+                  >
+                    {index + 1} {label}
+                  </button>
+                ))}
+              </div>
+            </section>
+            <section className={panelClass}>
+              <p className="fx-kicker">We heard</p>
+              <div className="mt-3 space-y-2">
+                {heard.map((card) => (
+                  <div key={card.title} className={`rounded-2xl border px-3 py-2.5 ${isDarkMode ? 'border-white/10 bg-black/30' : 'border-slate-200 bg-slate-50'}`}>
+                    <p className={`text-[13px] ${ink}`}>{card.title}</p>
+                    <p className={`mt-1 text-[11px] uppercase tracking-[0.12em] ${isDarkMode ? 'text-emerald-300' : 'text-emerald-700'}`}>{card.state}</p>
+                  </div>
+                ))}
+              </div>
+              <p className={`mt-4 text-[12px] leading-relaxed ${muted}`}>
+                Wrong card? Edit the paragraph. The original stays in the developer packet.
+              </p>
+            </section>
+          </div>
+        )}
 
-  const shell = (() => {
-    if (isTop && isDarkMode) {
-      return 'relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-2xl';
-    }
-    if (isTop && !isDarkMode) {
-      return 'relative overflow-hidden rounded-3xl border border-navy-800/40 bg-[#071a2e] p-5 text-white shadow-[0_14px_40px_rgba(7,26,46,0.25)]';
-    }
-    if (isDarkMode) {
-      return 'rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-2xl';
-    }
-    return 'rounded-3xl border border-slate-200/90 bg-white p-5 shadow-[0_8px_28px_rgba(15,23,42,0.05)]';
-  })();
+        {activeTab === 'handover' && (
+          <div className="mt-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="fx-kicker">{signed ? 'Signed client · handover gate' : 'Unsigned · preview only'}</p>
+                <h2 className="fx-display mt-2 text-2xl md:text-3xl">{signed ? `Ready for build — ${businessName}` : 'Handover locked until sign'}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSigned((value) => !value)}
+                className="fx-btn fx-btn-ghost text-[10px]"
+              >
+                {signed ? 'Mark unsigned' : 'Mark signed'}
+              </button>
+            </div>
+            {!signed ? (
+              <p className={`max-w-xl text-[13px] ${muted}`}>
+                Engineering does not provision from a Slack thread. Sign the client, then this packet becomes a work order.
+              </p>
+            ) : (
+              <>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <Fact label="Answer" body={`Front desk line · display CID ${businessName}`} isDarkMode={isDarkMode} />
+                  <Fact label="Write targets" body="Google Calendar · CRM contacts · inventory holds" isDarkMode={isDarkMode} />
+                  <Fact label="Escalate" body="Owner after hours if > $10k · design for custom · never legal on the line" isDarkMode={isDarkMode} />
+                </div>
+                <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+                  <section className={panelClass}>
+                    <p className="fx-kicker">Engineering checklist</p>
+                    <ul className="mt-3 space-y-2">
+                      {HANDOVER_ITEMS.map((item) => (
+                        <li key={item.id} className={`text-[13px] ${ink}`}>
+                          <span className={item.ready ? 'text-emerald-400' : isDarkMode ? 'text-[#e8d5a8]' : 'text-amber-700'}>
+                            {item.ready ? '☑' : '☐'}
+                          </span>{' '}
+                          {item.label}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                  <section className={panelClass}>
+                    <p className="fx-kicker">Do-not-do (client words)</p>
+                    <p className={`mt-3 text-[13px] leading-relaxed ${isDarkMode ? 'text-white/80' : 'text-navy-800'}`}>
+                      {plainEnglish}
+                    </p>
+                  </section>
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
-  const labelCls =
-    isTop && !isDarkMode
-      ? 'text-[10px] uppercase tracking-[0.28em] text-white/70'
-      : isDarkMode
-        ? 'text-[10px] uppercase tracking-[0.28em] text-white/60'
-        : 'text-[10px] uppercase tracking-[0.28em] text-navy-600';
-
-  const valueCls =
-    isTop && !isDarkMode
-      ? 'mt-3 text-2xl font-semibold tracking-tight text-white md:text-3xl'
-      : isDarkMode
-        ? 'mt-3 text-2xl font-semibold tracking-tight text-[#c8b58f] md:text-3xl'
-        : 'mt-3 text-2xl font-semibold tracking-tight text-navy-900 md:text-3xl';
-
-  const showGrid = isTop;
-
-  return (
-    <div className={shell}>
-      {showGrid && (
-        <GridWash style={gridOnDark} opacity={isTop && !isDarkMode ? 'opacity-[0.22]' : 'opacity-[0.14]'} />
-      )}
-      <div className={showGrid ? 'relative z-10' : undefined}>
-        <p className={labelCls}>{label}</p>
-        <p className={valueCls}>{value}</p>
+        {activeTab === 'studio' && (
+          <div className="mt-6 space-y-3">
+            <p className={`text-[12px] ${muted}`}>
+              Showroom merchandising only. The voice agent remains the SOP — this never replaces a live inventory lookup.
+            </p>
+            {ringBuilder ? (
+              <LazyRingBuilderSection config={ringBuilder} isDarkMode={isDarkMode} compact businessName={businessName} />
+            ) : (
+              <p className={muted}>Ring studio is off for this payload (`ringBuilder.enabled: false`).</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-const OverviewCard: React.FC<{ title: string; value: string; hint: string; isDarkMode: boolean }> = ({
-  title,
-  value,
-  hint,
-  isDarkMode,
-}) => (
-  <div
-    className={`relative overflow-hidden rounded-3xl border p-6 ${
-      isDarkMode
-        ? 'border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.35)]'
-        : 'border-slate-200 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.08)]'
+function parsePlainEnglish(text: string) {
+  const cards = [
+    { title: 'Phone · front desk', state: 'Mapped · number still needed', hit: /iphone|phone|desk|line/i },
+    { title: 'Calendar · bridal', state: 'Mapped · invite owner', hit: /calendar|jane|book/i },
+    { title: 'Inventory · Nivoda', state: 'Mapped · token at handover', hit: /nivoda|stone|inventory/i },
+    { title: 'After-hours · SMS + escalate', state: 'Rule drafted', hit: /after|6|sms|text|10k|owner/i },
+    { title: 'WhatsApp', state: 'Scoped if mentioned', hit: /whatsapp|miami/i },
+    { title: 'Website · storefront', state: 'Noted', hit: /shopify|website|storefront/i },
+  ];
+  const matched = cards.filter((card) => card.hit.test(text));
+  return matched.length ? matched : [{ title: 'Needs a first paragraph', state: 'Waiting', hit: /./ }];
+}
+
+const Kpi: React.FC<{ label: string; value: string; isDarkMode: boolean }> = ({ label, value, isDarkMode }) => (
+  <div className={`rounded-2xl border px-4 py-3 ${isDarkMode ? 'border-white/10 bg-white/[0.04]' : 'border-slate-200 bg-white'}`}>
+    <p className={`text-[10px] uppercase tracking-[0.2em] ${isDarkMode ? 'text-white/55' : 'text-navy-500'}`}>{label}</p>
+    <p className={`mt-1 text-xl font-medium tracking-tight ${isDarkMode ? 'text-[#c8b58f]' : 'text-navy-900'}`}>{value}</p>
+  </div>
+);
+
+const Fact: React.FC<{ label: string; body: string; isDarkMode: boolean }> = ({ label, body, isDarkMode }) => (
+  <div className={`rounded-2xl border px-4 py-3 ${isDarkMode ? 'border-white/10 bg-white/[0.04]' : 'border-slate-200 bg-white'}`}>
+    <p className="fx-kicker">{label}</p>
+    <p className={`mt-2 text-[13px] leading-relaxed ${isDarkMode ? 'text-white/80' : 'text-navy-800'}`}>{body}</p>
+  </div>
+);
+
+const LogRow: React.FC<{
+  title: string;
+  meta: string;
+  status: string;
+  selected: boolean;
+  isDarkMode: boolean;
+  onClick: () => void;
+}> = ({ title, meta, status, selected, isDarkMode, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`w-full rounded-2xl border px-3 py-2.5 text-left ${
+      selected
+        ? isDarkMode
+          ? 'border-amber-300/35 bg-amber-100/5'
+          : 'border-navy-400 bg-navy-50'
+        : isDarkMode
+          ? 'border-white/10 bg-black/40'
+          : 'border-slate-200 bg-slate-50'
     }`}
   >
-    <GridWash style={isDarkMode ? gridOnDark : gridOnLightPanel} opacity={isDarkMode ? 'opacity-[0.18]' : 'opacity-[0.4]'} />
-    <div className="relative z-10">
-      <p className={`text-[10px] uppercase tracking-[0.28em] ${isDarkMode ? 'text-white/60' : 'text-navy-600'}`}>{title}</p>
-      <p className={`mt-3 text-3xl font-semibold tracking-tight ${isDarkMode ? 'text-[#c8b58f]' : 'text-navy-900'}`}>{value}</p>
-      <p className={`mt-3 text-xs leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-navy-600'}`}>{hint}</p>
-    </div>
-  </div>
+    <p className={`text-[13px] font-medium ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>{title}</p>
+    <p className={`mt-1 text-[11px] ${isDarkMode ? 'text-white/55' : 'text-navy-500'}`}>
+      {meta} · <span className={statusTone(status, isDarkMode)}>{status}</span>
+    </p>
+  </button>
 );

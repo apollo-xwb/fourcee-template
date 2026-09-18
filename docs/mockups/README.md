@@ -1,15 +1,17 @@
-# Direction mockups (shipped into live app)
+# Direction mockups
 
-Founder hold is lifted. These frames were the visual source of truth for the SpaceX × Apple × Stark chrome now in `App.tsx`, `AuditPage`, `CRMView`, `RingBuilder`, and `CheckoutFlow`. **Neuro `content.json` wiring stays frozen** — field names, load order (`GET /content.json`), placeholders, and fallbacks do not change.
+SOP is the **voice agent**. Ring studio is merchandising. Neuro `content.json` stays frozen.
 
-Open `index.html` locally, or review the exported 1440×810 frames in `frames/`.
+Open `index.html` locally.
 
 | Frame | File | Caption |
 | --- | --- | --- |
-| 1 Landing / hero | `frames/01-landing-hero.png` | Cinematic restraint: one ring, ice status chip, copper CTA. Audit first, not a SaaS feature grid. |
-| 2 Personalized audit | `frames/02-audit-lost-revenue.png` | Stark lost-revenue number, proof tiles, urgency card, recover CTA. Figures map to `revenueModel` / `callModel` / `auditMeta`. |
-| 3 Concierge HUD | `frames/03-portal-hud.png` | Mission-control clock, channel chips, live transcript. Fed by `liveDemo.*`. |
-| 4 Ring studio | `frames/04-ring-studio.png` | Metal/gem controls beside a 3D ring stage. Optional `ringBuilder` — older payloads omit it and still work. |
+| 1 Landing / hero | `01-landing.html` | Smaller display type. Audit first. |
+| 2 Personalized audit | `02-audit.html` | Lost-revenue proof. Numbers tighter. |
+| 5 Voice ops | `05-ops-calls.html` | Call logs, transcript, actions, statuses. |
+| 6 Onboarding | `06-onboarding.html` | Plain-English integrations. |
+| 7 Handover | `07-handover.html` | Developer packet after sign. |
+| 8 Ring scroll | `08-ring-scroll.html` | 3D-app GLB + camera + build. Not the SOP. |
 
 Atmosphere plates in `plates/` are text-free product photography. Type is HTML so spelling stays reviewable (earlier AI-only frames garbled “Fourcee”, “gold standard”, metal names).
 

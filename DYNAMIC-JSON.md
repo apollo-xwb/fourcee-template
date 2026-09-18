@@ -105,8 +105,8 @@ Code defaults live in `lib/ring-builder.ts`. Neuro can personalize later without
 | Personalize swatches | `"metals"` / `"gems"` arrays of `{ id, label, color }` |
 | Alias | same object under `liveDemo.ringBuilder` (top-level wins if both exist) |
 
-Placement: landing `#ring-studio` (lazy IntersectionObserver + `React.lazy`) and portal Overview (compact).  
-Implementation: lighter Three.js torus/prong/stone studio. **Not** a vendor of [VikasRana10/3D-app](https://github.com/VikasRana10/3D-app) — that README claims MIT but has no LICENSE file, and Crystal-Jewels uses WebGI-licensed models. Patterns only (metal/gem chips, 3D stage, rotate).
+Placement: landing `#ring-studio` (lazy IntersectionObserver + `React.lazy`) and Fourcee ops → Studio (compact).  
+Implementation: Three.js + local Draco (`/draco/gltf/`) loads the 3D-app ring GLB (`public/assets/3D/ring_webgi.glb`, `KHR_draco_mesh_compression`). Ports **only** scroll-camera, rotation, and metal/gem build. WebGI, their site chrome, and audio are not vendored. The voice agent is the SOP — the studio is merchandising.
 
 Visual chrome (landing / audit / portal / ring studio / pricing) is CSS-only. It does **not** add or rename JSON keys. Omit-key still keeps April Neuro payloads working.
 
