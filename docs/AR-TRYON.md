@@ -65,7 +65,24 @@ Verified (Chromium via Playwright, software GL, emulated devices):
 
 - **Dialogs.** `ArViewSheet` and `RingTryOn` both use `lib/use-modal-a11y.ts`: focus moves in on open, Tab/Shift+Tab cycle inside, Escape closes, the rest of `<body>` gets `inert` + `aria-hidden="true"` while open (restored exactly on close) and focus returns to the trigger.
 - **What AR shows.** The AR files (GLB/USDZ) change **metal only**; the stone is baked clear. The AR sheet says so. The chosen stone colour is shown in the 3D studio and in the camera/photo try-on.
-- **Download size.** First camera try-on fetches about 19 MB (hand model 7.8 MB + MediaPipe WASM 11.2 MB + JS 0.3 MB). The try-on copy says "about 19 MB on first use".
+- **Download size.** First try-on fetches ~11.5 MB over the wire: hand model 5.8 MB (gzip) + MediaPipe WASM 3.3 MB (gzip) + ring GLB 2.1 MB + loader JS 0.3 MB (about 21 MB if the `.gz` variants are unavailable). The progress bar and the status copy compute the size from the real downloads (`lib/tryon-preload.ts`), not from a hard-coded number.
 - **`window.__ringTryOn`** (landmarks + pose for e2e) exists **only** in a build made with `VITE_E2E_HOOKS=1` (`VITE_E2E_HOOKS=1 npm run build`). Normal builds do not contain it.
 - **Licences.** The vendored MediaPipe runtime and hand model are Apache-2.0 (Google LLC): see `THIRD_PARTY_NOTICES.md`, `public/mediapipe/{LICENSE,NOTICE}`, `public/ar/{LICENSE,NOTICE}`.
 - **Tests.** `npm test` runs the vitest suite in `tests/` (pose maths, AR asset helpers, asset files present).
+
+
+## Loading performance (try-on)
+
+- Nothing is downloaded until the user shows intent: hover / focus / touch / press on "Try on your hand" (or "Try on" inside the AR sheet) calls `warmTryOn()`, and opening the sheet calls `prefetchTryOn()`. `Save-Data` skips the warm-up.
+- The MediaPipe chunk, wasm, hand model and ring GLB are fetched **in parallel** (`lib/tryon-preload.ts`), with one aggregate progress bar (`data-testid=tryon-progress`, `role=progressbar`).
+- `public/mediapipe/wasm/vision_wasm_internal.wasm.gz` and `public/ar/hand_landmarker.task.gz` are gzip copies of the vendored binaries (the app inflates them with `DecompressionStream`; if that API or the `.gz` is missing it falls back to the plain file). **Regenerate them whenever the originals change**: `gzip -9 -n -c X > X.gz` (`tests/tryon-assets.test.ts` checks that each `.gz` inflates to exactly the original).
+- URLs carry `?v=<AR_ASSET_VERSION>` (`lib/ar-assets.ts`); bump it when any AR/MediaPipe binary changes. `vite preview`/`vite dev` serve versioned binaries with `Cache-Control: public, max-age=31536000, immutable`.
+- **Production headers are not set by this repo** (the web server config lives outside it). Recommended for nginx, applied by whoever owns that config:
+
+```nginx
+location ~* \.(wasm|task|glb|usdz|gz)$ {
+    add_header Cache-Control "public, max-age=31536000, immutable";   # safe because the app requests them as ...?v=<version>
+}
+```
+  and make sure `application/wasm`, `model/gltf-binary` and `model/vnd.usdz+zip` are in `mime.types`. Do not add `Content-Encoding: gzip` for `*.gz` (the app inflates them itself; it also detects an already-inflated body).
+- Not done: no smaller hand model exists in MediaPipe's `hand_landmarker` bundle (this is the only variant, float16); the ring GLB is already Draco/mesh-compressed.
