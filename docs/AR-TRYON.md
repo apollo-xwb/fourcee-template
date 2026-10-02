@@ -80,7 +80,7 @@ Verified (Chromium via Playwright, software GL, emulated devices):
 - **Production headers are not set by this repo** (the web server config lives outside it). Recommended for nginx, applied by whoever owns that config:
 
 ```nginx
-location ~* \.(wasm|task|glb|usdz|gz)$ {
+location ~* \.(wasm|task|glb|gz)$ {
     add_header Cache-Control "public, max-age=31536000, immutable";   # safe because the app requests them as ...?v=<version>
 }
 ```
