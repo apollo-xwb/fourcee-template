@@ -558,6 +558,10 @@ const App: React.FC = () => {
           aria-hidden
         />
         <div className="fx-grid z-[1]" aria-hidden />
+        {/* Phone-sized screens: the lower half of the hero (the "Try Fourcee on your phone" card and its legal text) fades into the page's
+            solid beige, so the dark vertical slats of the background texture never sit behind small text. Starts at ~45% of the hero,
+            fully solid by ~85%. Keeps the existing background, veil and grid above; md+ is unchanged. */}
+        <div className="fourcee-hero-fade pointer-events-none absolute inset-0 z-[2] md:hidden" data-testid="hero-fade" aria-hidden />
         <div className="relative z-10 mx-auto grid min-h-[100svh] w-full max-w-7xl grid-cols-1 content-start items-start gap-5 px-5 pt-16 pb-28 sm:px-8 sm:pt-20 md:px-12 md:items-center lg:grid-cols-2 lg:gap-10 lg:content-center lg:py-20">
           {/* Desktop: Ring Builder inhabiting the left rail */}
           <div

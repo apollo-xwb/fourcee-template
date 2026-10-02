@@ -359,3 +359,16 @@ model-viewer > button:focus-visible {
   outline: 2px solid #f4efe4 !important;
   outline-offset: 2px;
 }
+
+/* Mobile hero: transparent -> solid page beige (#faf5ea). Stops chosen so the slats are still visible in the top ~45%. */
+.fourcee-hero-fade {
+  background: linear-gradient(
+    180deg,
+    rgba(250, 245, 234, 0) 0%,
+    rgba(250, 245, 234, 0) 45%,
+    rgba(250, 245, 234, 0.55) 60%,
+    rgba(250, 245, 234, 0.9) 74%,
+    #faf5ea 85%,
+    #faf5ea 100%
+  );
+}
