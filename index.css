@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Tailwind v4 auto-scans the whole project dir (minus .gitignore'd paths, node_modules and binaries). On the VPS (/opt/fourcee-template)
+   untracked folders such as backups/ (old copies of the sources + built bundles) and dist-ops-preview/ (an old build) are not
+   git-ignored, so every class-looking token in them was emitted as extra CSS: the live CSS was ~7-11% bigger than a clean rebuild
+   and every JS chunk hash changed with it. Never scan build output or backups, whatever exists next to the sources. */
+@source not "./backups";
+@source not "./dist*";
+@source not "./dist-*";
+
 /* Custom Sphere fonts optional — missing files must not 404-spam; Michroma/Inter already loaded. */
 @font-face {
   font-family: "SphereNextThin";
