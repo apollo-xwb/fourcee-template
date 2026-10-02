@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { withBase } from '../lib/base-url';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment';
 
-const RING_URL = '/assets/3D/ring_webgi.glb';
-const DRACO_PATH = '/draco/gltf/';
+const RING_URL = withBase('/assets/3D/ring_webgi.glb');
+const DRACO_PATH = withBase('/draco/gltf/');
 
 type Vec3 = [number, number, number];
 

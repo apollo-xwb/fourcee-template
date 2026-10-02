@@ -6,6 +6,7 @@
  */
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { withBase } from '../lib/base-url';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 
@@ -17,7 +18,7 @@ const ASSET_FOLDERS = [
 ];
 
 function toAssetUrl(folder: string, file = 'scene.gltf'): string {
-  const path = `/assets/3D/${encodeURIComponent(folder)}/${file}`;
+  const path = withBase(`/assets/3D/${encodeURIComponent(folder)}/${file}`);
   return path;
 }
 

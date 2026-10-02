@@ -31,9 +31,20 @@ const arMimePlugin = (): Plugin => {
   };
 };
 
+/**
+ * Deploy sub-path. Default '/' keeps the root build (Vercel/preview) unchanged.
+ * Example: VITE_BASE=/fourcee-template/ npm run build  ->  https://ops.lutho.app/fourcee-template/
+ */
+const normaliseBase = (raw: string | undefined) => {
+  const b = (raw ?? '').trim();
+  if (!b || b === '/') return '/';
+  return `/${b.replace(/^\/+|\/+$/g, '')}/`;
+};
+
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
+      base: normaliseBase(process.env.VITE_BASE ?? env.VITE_BASE),
       server: {
         port: 3000,
         host: '0.0.0.0',

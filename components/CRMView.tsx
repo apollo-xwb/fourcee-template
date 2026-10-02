@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { RingBuilderConfig } from '../types/audit';
 import { LazyRingBuilderSection } from './LazyRingBuilderSection';
+import { withBase } from '../lib/base-url';
 import {
   HANDOVER_ITEMS,
   ONBOARD_STEPS,
@@ -222,7 +223,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
         style={{
           filter: 'grayscale(1)',
           background: isDarkMode
-            ? 'linear-gradient(180deg, rgba(4,4,4,0.55), rgba(4,4,4,0.78)), url("/assets/plates/plate_hud_atmosphere.png") center / cover no-repeat'
+            ? `linear-gradient(180deg, rgba(4,4,4,0.55), rgba(4,4,4,0.78)), url("${withBase('/assets/plates/plate_hud_atmosphere.png')}") center / cover no-repeat`
             : undefined,
         }}
         aria-hidden

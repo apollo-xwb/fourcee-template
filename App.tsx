@@ -42,6 +42,7 @@ import { LazyRingBuilderSection } from './components/LazyRingBuilderSection';
 import type { AuditData } from './types/audit';
 import { loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from './lib/audit-content';
 import { resolveRingBuilder } from './lib/ring-builder';
+import { withBase } from './lib/base-url';
 
 const INTEGRATIONS_DATA = [
   {
@@ -377,7 +378,7 @@ const App: React.FC = () => {
           style={{
             filter: 'grayscale(1)',
             background:
-              'linear-gradient(90deg, rgba(9,9,9,0.08) 0%, rgba(9,9,9,0.16) 40%, rgba(9,9,9,0.78) 66%, rgba(9,9,9,0.94) 100%), url("/assets/plates/plate_hero_ring.png") center / cover no-repeat',
+              `linear-gradient(90deg, rgba(9,9,9,0.08) 0%, rgba(9,9,9,0.16) 40%, rgba(9,9,9,0.78) 66%, rgba(9,9,9,0.94) 100%), url("${withBase('/assets/plates/plate_hero_ring.png')}") center / cover no-repeat`,
           }}
           aria-hidden
         />

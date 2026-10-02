@@ -7,6 +7,7 @@ import { MiniPhone } from './ui/mini-phone';
 import { IncomingCallPhone } from './ui/incoming-call-phone';
 import { ValueCalculator } from './ValueCalculator';
 import type { AuditData } from '../types/audit';
+import { withBase } from '../lib/base-url';
 import {
   formatAuditCurrency,
   formatAuditRange,
@@ -538,7 +539,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
             </div>
             <div className="relative min-h-[320px] sm:min-h-[420px]">
               <img
-                src="/assets/plates/plate_missed_call_phone.png"
+                src={withBase('/assets/plates/plate_missed_call_phone.png')}
                 alt=""
                 className="pointer-events-none mx-auto h-[min(58vh,520px)] w-auto max-w-full object-contain grayscale drop-shadow-[0_30px_60px_rgba(0,0,0,0.45)]"
                 aria-hidden

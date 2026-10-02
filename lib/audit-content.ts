@@ -1,5 +1,6 @@
 import { GBP_PLACEHOLDER_TOKENS } from '../components/audit-placeholders';
 import type { AuditData } from '../types/audit';
+import { rebaseAssetStrings, withBase } from './base-url';
 
 /**
  * Neuro generator contract — do not rename these strings.
@@ -23,12 +24,12 @@ export function isPlaceholderBusinessName(name: string | undefined | null): bool
  * 3) Fill only missing OPTIONAL fields — never rename or drop keys
  */
 export async function loadAuditContent(): Promise<AuditData> {
-  const response = await fetch(AUDIT_CONTENT_URL, { cache: 'no-store' });
+  const response = await fetch(withBase(AUDIT_CONTENT_URL), { cache: 'no-store' });
   if (!response.ok) {
     throw new Error(`Failed to load ${AUDIT_CONTENT_URL} (${response.status})`);
   }
   const raw = (await response.json()) as AuditData;
-  return normalizeAuditData(raw);
+  return normalizeAuditData(rebaseAssetStrings(raw));
 }
 
 /**
@@ -72,7 +73,7 @@ export function normalizeAuditData(raw: AuditData): AuditData {
       headline: recoveryPlan.headline || 'Recommended Recovery Plan',
       body: recoveryPlan.body || '',
       capabilities: recoveryPlan.capabilities || [],
-      supportingMediaUrl: recoveryPlan.supportingMediaUrl || '/assets/placeholder.gif',
+      supportingMediaUrl: recoveryPlan.supportingMediaUrl || withBase('/assets/placeholder.gif'),
     },
     compliance: {
       ...compliance,
