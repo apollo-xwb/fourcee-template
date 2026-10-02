@@ -30,7 +30,13 @@ export function DottedSurface({ className, isDarkMode = false, ...props }: Dotte
 		const camera = new THREE.PerspectiveCamera(60, w / h, 1, 10000);
 		camera.position.set(0, 355, 1220);
 
-		const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+		let renderer: THREE.WebGLRenderer;
+		try {
+		  renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+		} catch {
+		  // No WebGL (blocked / unsupported): skip the decorative 3D instead of crashing the whole app.
+		  return;
+		}
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 		renderer.setSize(w, h);
 		renderer.setClearColor(0x000000, 0);

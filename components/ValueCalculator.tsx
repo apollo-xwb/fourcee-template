@@ -53,39 +53,39 @@ export const ValueCalculator: React.FC<ValueCalculatorProps> = ({
       : results.roiMonths.toFixed(1);
 
   const rangeClass = isDarkMode
-    ? 'h-2 w-full cursor-pointer appearance-none rounded-full bg-white/28 accent-amber-300 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-amber-200/80 [&::-webkit-slider-thumb]:bg-gradient-to-br [&::-webkit-slider-thumb]:from-amber-50 [&::-webkit-slider-thumb]:to-amber-600 [&::-webkit-slider-thumb]:shadow-[0_0_14px_rgba(253,224,71,0.55)]'
-    : 'h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-emerald-600 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-navy-300 [&::-webkit-slider-thumb]:bg-navy-900 [&::-webkit-slider-thumb]:shadow-md';
+    ? 'h-2 w-full cursor-pointer appearance-none rounded-full bg-white/28 accent-neutral-300 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-neutral-200/80 [&::-webkit-slider-thumb]:bg-gradient-to-br [&::-webkit-slider-thumb]:from-neutral-50 [&::-webkit-slider-thumb]:to-neutral-600 [&::-webkit-slider-thumb]:shadow-[0_0_14px_rgba(219,219,219,0.55)]'
+    : 'h-2 w-full cursor-pointer appearance-none rounded-full bg-neutral-200 accent-neutral-600 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-navy-300 [&::-webkit-slider-thumb]:bg-navy-900 [&::-webkit-slider-thumb]:shadow-md';
 
   const shell = isDarkMode
-    ? 'border-white/15 bg-gradient-to-br from-zinc-950/90 via-zinc-900 to-zinc-950 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] md:p-10'
-    : 'border-navy-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] md:p-10';
+    ? 'border-white/15 bg-gradient-to-br from-neutral-950/90 via-neutral-900 to-neutral-950 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] md:p-10'
+    : 'border-navy-200 bg-gradient-to-br from-white via-neutral-50 to-neutral-100 p-6 shadow-[0_12px_40px_rgba(9,9,9,0.08)] md:p-10';
 
   const titleClass = isDarkMode ? 'serif text-2xl font-bold text-white' : 'serif text-2xl font-bold text-navy-900';
   const subtitleClass = isDarkMode
-    ? 'mb-6 mt-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-100 sm:text-xs'
+    ? 'mb-6 mt-2 text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-100 sm:text-xs'
     : 'mb-6 mt-2 text-[10px] font-bold uppercase tracking-[0.2em] text-navy-700 sm:text-xs';
   const labelClass = isDarkMode
-    ? 'mb-3 flex justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-slate-100'
+    ? 'mb-3 flex justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-100'
     : 'mb-3 flex justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-navy-700';
   const valueClass = isDarkMode ? 'text-white' : 'text-navy-900';
   const dividerClass = isDarkMode ? 'border-t border-white/15' : 'border-t border-navy-200';
   const smallLabelClass = isDarkMode
-    ? 'text-[10px] font-bold uppercase tracking-[0.2em] text-slate-100'
+    ? 'text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-100'
     : 'text-[10px] font-bold uppercase tracking-[0.2em] text-navy-700';
   const bigNumberClass = isDarkMode ? 'serif mt-1 text-4xl font-bold text-white' : 'serif mt-1 text-4xl font-bold text-navy-900';
   const roiPillClass = isDarkMode
-    ? 'rounded-full border border-amber-400/50 bg-gradient-to-r from-amber-950/80 to-zinc-900 px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-amber-50 shadow-[0_0_20px_rgba(212,175,55,0.2)]'
-    : 'rounded-full border border-emerald-700 bg-emerald-900 px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-white shadow-md';
+    ? 'rounded-full border border-neutral-400/50 bg-gradient-to-r from-neutral-950/80 to-neutral-900 px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-neutral-50 shadow-[0_0_20px_rgba(174,174,174,0.2)]'
+    : 'rounded-full border border-neutral-700 bg-neutral-900 px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-white shadow-md';
   const infoBtnClass = isDarkMode
-    ? 'mt-2 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-100 transition-colors hover:text-white'
-    : 'mt-2 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-navy-700 transition-colors hover:text-navy-900';
+    ? 'mt-2 inline-flex min-h-[36px] items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-100 transition-colors hover:text-white'
+    : 'mt-2 inline-flex min-h-[36px] items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-navy-700 transition-colors hover:text-navy-900';
   const infoIconClass = isDarkMode
     ? 'inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/25 bg-white/10 text-[9px] font-semibold text-white'
     : 'inline-flex h-5 w-5 items-center justify-center rounded-full border border-navy-200 bg-white text-[9px] font-semibold text-navy-800';
   const insightsShell = isDarkMode
-    ? 'mt-4 space-y-2 rounded-2xl border border-white/15 bg-black/50 px-5 py-4 text-xs leading-relaxed text-slate-200'
+    ? 'mt-4 space-y-2 rounded-2xl border border-white/15 bg-black/50 px-5 py-4 text-xs leading-relaxed text-neutral-200'
     : 'mt-4 space-y-2 rounded-2xl border border-navy-200 bg-white px-5 py-4 text-xs leading-relaxed text-navy-800';
-  const insightsHeading = isDarkMode ? 'text-[9px] font-semibold uppercase tracking-[0.18em] text-amber-100' : 'text-[9px] font-semibold uppercase tracking-[0.18em] text-emerald-900';
+  const insightsHeading = isDarkMode ? 'text-[9px] font-semibold uppercase tracking-[0.18em] text-neutral-100' : 'text-[9px] font-semibold uppercase tracking-[0.18em] text-neutral-900';
   const insightsStrong = isDarkMode ? 'font-semibold text-white' : 'font-semibold text-navy-900';
 
   return (
@@ -107,6 +107,7 @@ export const ValueCalculator: React.FC<ValueCalculatorProps> = ({
             max="50000"
             step="500"
             value={avgValue}
+            aria-label="Average piece value"
             onChange={(e) => setAvgValue(parseInt(e.target.value, 10))}
             className={rangeClass}
           />
@@ -123,6 +124,7 @@ export const ValueCalculator: React.FC<ValueCalculatorProps> = ({
             max="100"
             step="5"
             value={missedCalls}
+            aria-label="Monthly missed calls"
             onChange={(e) => setMissedCalls(parseInt(e.target.value, 10))}
             className={rangeClass}
           />
@@ -139,6 +141,7 @@ export const ValueCalculator: React.FC<ValueCalculatorProps> = ({
             max="10000"
             step="100"
             value={staffSalary}
+            aria-label="Monthly staff salary cost"
             onChange={(e) => setStaffSalary(parseInt(e.target.value, 10))}
             className={rangeClass}
           />

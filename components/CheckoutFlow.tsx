@@ -76,10 +76,10 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
               <p className="fx-kicker">
                 Configure · {companyName}
               </p>
-              <h2 className="fx-display mt-3 text-3xl md:text-4xl text-navy-900 dark:text-[#f4efe4]">
+              <h2 className="fx-display mt-3 text-3xl md:text-4xl text-navy-900 dark:text-[#efefef]">
                 Get live in 2 hours
               </h2>
-              <p className="mt-3 text-sm text-navy-600 dark:text-[#8aa0b5] leading-relaxed">
+              <p className="mt-3 text-sm text-navy-600 dark:text-[#9d9d9d] leading-relaxed">
                 Setup takes less than 2 hours. Once active, you&apos;ll never lose another client to a missed call again.
               </p>
             </div>
@@ -94,8 +94,8 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                   onClick={() => setState((s) => ({ ...s, billingCycle: 'monthly' }))}
                   className={`rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition ${
                     state.billingCycle === 'monthly'
-                      ? 'bg-gradient-to-r from-[#e8d5a8] to-[#c8b58f] text-[#1a140c]'
-                      : 'text-navy-600 dark:text-[#c2ccd6]'
+                      ? 'bg-gradient-to-r from-[#d6d6d6] to-[#b6b6b6] text-[#080808]'
+                      : 'text-navy-600 dark:text-[#cbcbcb]'
                   }`}
                 >
                   Monthly
@@ -105,8 +105,8 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                   onClick={() => setState((s) => ({ ...s, billingCycle: 'annual' }))}
                   className={`rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition ${
                     state.billingCycle === 'annual'
-                      ? 'bg-gradient-to-r from-[#e8d5a8] to-[#c8b58f] text-[#1a140c]'
-                      : 'text-navy-600 dark:text-[#c2ccd6]'
+                      ? 'bg-gradient-to-r from-[#d6d6d6] to-[#b6b6b6] text-[#080808]'
+                      : 'text-navy-600 dark:text-[#cbcbcb]'
                   }`}
                 >
                   Annual
@@ -123,7 +123,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                   <div 
                     key={pkg.id}
                     onClick={() => setState(s => ({ ...s, packageId: pkg.id }))}
-                    className={`p-6 rounded-2xl border-2 cursor-pointer transition-all backdrop-blur-md ${state.packageId === pkg.id ? 'border-[#c8b58f] bg-white/80 dark:bg-[rgba(8,18,28,0.72)] shadow-[0_0_0_1px_rgba(200,181,143,0.35)]' : 'border-silver-200 dark:border-white/10 bg-white/50 dark:bg-black/25 hover:border-[#c8b58f]/50'}`}
+                    className={`p-6 rounded-2xl border-2 cursor-pointer transition-all backdrop-blur-md ${state.packageId === pkg.id ? 'border-[#b6b6b6] bg-white/80 dark:bg-[rgba(7,7,7,0.72)] shadow-[0_0_0_1px_rgba(182,182,182,0.35)]' : 'border-silver-200 dark:border-white/10 bg-white/50 dark:bg-black/25 hover:border-[#b6b6b6]/50'}`}
                   >
                     <p className="text-[10px] font-bold uppercase tracking-widest text-navy-700 dark:text-navy-300 mb-2">{pkg.name}</p>
                     <p className="text-2xl sm:text-3xl font-bold serif text-navy-900 dark:text-white">
@@ -188,7 +188,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                         isUnifiedChat
                           ? 'bg-gradient-to-br from-navy-50 to-white dark:from-navy-900/60 dark:to-navy-950/80 border-navy-200 dark:border-white/20'
                           : 'bg-white dark:bg-navy-900/40 border-silver-100 dark:border-navy-800'
-                      } ${isChecked ? 'ring-2 ring-[#c8b58f] ring-offset-2 dark:ring-offset-navy-950' : ''}`}
+                      } ${isChecked ? 'ring-2 ring-[#b6b6b6] ring-offset-2 dark:ring-offset-navy-950' : ''}`}
                     >
                       <div className="relative flex-shrink-0 mt-0.5">
                         <input 
@@ -340,7 +340,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
       case 4:
         return (
           <div className="text-center space-y-6 py-16 sm:py-20 animate-in bounce-in duration-700">
-            <div className="w-24 h-24 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto text-5xl">✓</div>
+            <div className="w-24 h-24 bg-neutral-100 dark:bg-neutral-900/30 text-neutral-600 dark:text-neutral-400 rounded-full flex items-center justify-center mx-auto text-5xl">✓</div>
             <h2 className="text-3xl sm:text-4xl font-bold serif text-navy-900 dark:text-white">Deployment Started</h2>
             <p className="text-lg sm:text-xl text-navy-700 dark:text-navy-300 max-w-lg mx-auto leading-relaxed">
               Your tailored voice model is now in fabrication. Expect a reach-out within 2 hours to confirm your onboarding timeline and workshop slot.

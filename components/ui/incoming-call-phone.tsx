@@ -30,8 +30,8 @@ export function IncomingCallPhone({
     : { x: 0, y: 0 };
 
   const vibrationTransition = isRinging && !isHovering
-    ? { duration: 0.45, ease: 'easeInOut', repeat: Infinity }
-    : { duration: 0.25, ease: 'easeOut' };
+    ? { duration: 0.45, ease: 'easeInOut' as const, repeat: Infinity }
+    : { duration: 0.25, ease: 'easeOut' as const };
 
   const statusText =
     callState === 'ringing'

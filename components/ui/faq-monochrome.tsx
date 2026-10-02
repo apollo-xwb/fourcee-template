@@ -49,7 +49,7 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
         'backdrop-blur-2xl transition-colors duration-700',
         isDarkMode
           ? 'bg-navy-950/70 border-white/10 text-white shadow-[0_28px_120px_rgba(0,0,0,0.85)]'
-          : 'bg-white/90 border-navy-100 text-navy-950 shadow-[0_28px_80px_rgba(15,23,42,0.22)]',
+          : 'bg-white/90 border-navy-100 text-navy-950 shadow-[0_28px_80px_rgba(9,9,9,0.22)]',
         hasEntered ? 'animate-in fade-in slide-in-from-bottom-4 duration-700' : 'opacity-0 translate-y-4',
       ].join(' ')}
     >
@@ -57,8 +57,8 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
         className="pointer-events-none absolute inset-0 opacity-80"
         style={{
           background: isDarkMode
-            ? 'radial-gradient(ellipse 120% 140% at 0% 0%, rgba(148,163,184,0.22), transparent 55%)'
-            : 'radial-gradient(ellipse 120% 140% at 0% 0%, rgba(15,23,42,0.08), rgba(255,255,255,0.9) 70%)',
+            ? 'radial-gradient(ellipse 120% 140% at 0% 0%, rgba(161,161,161,0.22), transparent 55%)'
+            : 'radial-gradient(ellipse 120% 140% at 0% 0%, rgba(9,9,9,0.08), rgba(255,255,255,0.9) 70%)',
           mixBlendMode: isDarkMode ? 'screen' : 'multiply',
         }}
         aria-hidden
@@ -72,8 +72,8 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
               'relative flex items-center gap-2 sm:gap-3 rounded-full px-3 sm:px-4 py-2 w-full max-w-[min(100%,16rem)] sm:max-w-sm',
               'border text-[10px] font-semibold uppercase tracking-[0.35em]',
               isDarkMode
-                ? 'bg-black/60 border-white/15 text-slate-100'
-                : 'bg-white border-slate-200 text-slate-700',
+                ? 'bg-black/60 border-white/15 text-neutral-100'
+                : 'bg-white border-neutral-200 text-neutral-700',
             ].join(' ')}
           >
             <span className="relative z-10">Signal FAQ</span>
@@ -81,20 +81,20 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
               className="relative z-10 flex-1 h-px"
               style={{
                 background: isDarkMode
-                  ? 'linear-gradient(90deg, transparent, rgba(148,163,184,0.8), transparent)'
-                  : 'linear-gradient(90deg, transparent, rgba(15,23,42,0.6), transparent)',
+                  ? 'linear-gradient(90deg, transparent, rgba(161,161,161,0.8), transparent)'
+                  : 'linear-gradient(90deg, transparent, rgba(9,9,9,0.6), transparent)',
               }}
             />
             <span
               className={[
                 'relative z-10 h-4 w-4 rounded-full border flex items-center justify-center',
-                isDarkMode ? 'border-white/20 bg-white/5' : 'border-slate-300 bg-slate-100',
+                isDarkMode ? 'border-white/20 bg-white/5' : 'border-neutral-300 bg-neutral-100',
               ].join(' ')}
             >
               <span
                 className={[
                   'h-1.5 w-1.5 rounded-full',
-                  isDarkMode ? 'bg-slate-100' : 'bg-slate-700',
+                  isDarkMode ? 'bg-neutral-100' : 'bg-neutral-700',
                 ].join(' ')}
               />
             </span>
@@ -131,9 +131,9 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
                 <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-navy-400 dark:text-navy-300">
                   Client journey
                 </span>
-                <span className="h-1.5 w-16 rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 opacity-80" />
+                <span className="h-1.5 w-16 rounded-full bg-gradient-to-r from-neutral-400 to-neutral-400 opacity-80" />
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' as const }}>
+              <div className="flex gap-2 overflow-x-auto pb-1" tabIndex={0} role="region" aria-label="Client journey steps" style={{ scrollbarWidth: 'none' as const }}>
                 {steps.map((step, idx) => (
                   <div
                     key={step.label}
@@ -163,7 +163,7 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
           <p
             className={[
               'text-[10px] font-bold uppercase tracking-[0.35em] break-words',
-              isDarkMode ? 'text-emerald-300' : 'text-navy-500',
+              isDarkMode ? 'text-neutral-300' : 'text-navy-500',
             ].join(' ')}
           >
             Designed for the boardroom - the questions your CFO will ask
@@ -179,7 +179,7 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
                     isDarkMode
                       ? 'border-white/12 bg-white/0 hover:bg-white/5'
                       : 'border-navy-100 bg-white/60 hover:bg-white',
-                    open ? 'ring-1 ring-emerald-400/80 shadow-lg' : '',
+                    open ? 'ring-1 ring-neutral-400/80 shadow-lg' : '',
                   ].join(' ')}
                   onClick={() => setActiveIndex(open ? -1 : index)}
                   onMouseMove={handleGlowMove}
@@ -189,7 +189,7 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
                     className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                     style={{
                       background: `radial-gradient(200px circle at var(--faq-x, 50%) var(--faq-y, 50%), ${
-                        isDarkMode ? 'rgba(96,165,250,0.18)' : 'rgba(15,23,42,0.08)'
+                        isDarkMode ? 'rgba(156,156,156,0.18)' : 'rgba(9,9,9,0.08)'
                       }, transparent 70%)`,
                     }}
                   />
@@ -199,7 +199,7 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
                         'mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[12px] font-semibold',
                         isDarkMode
                           ? 'border-white/30 text-white bg-white/5'
-                          : 'border-slate-300 text-slate-800 bg-white',
+                          : 'border-neutral-300 text-neutral-800 bg-white',
                       ].join(' ')}
                     >
                       {open ? '×' : '+'}
@@ -212,8 +212,8 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
                             className={[
                               'hidden sm:inline-flex items-center rounded-full border px-3 py-1 text-[9px] md:text-[10px] uppercase tracking-[0.3em] max-w-[60%] md:max-w-none truncate',
                               isDarkMode
-                                ? 'border-white/20 text-slate-200 bg-white/5'
-                                : 'border-slate-200 text-slate-600 bg-white/80',
+                                ? 'border-white/20 text-neutral-200 bg-white/5'
+                                : 'border-neutral-200 text-neutral-600 bg-white/80',
                             ].join(' ')}
                           >
                             {item.meta}

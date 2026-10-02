@@ -1,0 +1,234 @@
+{
+ "desktop-00-landing-initial.png": {
+  "before": 80.16,
+  "after": 0.0
+ },
+ "desktop-01-landing-0.png": {
+  "before": 80.45,
+  "after": 0.02
+ },
+ "desktop-01-landing-1.png": {
+  "before": 0.5,
+  "after": 0.0
+ },
+ "desktop-01-landing-2.png": {
+  "before": 6.47,
+  "after": 6.03
+ },
+ "desktop-01-landing-3.png": {
+  "before": 3.16,
+  "after": 2.56
+ },
+ "desktop-01-landing-4.png": {
+  "before": 62.07,
+  "after": 0.0
+ },
+ "desktop-01-landing-5.png": {
+  "before": 58.26,
+  "after": 0.0
+ },
+ "desktop-02-ringbuilder.png": {
+  "before": 4.84,
+  "after": 4.4
+ },
+ "desktop-03-audit-0.png": {
+  "before": 75.31,
+  "after": 0.0
+ },
+ "desktop-03-audit-1.png": {
+  "before": 42.02,
+  "after": 0.02
+ },
+ "desktop-03-audit-2.png": {
+  "before": 65.04,
+  "after": 0.0
+ },
+ "desktop-03-audit-3.png": {
+  "before": 76.75,
+  "after": 0.51
+ },
+ "desktop-03-audit-4.png": {
+  "before": 91.12,
+  "after": 0.0
+ },
+ "desktop-03-audit-5.png": {
+  "before": 45.97,
+  "after": 0.0
+ },
+ "desktop-04-portal-0.png": {
+  "before": 7.48,
+  "after": 0.0
+ },
+ "desktop-04-portal-1.png": {
+  "before": 39.51,
+  "after": 0.0
+ },
+ "desktop-05-pricing-0.png": {
+  "before": 81.47,
+  "after": 0.0
+ },
+ "desktop-05-pricing-1.png": {
+  "before": 88.5,
+  "after": 0.0
+ },
+ "desktop-05-pricing-2.png": {
+  "before": 98.99,
+  "after": 0.0
+ },
+ "desktop-FAIL-06-insights.png": {
+  "before": 81.44
+ },
+ "desktop-FAIL-07-home.png": {
+  "before": 81.47
+ },
+ "phone-00-landing-initial.png": {
+  "before": 74.08,
+  "after": 0.0
+ },
+ "phone-01-landing-0.png": {
+  "before": 73.27,
+  "after": 0.09
+ },
+ "phone-01-landing-1.png": {
+  "before": 1.46,
+  "after": 3.23
+ },
+ "phone-01-landing-2.png": {
+  "before": 26.01,
+  "after": 25.2
+ },
+ "phone-01-landing-3.png": {
+  "before": 6.26,
+  "after": 5.09
+ },
+ "phone-01-landing-4.png": {
+  "before": 56.45,
+  "after": 0.0
+ },
+ "phone-01-landing-5.png": {
+  "before": 23.66,
+  "after": 0.0
+ },
+ "phone-02-ringbuilder.png": {
+  "before": 4.67,
+  "after": 3.23
+ },
+ "phone-03-audit-0.png": {
+  "before": 56.51,
+  "after": 0.0
+ },
+ "phone-03-audit-1.png": {
+  "before": 20.37,
+  "after": 0.0
+ },
+ "phone-03-audit-2.png": {
+  "before": 65.89,
+  "after": 0.09
+ },
+ "phone-03-audit-3.png": {
+  "before": 67.75,
+  "after": 0.0
+ },
+ "phone-03-audit-4.png": {
+  "before": 39.79,
+  "after": 0.0
+ },
+ "phone-03-audit-5.png": {
+  "before": 81.27,
+  "after": 0.79
+ },
+ "phone-04-portal-0.png": {
+  "before": 4.11,
+  "after": 0.0
+ },
+ "phone-04-portal-1.png": {
+  "before": 6.38,
+  "after": 0.0
+ },
+ "phone-04-portal-2.png": {
+  "before": 36.25,
+  "after": 0.0
+ },
+ "phone-05-pricing-0.png": {
+  "before": 77.55,
+  "after": 0.0
+ },
+ "phone-FAIL-05-pricing.png": {
+  "before": 32.98
+ },
+ "phone-FAIL-06-insights.png": {
+  "before": 33.01
+ },
+ "phone-FAIL-07-home.png": {
+  "before": 32.95
+ },
+ "desktop-06-insights-0.png": {
+  "after": 19.3
+ },
+ "desktop-06-insights-1.png": {
+  "after": 3.06
+ },
+ "desktop-06-insights-2.png": {
+  "after": 1.24
+ },
+ "desktop-07-home-0.png": {
+  "after": 0.02
+ },
+ "desktop-07-home-1.png": {
+  "after": 0.0
+ },
+ "desktop-07-home-2.png": {
+  "after": 6.03
+ },
+ "desktop-07-home-3.png": {
+  "after": 2.56
+ },
+ "desktop-07-home-4.png": {
+  "after": 0.0
+ },
+ "desktop-07-home-5.png": {
+  "after": 0.0
+ },
+ "phone-05-pricing-1.png": {
+  "after": 0.0
+ },
+ "phone-05-pricing-2.png": {
+  "after": 0.0
+ },
+ "phone-05-pricing-3.png": {
+  "after": 0.0
+ },
+ "phone-05-pricing-4.png": {
+  "after": 0.0
+ },
+ "phone-06-insights-0.png": {
+  "after": 14.76
+ },
+ "phone-06-insights-1.png": {
+  "after": 0.0
+ },
+ "phone-06-insights-2.png": {
+  "after": 20.8
+ },
+ "phone-06-insights-3.png": {
+  "after": 11.03
+ },
+ "phone-07-home-0.png": {
+  "after": 0.09
+ },
+ "phone-07-home-1.png": {
+  "after": 0.0
+ },
+ "phone-07-home-2.png": {
+  "after": 25.2
+ },
+ "phone-07-home-3.png": {
+  "after": 5.09
+ },
+ "phone-07-home-4.png": {
+  "after": 0.0
+ },
+ "phone-07-home-5.png": {
+  "after": 0.0
+ }
+}

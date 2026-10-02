@@ -183,7 +183,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDarkMode = fal
             <button
               type="button"
               onClick={() => setAdding(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-600 dark:bg-emerald-500 text-white text-xs font-bold uppercase tracking-widest hover:opacity-90"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-neutral-600 dark:bg-neutral-500 text-white text-xs font-bold uppercase tracking-widest hover:opacity-90"
             >
               <Plus className="w-4 h-4" /> Add client
             </button>
@@ -217,7 +217,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDarkMode = fal
         </div>
         <div className="rounded-2xl border border-navy-200 dark:border-navy-700 p-5 bg-white dark:bg-navy-900/40">
           <p className="text-[10px] font-bold uppercase tracking-widest text-navy-500 dark:text-navy-400 mb-1">Overdue</p>
-          <p className="text-2xl font-bold serif text-red-600 dark:text-red-400">{clients.filter((c) => c.paymentStatus === 'overdue').length}</p>
+          <p className="text-2xl font-bold serif text-neutral-600 dark:text-neutral-400">{clients.filter((c) => c.paymentStatus === 'overdue').length}</p>
         </div>
       </div>
 
@@ -258,20 +258,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDarkMode = fal
                   <td className="py-3 px-4 text-sm text-navy-700 dark:text-navy-300">${c.monthlyFee}</td>
                   <td className="py-3 px-4 font-semibold text-navy-900 dark:text-white">${c.totalMRR.toLocaleString()}</td>
                   <td className="py-3 px-4">
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase ${c.paymentStatus === 'paid' ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300' : c.paymentStatus === 'overdue' ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'}`}>{c.paymentStatus}</span>
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase ${c.paymentStatus === 'paid' ? 'bg-neutral-100 dark:bg-neutral-900/40 text-neutral-700 dark:text-neutral-300' : c.paymentStatus === 'overdue' ? 'bg-neutral-100 dark:bg-neutral-900/40 text-neutral-700 dark:text-neutral-300' : 'bg-neutral-100 dark:bg-neutral-900/40 text-neutral-700 dark:text-neutral-300'}`}>{c.paymentStatus}</span>
                   </td>
                   <td className="py-3 px-4 text-sm text-navy-700 dark:text-navy-300">{c.renewalDate}</td>
-                  <td className="py-3 px-4 text-sm">{c.annualPlan ? <span className="text-emerald-600 dark:text-emerald-400">Yes</span> : 'No'}</td>
+                  <td className="py-3 px-4 text-sm">{c.annualPlan ? <span className="text-neutral-600 dark:text-neutral-400">Yes</span> : 'No'}</td>
                   <td className="py-3 px-4 flex items-center gap-2">
                     <button type="button" onClick={() => setHistoryClientId(c.id)} className="p-1.5 rounded-lg hover:bg-navy-100 dark:hover:bg-navy-800 text-navy-600 dark:text-navy-400" title="Payment history"><History className="w-4 h-4" /></button>
                     <button type="button" onClick={() => setEditingId(c.id)} className="p-1.5 rounded-lg hover:bg-navy-100 dark:hover:bg-navy-800 text-navy-600 dark:text-navy-400" title="Edit"><Pencil className="w-4 h-4" /></button>
                     {deleteConfirmId === c.id ? (
                       <span className="flex items-center gap-1">
-                        <button type="button" onClick={() => handleDelete(c.id)} className="text-[10px] font-bold text-red-600 hover:underline">Confirm</button>
+                        <button type="button" onClick={() => handleDelete(c.id)} className="text-[10px] font-bold text-neutral-600 hover:underline">Confirm</button>
                         <button type="button" onClick={() => setDeleteConfirmId(null)} className="text-[10px] font-bold text-navy-600 dark:text-navy-400">Cancel</button>
                       </span>
                     ) : (
-                      <button type="button" onClick={() => setDeleteConfirmId(c.id)} className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => setDeleteConfirmId(c.id)} className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-900/30 text-neutral-600 dark:text-neutral-400" title="Delete"><Trash2 className="w-4 h-4" /></button>
                     )}
                   </td>
                 </tr>
@@ -345,7 +345,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDarkMode = fal
                     <li key={i} className="flex justify-between items-center py-2 border-b border-navy-100 dark:border-navy-800 text-sm">
                       <span className="text-navy-700 dark:text-navy-300">{p.date}</span>
                       <span className="font-semibold text-navy-900 dark:text-white">${p.amount.toLocaleString()}</span>
-                      <span className={`text-[10px] font-bold uppercase ${p.status === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>{p.status}</span>
+                      <span className={`text-[10px] font-bold uppercase ${p.status === 'paid' ? 'text-neutral-600' : 'text-neutral-600'}`}>{p.status}</span>
                     </li>
                   ))}
                 </ul>
@@ -479,7 +479,7 @@ function AddForm({ onAdd, onCancel }: { onAdd: (p: Omit<AdminClient, 'id'>) => v
         <textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} rows={2} className="w-full px-4 py-2.5 rounded-xl border border-navy-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-navy-900 dark:text-white" />
       </div>
       <div className="flex gap-3 pt-4">
-        <button type="submit" className="px-5 py-2.5 rounded-full bg-emerald-600 text-white text-xs font-bold uppercase tracking-widest">Add client</button>
+        <button type="submit" className="px-5 py-2.5 rounded-full bg-neutral-600 text-white text-xs font-bold uppercase tracking-widest">Add client</button>
         <button type="button" onClick={onCancel} className="px-5 py-2.5 rounded-full border border-navy-200 dark:border-navy-700 text-navy-700 dark:text-navy-300 text-xs font-bold uppercase tracking-widest">Cancel</button>
       </div>
     </form>

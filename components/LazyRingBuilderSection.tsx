@@ -24,6 +24,14 @@ export const LazyRingBuilderSection: React.FC<LazyRingBuilderSectionProps> = (pr
   useEffect(() => {
     const node = hostRef.current;
     if (!node) return;
+    // QR / share deep link (?ring=…&ar=1|tryon=1): mount the studio straight away and bring it into view,
+    // otherwise the AR / try-on sheet would only open after the visitor happened to scroll here.
+    const q = new URLSearchParams(window.location.search);
+    if (q.has('ring') && (q.get('ar') === '1' || q.get('tryon') === '1')) {
+      setVisible(true);
+      window.setTimeout(() => node.scrollIntoView({ block: 'start' }), 400);
+      return;
+    }
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -38,7 +46,7 @@ export const LazyRingBuilderSection: React.FC<LazyRingBuilderSectionProps> = (pr
   }, []);
 
   const placeholderClass = `rounded-[2rem] border px-6 py-16 text-center text-xs uppercase tracking-[0.22em] ${
-    props.isDarkMode ? 'border-white/10 text-slate-500' : 'border-navy-200 text-navy-500'
+    props.isDarkMode ? 'border-white/10 text-neutral-300' : 'border-navy-200 text-neutral-700'
   }`;
 
   return (

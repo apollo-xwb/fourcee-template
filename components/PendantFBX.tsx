@@ -7,7 +7,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader';
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 
 // Folders in public/assets/3D that contain scene.gltf (or scene.glb). Add new ones as you upload.
 const ASSET_FOLDERS = [
@@ -53,7 +53,13 @@ export const PendantFBX: React.FC<PendantFBXProps> = ({ className = '', isDarkMo
     camera.position.set(0, 0, 3.05);
     camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch {
+      // No WebGL (blocked / unsupported): skip the decorative 3D instead of crashing the whole app.
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(w, h);
     renderer.domElement.style.width = '100%';
@@ -84,11 +90,11 @@ export const PendantFBX: React.FC<PendantFBXProps> = ({ className = '', isDarkMo
     const dirLight = new THREE.DirectionalLight(0xffffff, 1);
     dirLight.position.set(2, 4, 4);
     scene.add(dirLight);
-    const fillLight = new THREE.DirectionalLight(0xf5e6c8, 0.4);
+    const fillLight = new THREE.DirectionalLight(0xf0f0f0, 0.4);
     fillLight.position.set(-1, 2, 2);
     scene.add(fillLight);
 
-    const baseColor = isDarkMode ? 0xc9a227 : 0xa8b2c1; // gold (dark) / silver (light)
+    const baseColor = isDarkMode ? 0xd2d2d2 : 0xa8b2c1; // gold (dark) / silver (light)
     const chromeMaterial = new THREE.MeshPhysicalMaterial({
       color: baseColor,
       metalness: 0.92,

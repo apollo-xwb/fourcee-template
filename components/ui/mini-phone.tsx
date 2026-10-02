@@ -82,9 +82,9 @@ export function MiniPhone({
     }
   }, [status, onCallCompleted]);
 
-  const textClass = isDarkMode ? 'text-white' : 'text-[#2e261c]';
-  const mutedClass = isDarkMode ? 'text-slate-400' : 'text-[#5f523f]';
-  const inputBg = isDarkMode ? 'bg-white/10 border-white/20' : 'bg-[#f7efde]/85 border-[#b7d4bf]';
+  const textClass = isDarkMode ? 'text-white' : 'text-[#272727]';
+  const mutedClass = isDarkMode ? 'text-neutral-400' : 'text-[#535353]';
+  const inputBg = isDarkMode ? 'bg-white/10 border-white/20' : 'bg-[#efefef]/85 border-[#cccccc]';
 
   return (
     <div
@@ -92,7 +92,7 @@ export function MiniPhone({
         'w-full min-w-0 max-w-sm rounded-2xl p-4 sm:p-6 border backdrop-blur-2xl shadow-[0_25px_60px_-12px_rgba(0,0,0,0.35)]',
         isDarkMode
           ? 'bg-white/5 border-white/20'
-          : 'bg-gradient-to-br from-[#b8e2cd]/85 via-[#a6d8bf]/82 to-[#88c7ab]/78 border-[#7fbaa3]/70 shadow-[0_28px_60px_-18px_rgba(95,130,104,0.45)]',
+          : 'bg-gradient-to-br from-[#d8d8d8]/85 via-[#cccccc]/82 to-[#b8b8b8]/78 border-[#acacac]/70 shadow-[0_28px_60px_-18px_rgba(121,121,121,0.45)]',
         className
       )}
       role="group"
@@ -100,7 +100,7 @@ export function MiniPhone({
     >
       {status === 'success' ? (
         <div className="text-center py-4 animate-in fade-in duration-300">
-          <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white">
+          <div className="w-12 h-12 bg-neutral-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white">
             <Phone className="w-6 h-6" />
           </div>
           <p className={cn('font-bold', textClass)}>Call initiated</p>
@@ -109,7 +109,7 @@ export function MiniPhone({
       ) : (
         <>
           <div className="flex items-center gap-2 mb-4">
-            <div className={cn('w-10 h-10 rounded-full flex items-center justify-center', isDarkMode ? 'bg-white/10' : 'bg-[#f6ead6]/90')}>
+            <div className={cn('w-10 h-10 rounded-full flex items-center justify-center', isDarkMode ? 'bg-white/10' : 'bg-[#ebebeb]/90')}>
               <Phone className={cn('w-5 h-5', textClass)} />
             </div>
             <div>
@@ -140,7 +140,7 @@ export function MiniPhone({
                   <div className="fixed inset-0 z-10" aria-hidden onClick={() => setDropdownOpen(false)} />
                   <ul
                     role="listbox"
-                    className="absolute top-full left-0 mt-1 w-48 max-h-52 overflow-y-auto rounded-xl border shadow-xl z-20 py-1 bg-[#fbf5e7] dark:bg-navy-900 border-[#b7d4bf] dark:border-white/20 animate-in slide-in-from-top-2"
+                    className="absolute top-full left-0 mt-1 w-48 max-h-52 overflow-y-auto rounded-xl border shadow-xl z-20 py-1 bg-[#f5f5f5] dark:bg-navy-900 border-[#cccccc] dark:border-white/20 animate-in slide-in-from-top-2"
                   >
                     {COUNTRIES.map((c) => (
                       <li key={c.code} role="option">
@@ -150,7 +150,7 @@ export function MiniPhone({
                             'w-full px-3 py-2.5 text-left text-sm font-medium flex items-center gap-2 transition-colors',
                             c.code === selectedCountry.code
                               ? 'bg-navy-100 dark:bg-white/10 text-navy-900 dark:text-white'
-                              : 'text-[#4f4330] dark:text-navy-200 hover:bg-[#f1e6cf] dark:hover:bg-white/5'
+                              : 'text-[#444444] dark:text-navy-200 hover:bg-[#e7e7e7] dark:hover:bg-white/5'
                           )}
                           onClick={() => {
                             setSelectedCountry(c);
@@ -189,8 +189,8 @@ export function MiniPhone({
             className={cn(
               'w-full h-10 sm:h-11 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all disabled:opacity-50',
               isDarkMode
-                ? 'bg-green-500 text-white hover:bg-green-600 active:scale-[0.98]'
-                : 'bg-gradient-to-r from-[#22a06b] via-[#19a66f] to-[#0d8d60] text-[#f4fff9] hover:brightness-110 active:scale-[0.98] border border-[#0f8c62] shadow-[0_8px_20px_rgba(13,141,96,0.35)]'
+                ? 'bg-neutral-100 text-neutral-950 hover:bg-white active:scale-[0.98]'
+                : 'bg-gradient-to-r from-[#4a4a4a] via-[#505050] to-[#3a3a3a] text-white hover:brightness-110 active:scale-[0.98] border border-[#6e6e6e] shadow-[0_8px_20px_rgba(111,111,111,0.35)]'
             )}
           >
             <Phone className="w-5 h-5" />

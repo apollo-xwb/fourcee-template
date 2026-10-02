@@ -24,6 +24,7 @@ const VIEWS_WITH_UTILITIES: AppView[] = [
   AppView.BLOG,
   AppView.DASHBOARD,
   AppView.LEAD_MAGNET,
+  AppView.CHECKOUT,
 ];
 
 export const FloatingNav: React.FC<FloatingNavProps> = ({
@@ -100,7 +101,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
   return (
     <div className="nav-floating animate-in slide-in-from-bottom duration-700 w-full max-w-[calc(100vw-2rem)] sm:max-w-none">
       <div className="relative glass-card shadow-2xl rounded-full pl-1.5 pr-1.5 sm:pl-3 sm:pr-3 py-2 sm:py-2.5 flex items-center justify-center gap-0.5 sm:gap-2 border border-navy-900/10 transition-all mx-auto w-fit max-w-full">
-        <div className="pointer-events-none absolute inset-0 rounded-full border border-amber-300/25" />
+        <div className="pointer-events-none absolute inset-0 rounded-full border border-neutral-300/25" />
 
         {showUtilities && onOpenMenu && (
           <button
@@ -143,6 +144,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
           onClick={toggleDarkMode}
           className={`p-2 sm:p-2.5 rounded-full transition-colors shrink-0 ${iconBtn}`}
           title="Toggle Theme"
+          aria-label={isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}
         >
           {isDarkMode ? (
             <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -159,7 +161,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
           <button
             type="button"
             onClick={onBookMeeting}
-            className={`inline-flex px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.16em] shrink-0 border border-dashed border-[#d4af37] transition-all hover:scale-[1.03] active:scale-95 ${
+            className={`inline-flex items-center min-h-[36px] px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-[10px] sm:text-[10px] font-bold uppercase tracking-[0.16em] shrink-0 border border-dashed border-[#aeaeae] transition-all hover:scale-[1.03] active:scale-95 ${
               isDarkMode ? 'text-white/95 bg-white/5' : 'text-navy-900 bg-navy-900/[0.03]'
             }`}
           >
@@ -170,7 +172,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
         <button
           type="button"
           onClick={() => onNavigate(AppView.CHECKOUT)}
-          className={`px-3 py-2 sm:px-5 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-semibold transition-all uppercase tracking-[0.14em] shrink-0 ${
+          className={`min-h-[36px] px-3 py-2 sm:px-5 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-semibold transition-all uppercase tracking-[0.14em] shrink-0 ${
             isActive(AppView.CHECKOUT)
               ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950 shadow-lg scale-105'
               : 'bg-navy-900 dark:bg-white text-white dark:text-navy-950 hover:shadow-xl hover:scale-105 active:scale-95'
@@ -192,39 +194,39 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M5.121 17.804A8.97 8.97 0 0112 15a8.97 8.97 0 016.879 2.804M15 9a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               {portalNotifCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-emerald-600 text-white text-[9px] font-bold flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-neutral-600 text-white text-[9px] font-bold flex items-center justify-center">
                   {portalNotifCount}
                 </span>
               )}
             </button>
             {showPortalGuide && (
-              <div className="absolute bottom-[calc(100%+0.75rem)] right-0 w-[min(92vw,360px)] rounded-2xl border border-[#d9c39a]/70 bg-white/95 dark:bg-navy-950/95 dark:border-white/20 shadow-2xl p-4 z-10">
-                <p className="text-[10px] uppercase tracking-[0.23em] text-[#7a6648] dark:text-amber-200/80">Portal Walkthrough</p>
-                <p className="mt-2 text-sm text-navy-800 dark:text-slate-200">
+              <div className="absolute bottom-[calc(100%+0.75rem)] right-0 w-[min(92vw,360px)] rounded-2xl border border-[#c5c5c5]/70 bg-white/95 dark:bg-navy-950/95 dark:border-white/20 shadow-2xl p-4 z-10">
+                <p className="text-[10px] uppercase tracking-[0.23em] text-[#686868] dark:text-neutral-200/80">Portal Walkthrough</p>
+                <p className="mt-2 text-sm text-navy-800 dark:text-neutral-200">
                   This profile icon opens your Concierge Intelligence Portal: live calls, transcript quality, booked consults, and revenue impact across screens.
                 </p>
-                <p className="mt-2 text-xs text-navy-600 dark:text-slate-300">
+                <p className="mt-2 text-xs text-navy-600 dark:text-neutral-300">
                   Every page explains performance significance so your team can understand what changed, why it matters, and where ROI is being captured.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={onDismissPortalGuide}
-                    className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] border border-navy-200 dark:border-white/20 text-navy-700 dark:text-slate-200"
+                    className="rounded-full min-h-[40px] px-4 py-2 text-[10px] uppercase tracking-[0.18em] border border-navy-200 dark:border-white/20 text-navy-700 dark:text-neutral-200"
                   >
                     Got it
                   </button>
                   <button
                     type="button"
                     onClick={onHidePortalGuideForever}
-                    className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] bg-navy-900 text-white dark:bg-white dark:text-navy-950"
+                    className="rounded-full min-h-[40px] px-4 py-2 text-[10px] uppercase tracking-[0.18em] bg-navy-900 text-white dark:bg-white dark:text-navy-950"
                   >
                     Hide permanently
                   </button>
                   <button
                     type="button"
                     onClick={onReopenPortalGuide}
-                    className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] border border-navy-200 dark:border-white/20 text-navy-700 dark:text-slate-200"
+                    className="rounded-full min-h-[40px] px-4 py-2 text-[10px] uppercase tracking-[0.18em] border border-navy-200 dark:border-white/20 text-navy-700 dark:text-neutral-200"
                   >
                     Reopen later
                   </button>
@@ -248,6 +250,9 @@ const NavItem: React.FC<{
   <button
     type="button"
     onClick={onClick}
+    aria-label={label}
+    aria-current={active ? 'page' : undefined}
+    title={label}
     className={`flex items-center gap-1.5 sm:gap-2 px-2 py-2 sm:px-3.5 sm:py-2.5 rounded-full transition-all duration-300 shrink-0 [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-5 sm:[&>svg]:w-5 ${
       active
         ? 'bg-navy-900 text-white shadow-md scale-105 dark:bg-white dark:text-navy-950'

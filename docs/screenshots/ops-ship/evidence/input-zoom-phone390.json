@@ -1,0 +1,280 @@
+{
+ "viewportMeta": "width=device-width, initial-scale=1.0, viewport-fit=cover",
+ "fields": [
+  {
+   "view": "landing",
+   "i": 0,
+   "tag": "INPUT",
+   "type": "tel",
+   "name": "Phone number",
+   "fs": 16,
+   "range": false,
+   "focusedVisualViewportScale": 1,
+   "pass": true
+  },
+  {
+   "view": "landing",
+   "i": 1,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "Average piece value",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "landing",
+   "i": 2,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "Monthly missed calls",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "landing",
+   "i": 3,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "Monthly staff salary cost",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "chat-open",
+   "i": 0,
+   "tag": "INPUT",
+   "type": "tel",
+   "name": "Phone number",
+   "fs": 16,
+   "range": false,
+   "focusedVisualViewportScale": 1,
+   "pass": true
+  },
+  {
+   "view": "chat-open",
+   "i": 1,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "Average piece value",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "chat-open",
+   "i": 2,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "Monthly missed calls",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "chat-open",
+   "i": 3,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "Monthly staff salary cost",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "chat-open",
+   "i": 4,
+   "tag": "TEXTAREA",
+   "type": "textarea",
+   "name": "Ask Melissa how Fourcee would handle your callers, integrations, or after‑hours coverage…",
+   "fs": 16,
+   "range": false,
+   "focusedVisualViewportScale": 1,
+   "pass": true
+  },
+  {
+   "view": "admin",
+   "i": 0,
+   "tag": "INPUT",
+   "type": "text",
+   "name": "Search by name, email, package…",
+   "fs": 16,
+   "range": false,
+   "focusedVisualViewportScale": 1,
+   "pass": true
+  },
+  {
+   "view": "portal-default",
+   "i": 0,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "portal-default",
+   "i": 1,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "portal-onboard",
+   "i": 0,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "portal-onboard",
+   "i": 1,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "portal-onboard",
+   "i": 2,
+   "tag": "TEXTAREA",
+   "type": "textarea",
+   "name": "",
+   "fs": 16,
+   "range": false,
+   "focusedVisualViewportScale": 1,
+   "pass": true
+  },
+  {
+   "view": "portal-handover",
+   "i": 0,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "portal-handover",
+   "i": 1,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "portal-studio",
+   "i": 0,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "portal-studio",
+   "i": 1,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "portal-calls",
+   "i": 0,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "portal-calls",
+   "i": 1,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "ringbuilder",
+   "i": 0,
+   "tag": "INPUT",
+   "type": "tel",
+   "name": "Phone number",
+   "fs": 16,
+   "range": false,
+   "focusedVisualViewportScale": 1,
+   "pass": true
+  },
+  {
+   "view": "ringbuilder",
+   "i": 1,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "Average piece value",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "ringbuilder",
+   "i": 2,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "Monthly missed calls",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  },
+  {
+   "view": "ringbuilder",
+   "i": 3,
+   "tag": "INPUT",
+   "type": "range",
+   "name": "Monthly staff salary cost",
+   "fs": 16,
+   "range": true,
+   "focusedVisualViewportScale": null,
+   "pass": true
+  }
+ ]
+}

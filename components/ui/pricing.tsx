@@ -334,9 +334,9 @@ function PricingToggle() {
         spread: 80,
         origin: { x: originX, y: originY },
         colors: [
-          "#0a192f",
+          "#090909",
           "#ffffff",
-          "#64748b",
+          "#727272",
         ],
         ticks: 300,
         gravity: 1.2,

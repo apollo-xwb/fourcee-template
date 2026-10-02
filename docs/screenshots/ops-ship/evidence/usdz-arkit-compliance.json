@@ -1,0 +1,58 @@
+{
+ "ring-platinum.usdz": {
+  "errors": [],
+  "failedChecks": [],
+  "warnings": [],
+  "upAxis": "Y",
+  "metersPerUnit": 1.0,
+  "zip": [
+   [
+    "ring.usdc",
+    0,
+    0
+   ]
+  ]
+ },
+ "ring-rose-gold.usdz": {
+  "errors": [],
+  "failedChecks": [],
+  "warnings": [],
+  "upAxis": "Y",
+  "metersPerUnit": 1.0,
+  "zip": [
+   [
+    "ring.usdc",
+    0,
+    0
+   ]
+  ]
+ },
+ "ring-white-gold.usdz": {
+  "errors": [],
+  "failedChecks": [],
+  "warnings": [],
+  "upAxis": "Y",
+  "metersPerUnit": 1.0,
+  "zip": [
+   [
+    "ring.usdc",
+    0,
+    0
+   ]
+  ]
+ },
+ "ring-yellow-gold.usdz": {
+  "errors": [],
+  "failedChecks": [],
+  "warnings": [],
+  "upAxis": "Y",
+  "metersPerUnit": 1.0,
+  "zip": [
+   [
+    "ring.usdc",
+    0,
+    0
+   ]
+  ]
+ }
+}

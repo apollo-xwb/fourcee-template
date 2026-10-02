@@ -1,19 +1,14 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: "SphereNextThin";
-  src: url("/assets/SphereNextThin-WyR54.ttf") format("truetype");
-  font-weight: 100 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "NextSphereBlack";
-  src: url("/assets/NextSphereBlack-eZLJg.ttf") format("truetype");
-  font-weight: 600 900;
-  font-style: normal;
-  font-display: swap;
+/* The navy/silver palette used to live in a runtime Tailwind CDN config (index.html).
+   Compiled into the build (as neutral black/white greys) so there is no render-blocking third-party script and no colour tint. */
+@custom-variant dark (&:where(.dark, .dark *));
+@theme {
+  --color-navy-50: #f7f7f7; --color-navy-100: #ececec; --color-navy-200: #d4d4d4; --color-navy-300: #b0b0b0;
+  --color-navy-400: #8c8c8c; --color-navy-500: #6e6e6e; --color-navy-600: #525252; --color-navy-700: #3a3a3a;
+  --color-navy-800: #262626; --color-navy-900: #141414; --color-navy-950: #050505;
+  --color-silver-50: #f7f7f7; --color-silver-100: #ececec; --color-silver-200: #d4d4d4;
+  --color-silver-300: #a3a3a3; --color-silver-400: #8a8a8a; --color-silver-500: #6e6e6e;
 }
 
 @theme inline {
@@ -23,16 +18,16 @@
 
 :root {
   --destructive-foreground: oklch(1 0 0);
-  --fourcee-accent-copper: #c8b58f;
-  --fourcee-accent-copper-hi: #e8d5a8;
-  --fourcee-accent-ice: #c2ccd6;
-  --fourcee-brand-primary: #102a43;
-  --fourcee-brand-secondary: #051b2d;
+  --fourcee-accent-copper: #b6b6b6;
+  --fourcee-accent-copper-hi: #d6d6d6;
+  --fourcee-accent-ice: #cbcbcb;
+  --fourcee-brand-primary: #262626;
+  --fourcee-brand-secondary: #090909;
   --fourcee-ink: #e8eef4;
-  --fourcee-mute: #8aa0b5;
-  --fourcee-paper: #f4efe4;
-  --fourcee-glass: rgba(8, 18, 28, 0.52);
-  --fourcee-line: rgba(200, 181, 143, 0.28);
+  --fourcee-mute: #9d9d9d;
+  --fourcee-paper: #efefef;
+  --fourcee-glass: rgba(7,7,7,0.52);
+  --fourcee-line: rgba(182,182,182,0.28);
 }
 
 .dark {
@@ -126,7 +121,7 @@ a,
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid rgba(194, 204, 214, 0.28);
+  border: 1px solid rgba(203,203,203,0.28);
   border-radius: 999px;
   padding: 7px 13px;
   font-size: 10px;
@@ -137,8 +132,8 @@ a,
 }
 
 html:not(.dark) .fx-chip {
-  border-color: rgba(200, 181, 143, 0.4);
-  color: #3f3628;
+  border-color: rgba(182,182,182,0.4);
+  color: #373737;
   background: rgba(255, 255, 255, 0.55);
 }
 
@@ -146,8 +141,8 @@ html:not(.dark) .fx-chip {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #8ec8e6;
-  box-shadow: 0 0 10px #8ec8e6;
+  background: #bebebe;
+  box-shadow: 0 0 10px #bebebe;
 }
 
 .fx-btn {
@@ -165,7 +160,7 @@ html:not(.dark) .fx-chip {
 
 .fx-btn-primary {
   background: linear-gradient(90deg, var(--fourcee-accent-copper-hi), var(--fourcee-accent-copper));
-  color: #1a140c;
+  color: #080808;
 }
 
 .fx-btn-primary:hover {
@@ -173,14 +168,14 @@ html:not(.dark) .fx-chip {
 }
 
 .fx-btn-ghost {
-  border-color: rgba(194, 204, 214, 0.35);
+  border-color: rgba(203,203,203,0.35);
   color: var(--fourcee-ink);
   background: rgba(255, 255, 255, 0.03);
 }
 
 html:not(.dark) .fx-btn-ghost {
-  border-color: rgba(16, 42, 67, 0.22);
-  color: #102a43;
+  border-color: rgba(38,38,38,0.22);
+  color: #262626;
   background: rgba(255, 255, 255, 0.55);
 }
 
@@ -193,7 +188,7 @@ html:not(.dark) .fx-btn-ghost {
 }
 
 html:not(.dark) .fx-tile {
-  border-color: rgba(16, 42, 67, 0.1);
+  border-color: rgba(38,38,38,0.1);
   background: rgba(255, 255, 255, 0.72);
 }
 
@@ -210,6 +205,34 @@ html:not(.dark) .fx-tile {
 
 html:not(.dark) .fx-grid {
   background-image:
-    linear-gradient(rgba(16, 42, 67, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(16, 42, 67, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(38,38,38,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(38,38,38,0.06) 1px, transparent 1px);
+}
+
+/* iOS Safari zooms the viewport when a focused field is under 16px. Never allow that on touch-size screens.
+   Pinch-zoom itself stays enabled (viewport meta has no maximum-scale / user-scalable). */
+@media (max-width: 1024px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: max(16px, 1em) !important;
+  }
+}
+
+/* Keyboard focus must be visible on every control (WCAG 2.4.7). */
+:where(button, a, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

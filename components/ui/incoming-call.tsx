@@ -85,7 +85,7 @@ const IncomingCall = React.forwardRef<HTMLDivElement, IncomingCallProps>(
           <div className="grid w-full grid-cols-2 gap-4 pt-4">
             <Button
               size="lg"
-              className="w-full bg-green-500 text-white hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 border-0"
+              className="w-full bg-neutral-700 !text-white hover:bg-neutral-800 dark:bg-neutral-600 dark:hover:bg-neutral-700 border-0"
               onClick={onAccept}
             >
               <Phone className="mr-2 h-5 w-5" />

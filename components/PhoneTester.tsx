@@ -40,7 +40,7 @@ export const PhoneTester: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
         {status === 'success' ? (
           <div className="text-center py-10 animate-in bounce-in duration-500">
-            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl">✓</div>
+            <div className="w-16 h-16 bg-neutral-500 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl">✓</div>
             <p className="font-bold text-navy-900 dark:text-white">Incoming call initiated...</p>
             <p className="text-sm text-navy-400 mt-2 italic">Check your phone. The AI is ready.</p>
           </div>

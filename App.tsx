@@ -184,15 +184,8 @@ const App: React.FC = () => {
       });
   }, []);
 
-  useEffect(() => {
-    const theme = auditData?.branding?.theme;
-    if (!theme) return;
-    const root = document.documentElement;
-    if (theme.primary) root.style.setProperty('--fourcee-brand-primary', theme.primary);
-    if (theme.secondary) root.style.setProperty('--fourcee-brand-secondary', theme.secondary);
-    if (theme.accentGold) root.style.setProperty('--fourcee-accent-copper', theme.accentGold);
-    if (theme.accentSilver) root.style.setProperty('--fourcee-accent-ice', theme.accentSilver);
-  }, [auditData]);
+  // content.json `branding.theme` is intentionally NOT applied to the UI chrome: the template is locked to the
+  // black-and-white liquid-glass look (no colour accents). The keys stay in the contract and are ignored here.
 
   useEffect(() => {
     const el = scrollContainerRef.current;
@@ -378,12 +371,13 @@ const App: React.FC = () => {
     return (
     <div className="animate-in fade-in duration-1000 pb-32 md:pb-40">
       {/* Hero: cinematic ring plate + right-rail copy — matches founder frame 01 */}
-      <section className="snap-start snap-always relative min-h-screen overflow-hidden bg-[#051b2d]">
+      <section className="snap-start snap-always relative min-h-screen overflow-hidden bg-[#090909]">
         <div
           className="pointer-events-none absolute inset-0"
           style={{
+            filter: 'grayscale(1)',
             background:
-              'linear-gradient(90deg, rgba(5,27,45,0.08) 0%, rgba(5,27,45,0.16) 40%, rgba(5,27,45,0.78) 66%, rgba(5,27,45,0.94) 100%), url("/assets/plates/plate_hero_ring.png") center / cover no-repeat',
+              'linear-gradient(90deg, rgba(9,9,9,0.08) 0%, rgba(9,9,9,0.16) 40%, rgba(9,9,9,0.78) 66%, rgba(9,9,9,0.94) 100%), url("/assets/plates/plate_hero_ring.png") center / cover no-repeat',
           }}
           aria-hidden
         />
@@ -398,19 +392,19 @@ const App: React.FC = () => {
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              className="fx-display text-[32px] leading-[0.95] text-[#f4efe4] sm:text-4xl md:text-5xl"
+              className="fx-display text-[32px] leading-[0.95] text-[#efefef] sm:text-4xl md:text-5xl"
             >
               The gold standard
               <br />
               of voice AI
             </motion.h1>
-            <p className="mt-4 text-[11px] uppercase tracking-[0.28em] text-[#c2ccd6]">
+            <p className="mt-4 text-[11px] uppercase tracking-[0.28em] text-[#cbcbcb]">
               Tailored exclusively for high-end jewelers
             </p>
             <div className="fx-tile mt-7 max-w-[440px] px-5 py-4">
               <p className="fx-kicker">Prepared for</p>
-              <p className="mt-2 text-xl text-[#f4efe4]">{businessName}</p>
-              <p className="mt-2 text-[13px] leading-relaxed text-[#8aa0b5]">
+              <p className="mt-2 text-xl text-[#efefef]">{businessName}</p>
+              <p className="mt-2 text-[13px] leading-relaxed text-[#9d9d9d]">
                 One recovered client can cover months of platform cost.
               </p>
             </div>
@@ -440,13 +434,13 @@ const App: React.FC = () => {
       </section>
 
       {ringBuilder && (
-        <section id="ring-studio" className="snap-start snap-always min-h-screen flex flex-col justify-center px-3 sm:px-6 py-10 md:py-16 bg-[#07080c]">
+        <section id="ring-studio" className="snap-start snap-always min-h-screen flex flex-col justify-center px-3 sm:px-6 py-10 md:py-16 bg-[#030303]">
           <div className="mx-auto mb-6 w-full max-w-6xl px-1 text-center sm:text-left">
-            <p className="fx-kicker text-[#c8b58f]">Lead magnet · private showroom</p>
-            <h2 className="fx-display mt-3 text-3xl leading-[0.95] text-[#f4efe4] md:text-4xl">
+            <p className="fx-kicker text-[#b6b6b6]">Lead magnet · private showroom</p>
+            <h2 className="fx-display mt-3 text-3xl leading-[0.95] text-[#efefef] md:text-4xl">
               Ring Builder
             </h2>
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#8aa0b5]">
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#9d9d9d]">
               Let buyers play with metal and stone in 3D — a polished entry to the concierge experience, not a raw tool dump.
             </p>
           </div>
@@ -460,14 +454,14 @@ const App: React.FC = () => {
       <section ref={demoRef} id="demo" className="snap-start snap-always min-h-screen flex flex-col justify-center py-24 md:py-32 px-4 sm:px-6 bg-transparent relative">
         <div className="max-w-6xl mx-auto flex flex-col items-center w-full min-w-0">
           <h2 className="text-2xl md:text-3xl font-bold serif text-navy-900 dark:text-white mb-8 md:mb-12 text-center tracking-tighter">
-            <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-emerald-700 dark:from-white dark:via-slate-200 dark:to-emerald-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-neutral-700 dark:from-white dark:via-neutral-200 dark:to-neutral-300 bg-clip-text text-transparent">
               Experience the Demo
             </span>
           </h2>
           <button
             type="button"
             onClick={() => setShowDemoCallModal(true)}
-            className="mb-6 h-12 md:h-14 px-5 md:px-8 bg-navy-900/90 dark:bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all border border-[#c8b58f]/50 text-white dark:text-navy-950 text-[10px] md:text-xs uppercase tracking-[0.22em] font-bold shadow-xl"
+            className="mb-6 h-12 md:h-14 px-5 md:px-8 bg-navy-900/90 dark:bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all border border-[#b6b6b6]/50 text-white dark:text-navy-950 text-[10px] md:text-xs uppercase tracking-[0.22em] font-bold shadow-xl"
           >
             Call me
           </button>
@@ -475,7 +469,7 @@ const App: React.FC = () => {
             style={{ scale: demoScale, opacity: demoOpacity, y: demoY }}
             className="relative w-full max-w-[280px] aspect-[9/16] md:max-w-4xl md:aspect-video rounded-2xl md:rounded-[3rem] overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] group origin-center"
           >
-             <img src={demoImage} alt="Demo" className="w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-1000" />
+             <img src={demoImage} alt="Demo" className="w-full h-full object-cover grayscale brightness-50 group-hover:scale-105 transition-transform duration-1000" />
              <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 md:p-0">
                 <div className="mt-4 md:mt-8 text-center max-w-md px-2 md:px-6">
                   <p className="text-sm md:text-xl serif italic leading-relaxed">"Fourcee didn't just replace our receptionist; it enhanced the entire client experience. Our ROI was instant."</p>
@@ -562,10 +556,10 @@ const App: React.FC = () => {
           </div>
           <div className="flex flex-col gap-6">
             <div className="glass-card p-8 rounded-[2.5rem] border border-navy-50 shadow-xl dark:border-navy-800">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 mb-4 flex items-center gap-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4 flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neutral-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-neutral-500" />
                 </span>
                 Live Performance Signals
               </p>
@@ -647,30 +641,30 @@ const App: React.FC = () => {
               <DisplayCards 
                 cards={[
                   {
-                    icon: <PhoneCall className="size-4 text-red-400" />,
+                    icon: <PhoneCall className="size-4 text-neutral-400" />,
                     title: "Missed Opportunity",
                     description: "$12,000 Anniversary Inquiry",
                     date: "Sunday, 8:14 PM",
-                    iconClassName: "text-red-500",
-                    titleClassName: "text-red-500",
+                    iconClassName: "text-neutral-500",
+                    titleClassName: "text-neutral-500",
                     className: "[grid-area:stack] -translate-y-6 hover:-translate-y-10 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
                   },
                   {
-                    icon: <PhoneCall className="size-4 text-red-400" />,
+                    icon: <PhoneCall className="size-4 text-neutral-400" />,
                     title: "Missed Opportunity",
                     description: "$8,500 Engagement Lead",
                     date: "Saturday, 9:30 PM",
-                    iconClassName: "text-red-500",
-                    titleClassName: "text-red-500",
+                    iconClassName: "text-neutral-500",
+                    titleClassName: "text-neutral-500",
                     className: "[grid-area:stack] translate-x-12 translate-y-2 hover:-translate-y-1 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
                   },
                   {
-                    icon: <PhoneCall className="size-4 text-red-400" />,
+                    icon: <PhoneCall className="size-4 text-neutral-400" />,
                     title: "Missed Opportunity",
                     description: "$15,000 Watch Inquiry",
                     date: "Yesterday, 11:45 PM",
-                    iconClassName: "text-red-500",
-                    titleClassName: "text-red-500",
+                    iconClassName: "text-neutral-500",
+                    titleClassName: "text-neutral-500",
                     className: "[grid-area:stack] translate-x-24 translate-y-10 hover:translate-y-6",
                   },
                 ]}
@@ -692,8 +686,8 @@ const App: React.FC = () => {
             backgroundImage: isDarkMode
               ? `linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
                  linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)`
-              : `linear-gradient(to right, rgba(16,42,67,0.14) 1px, transparent 1px),
-                 linear-gradient(to bottom, rgba(16,42,67,0.14) 1px, transparent 1px)`,
+              : `linear-gradient(to right, rgba(38,38,38,0.14) 1px, transparent 1px),
+                 linear-gradient(to bottom, rgba(38,38,38,0.14) 1px, transparent 1px)`,
             backgroundSize: '32px 32px',
             maskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
             WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
@@ -708,7 +702,7 @@ const App: React.FC = () => {
         </div>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-20 relative z-10">
           <div className="order-2 md:order-1 flex-1 space-y-8 animate-in slide-in-from-left duration-1000">
-            <h2 className="text-2xl md:text-4xl font-bold serif leading-[1.1] text-slate-900 dark:text-white">Proactive <br/><span className="italic shimmer-text">Reach</span></h2>
+            <h2 className="text-2xl md:text-4xl font-bold serif leading-[1.1] text-neutral-900 dark:text-white">Proactive <br/><span className="italic shimmer-text">Reach</span></h2>
             <p className="text-xl text-navy-600 dark:text-navy-300 font-light leading-relaxed">
               Fourcee doesn't just wait for customers. It actively nurtures your pipeline with high-fidelity outbound reminders and follow-ups.
             </p>
@@ -740,13 +734,13 @@ const App: React.FC = () => {
       <section className="snap-start snap-always min-h-screen flex flex-col justify-center pt-32 pb-16 overflow-x-hidden bg-transparent transition-colors">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 min-w-0">
           <div className="text-center mb-16 md:mb-24 max-w-3xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold serif text-slate-900 dark:text-white mb-6 md:mb-8 tracking-tighter break-words">
-              <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-amber-700 dark:from-white dark:via-slate-200 dark:to-amber-200 bg-clip-text text-transparent">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold serif text-neutral-900 dark:text-white mb-6 md:mb-8 tracking-tighter break-words">
+              <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-neutral-700 dark:from-white dark:via-neutral-200 dark:to-neutral-200 bg-clip-text text-transparent">
                 Unified Workflow
               </span>
             </h2>
-            <p className="text-slate-600 dark:text-navy-400 uppercase tracking-[0.2em] text-[11px] font-bold mb-6">Built for your current stack</p>
-            <p className="text-base sm:text-lg text-slate-800 dark:text-navy-300 font-light leading-relaxed">
+            <p className="text-neutral-600 dark:text-navy-400 uppercase tracking-[0.2em] text-[11px] font-bold mb-6">Built for your current stack</p>
+            <p className="text-base sm:text-lg text-neutral-800 dark:text-navy-300 font-light leading-relaxed">
               Fourcee integrates seamlessly with the tools you already use. From deep Nivoda inventory sync to global e-commerce leaders, your existing workflow remains untouched, only enhanced.
             </p>
             <button
@@ -778,15 +772,15 @@ const App: React.FC = () => {
               className="absolute inset-0 pointer-events-none z-[1]"
               style={{
                 background: isDarkMode
-                  ? 'radial-gradient(ellipse 75% 75% at 50% 50%, transparent 35%, rgba(5,27,45,0.92) 100%)'
+                  ? 'radial-gradient(ellipse 75% 75% at 50% 50%, transparent 35%, rgba(9,9,9,0.92) 100%)'
                   : 'radial-gradient(ellipse 75% 75% at 50% 50%, transparent 35%, rgba(255,255,255,0.92) 100%)',
               }}
               aria-hidden
             />
             <div className="absolute inset-0 z-[2] flex items-end bg-gradient-to-t from-navy-950/80 via-transparent to-transparent p-4 sm:p-8 md:p-12 pointer-events-none">
               <div className="max-w-xl">
-                <h3 className={`text-2xl sm:text-3xl md:text-4xl font-bold serif mb-2 md:mb-4 italic ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>The Synchronized Showroom</h3>
-                <p className={`font-light text-sm sm:text-base md:text-lg ${isDarkMode ? 'text-white/80' : 'text-slate-800'}`}>Fourcee acts as the intelligent bridge between your client interactions and your inventory, scheduling, and CRM systems.</p>
+                <h3 className={`text-2xl sm:text-3xl md:text-4xl font-bold serif mb-2 md:mb-4 italic ${isDarkMode ? 'text-white' : 'text-neutral-900'}`}>The Synchronized Showroom</h3>
+                <p className={`font-light text-sm sm:text-base md:text-lg ${isDarkMode ? 'text-white/80' : 'text-neutral-800'}`}>Fourcee acts as the intelligent bridge between your client interactions and your inventory, scheduling, and CRM systems.</p>
               </div>
             </div>
             </div>
@@ -808,7 +802,7 @@ const App: React.FC = () => {
                 </p>
                 <button 
                   onClick={() => setExpandedIntegration(expandedIntegration === idx ? null : idx)}
-                  className="text-[10px] font-bold uppercase tracking-widest text-navy-900 dark:text-white border-b border-navy-900/20 dark:border-white/20 pb-1 w-fit hover:border-navy-900 dark:hover:border-white transition-all"
+                  className="text-[10px] font-bold uppercase tracking-widest text-navy-900 dark:text-white border-b border-navy-900/20 dark:border-white/20 pb-1 pt-2 min-h-[36px] w-fit hover:border-navy-900 dark:hover:border-white transition-all"
                 >
                   {expandedIntegration === idx ? 'Close Details ↑' : 'View Others ↓'}
                 </button>
@@ -834,7 +828,7 @@ const App: React.FC = () => {
       <section
         className="snap-start snap-always min-h-[80vh] flex flex-col justify-center px-6 py-16 md:py-24 relative transition-colors"
         style={{
-          backgroundColor: isDarkMode ? '#090906' : '#f4f5f7',
+          backgroundColor: isDarkMode ? '#040404' : '#f4f5f7',
           maskImage:
             'linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)',
           WebkitMaskImage:
@@ -845,8 +839,8 @@ const App: React.FC = () => {
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: isDarkMode
-              ? `repeating-radial-gradient(circle at 0 0, rgba(194,204,214,0.12) 0, rgba(194,204,214,0.12) 1px, transparent 1px, transparent 3px)`
-              : `repeating-radial-gradient(circle at 0 0, rgba(16,42,67,0.08) 0, rgba(16,42,67,0.08) 1px, transparent 1px, transparent 3px)`,
+              ? `repeating-radial-gradient(circle at 0 0, rgba(203,203,203,0.12) 0, rgba(203,203,203,0.12) 1px, transparent 1px, transparent 3px)`
+              : `repeating-radial-gradient(circle at 0 0, rgba(38,38,38,0.08) 0, rgba(38,38,38,0.08) 1px, transparent 1px, transparent 3px)`,
             opacity: 0.9,
           }}
         />
@@ -878,6 +872,7 @@ const App: React.FC = () => {
                   </mask>
                 </defs>
                 <image
+                  style={{ filter: 'grayscale(1)' }}
                   href={nivodaGif}
                   x="0"
                   y="0"
@@ -890,31 +885,31 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="space-y-6 text-left order-2">
-            <p className={`text-[10px] font-bold uppercase tracking-[0.3em] ${isDarkMode ? 'text-[#C2CCD6]/80' : 'text-navy-600/80'}`}>
+            <p className={`text-[10px] font-bold uppercase tracking-[0.3em] ${isDarkMode ? 'text-[#cbcbcb]/80' : 'text-navy-600/80'}`}>
               Nivoda-native inventory intelligence
             </p>
             <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold serif tracking-tight ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>
               Your AI hears<br className="hidden sm:block" /> the same diamonds you see.
             </h2>
-            <p className={`text-sm sm:text-base max-w-xl leading-relaxed ${isDarkMode ? 'text-[#C2CCD6]/90' : 'text-navy-700/90'}`}>
+            <p className={`text-sm sm:text-base max-w-xl leading-relaxed ${isDarkMode ? 'text-[#cbcbcb]/90' : 'text-navy-700/90'}`}>
               Fourcee doesn&apos;t guess what&apos;s in your case - it reads live data from Nivoda. Every search,
               estimate and availability check is backed by the same inventory spine your buyers already trust.
             </p>
-            <div className={`grid gap-4 sm:grid-cols-2 text-xs sm:text-sm ${isDarkMode ? 'text-[#C2CCD6]' : 'text-navy-700'}`}>
-              <div className={`rounded-2xl border px-4 py-3 backdrop-blur-md ${isDarkMode ? 'border-[#535B68]/60 bg-black/40' : 'border-navy-200 bg-white/80'}`}>
+            <div className={`grid gap-4 sm:grid-cols-2 text-xs sm:text-sm ${isDarkMode ? 'text-[#cbcbcb]' : 'text-navy-700'}`}>
+              <div className={`rounded-2xl border px-4 py-3 backdrop-blur-md ${isDarkMode ? 'border-[#5a5a5a]/60 bg-black/40' : 'border-navy-200 bg-white/80'}`}>
                 <p className={`font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>Real-time availability</p>
                 <p className="leading-relaxed">
                   Quote from live Nivoda feeds so your AI never offers stones that have already left the pipeline.
                 </p>
               </div>
-              <div className={`rounded-2xl border px-4 py-3 backdrop-blur-md ${isDarkMode ? 'border-[#3A5A88]/70 bg-black/40' : 'border-navy-200 bg-white/80'}`}>
+              <div className={`rounded-2xl border px-4 py-3 backdrop-blur-md ${isDarkMode ? 'border-[#575757]/70 bg-black/40' : 'border-navy-200 bg-white/80'}`}>
                 <p className={`font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>Smart search logic</p>
                 <p className="leading-relaxed">
                   Translate vague requests (&quot;oval, lab-grown, under 3 carats&quot;) into structured Nivoda queries
                   in the background.
                 </p>
               </div>
-              <div className={`rounded-2xl border px-4 py-3 backdrop-blur-md sm:col-span-2 ${isDarkMode ? 'border-[#535B68]/60 bg-black/40' : 'border-navy-200 bg-white/80'}`}>
+              <div className={`rounded-2xl border px-4 py-3 backdrop-blur-md sm:col-span-2 ${isDarkMode ? 'border-[#5a5a5a]/60 bg-black/40' : 'border-navy-200 bg-white/80'}`}>
                 <p className={`font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>CRM + analytics ready</p>
                 <p className="leading-relaxed">
                   Every Nivoda-backed search can be logged against a contact in your CRM and surfaced in the analytics
@@ -922,7 +917,7 @@ const App: React.FC = () => {
                 </p>
               </div>
             </div>
-            <p className={`text-[10px] uppercase tracking-[0.25em] pt-2 ${isDarkMode ? 'text-[#C2CCD6]/70' : 'text-navy-600/70'}`}>
+            <p className={`text-[10px] uppercase tracking-[0.25em] pt-2 ${isDarkMode ? 'text-[#cbcbcb]/70' : 'text-navy-600/70'}`}>
               Built to sit on top of your existing Nivoda workflows - not replace them.
             </p>
             <button
@@ -952,8 +947,8 @@ const App: React.FC = () => {
             backgroundImage: isDarkMode
               ? `linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
                  linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)`
-              : `linear-gradient(to right, rgba(16,42,67,0.14) 1px, transparent 1px),
-                 linear-gradient(to bottom, rgba(16,42,67,0.14) 1px, transparent 1px)`,
+              : `linear-gradient(to right, rgba(38,38,38,0.14) 1px, transparent 1px),
+                 linear-gradient(to bottom, rgba(38,38,38,0.14) 1px, transparent 1px)`,
             backgroundSize: '32px 32px',
             maskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
             WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
@@ -1024,8 +1019,8 @@ const App: React.FC = () => {
           className="h-16 w-auto object-contain sm:h-20 md:h-24"
         />
       </div>
-      <h1 className="text-4xl font-bold serif mb-4 text-center tracking-tighter text-slate-900 dark:text-white">The Ledger</h1>
-      <p className="text-center text-slate-600 dark:text-navy-300 uppercase tracking-[0.3em] text-[10px] font-bold mb-20">Strategic Insights for Luxury Retailers</p>
+      <h1 className="text-4xl font-bold serif mb-4 text-center tracking-tighter text-neutral-900 dark:text-white">The Ledger</h1>
+      <p className="text-center text-neutral-600 dark:text-navy-300 uppercase tracking-[0.3em] text-[10px] font-bold mb-20">Strategic Insights for Luxury Retailers</p>
       
       <div className="grid md:grid-cols-2 gap-10 md:gap-16">
         {BLOG_POSTS.map(post => (
@@ -1160,13 +1155,13 @@ const App: React.FC = () => {
           ? undefined
           : {
               background:
-                'linear-gradient(180deg, #faf5ea 0%, #f8f1e2 38%, #f6efdf 100%)',
+                'linear-gradient(180deg, #f5f5f5 0%, #f1f1f1 38%, #efefef 100%)',
             }
       }
     >
       <div className="fixed inset-0 z-0 pointer-events-none">
         <EtherealShadow 
-          color={isDarkMode ? "rgba(255, 255, 255, 0.12)" : "rgba(16, 42, 67, 0.08)"}
+          color={isDarkMode ? "rgba(255, 255, 255, 0.12)" : "rgba(38,38,38,0.08)"}
           animation={isDarkMode ? { scale: 100, speed: 45 } : { scale: 40, speed: 20 }}
           noise={isDarkMode ? { opacity: 0.6, scale: 1.2 } : { opacity: 0.3, scale: 1 }}
         />
@@ -1174,8 +1169,8 @@ const App: React.FC = () => {
 
       {currentView === AppView.LANDING && (
         <div className="pointer-events-none fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-6 py-5 sm:px-10">
-          <div className="fx-hud flex items-center gap-3 text-[11px] text-[#f4efe4]">
-            <span className="h-[18px] w-[18px] rounded-full border border-[#c8b58f] bg-[radial-gradient(circle_at_35%_30%,#f7e7b8,#b8913f_60%,#5c4318)]" />
+          <div className="fx-hud flex items-center gap-3 text-[11px] text-[#efefef]">
+            <span className="h-[18px] w-[18px] rounded-full border border-[#b6b6b6] bg-[radial-gradient(circle_at_35%_30%,#e7e7e7,#8a8a8a_60%,#454545)]" />
             Fourcee · Concierge
           </div>
         </div>
@@ -1194,7 +1189,7 @@ const App: React.FC = () => {
           >
             <div
               className={`pointer-events-none absolute inset-0 ${
-                isDarkMode ? 'bg-navy-950/88' : 'bg-[#faf5ea]/94'
+                isDarkMode ? 'bg-navy-950/88' : 'bg-[#f5f5f5]/94'
               }`}
               aria-hidden
             />
@@ -1204,7 +1199,7 @@ const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsSideMenuOpen(false)}
-                className="h-9 w-9 rounded-full border border-navy-200 dark:border-white/20 flex items-center justify-center text-navy-700 dark:text-slate-200"
+                className="h-9 w-9 rounded-full border border-navy-200 dark:border-white/20 flex items-center justify-center text-navy-700 dark:text-neutral-200"
                 aria-label="Close side menu"
               >
                 <X className="h-4 w-4" />
@@ -1217,9 +1212,9 @@ const App: React.FC = () => {
                 className="h-10 w-auto object-contain opacity-95"
               />
             </div>
-            <div className="mt-4 rounded-2xl border border-[#d9c39a]/70 bg-[#fbf4e7]/90 dark:bg-white/5 dark:border-white/10 p-4">
+            <div className="mt-4 rounded-2xl border border-[#c5c5c5]/70 bg-[#f5f5f5]/90 dark:bg-white/5 dark:border-white/10 p-4">
               <p className="text-[11px] font-semibold text-navy-900 dark:text-white">{businessName}</p>
-              <p className="mt-1 text-xs text-navy-700 dark:text-slate-200">Voice agent ops: call logs, transcripts, actions, onboarding, handover.</p>
+              <p className="mt-1 text-xs text-navy-700 dark:text-neutral-200">Voice agent ops: call logs, transcripts, actions, onboarding, handover.</p>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
               {[
@@ -1240,17 +1235,17 @@ const App: React.FC = () => {
                   }}
                   className="rounded-[1.25rem] min-h-[96px] border border-navy-200/80 dark:border-white/15 px-3 py-3 text-left bg-white/80 dark:bg-black/30 hover:bg-white dark:hover:bg-white/10 transition"
                 >
-                  <div className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-navy-100 dark:bg-white/10 text-navy-700 dark:text-slate-200">
+                  <div className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-navy-100 dark:bg-white/10 text-navy-700 dark:text-neutral-200">
                     {item.icon}
                   </div>
                   <p className="mt-2 text-xs font-semibold text-navy-900 dark:text-white">{item.label}</p>
-                  <p className="mt-1 text-[11px] text-navy-600 dark:text-slate-300">{item.sub}</p>
+                  <p className="mt-1 text-[11px] text-navy-600 dark:text-neutral-300">{item.sub}</p>
                 </button>
               ))}
             </div>
             <div className="mt-6 rounded-2xl border border-navy-200 dark:border-white/10 p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-navy-500 dark:text-slate-400">Onboarding & help</p>
-              <p className="mt-2 text-xs text-navy-700 dark:text-slate-300">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-navy-500 dark:text-neutral-400">Onboarding & help</p>
+              <p className="mt-2 text-xs text-navy-700 dark:text-neutral-300">
                 Re-open the portal walkthrough at any time or launch a demo call popup to guide buyers through your concierge journey.
               </p>
               <div className="mt-3 flex gap-2">
@@ -1270,16 +1265,16 @@ const App: React.FC = () => {
                     setCurrentView(AppView.LANDING);
                     setIsSideMenuOpen(false);
                   }}
-                  className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] border border-navy-200 dark:border-white/20 text-navy-700 dark:text-slate-200"
+                  className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] border border-navy-200 dark:border-white/20 text-navy-700 dark:text-neutral-200"
                 >
                   Return home
                 </button>
               </div>
             </div>
-            <div className="mt-6 rounded-2xl border border-[#d9c39a]/70 dark:border-white/15 bg-white/85 dark:bg-black/35 p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-navy-600 dark:text-slate-300">Quick ROI calculator</p>
+            <div className="mt-6 rounded-2xl border border-[#c5c5c5]/70 dark:border-white/15 bg-white/85 dark:bg-black/35 p-4">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-navy-600 dark:text-neutral-300">Quick ROI calculator</p>
               <div className="mt-3 space-y-3">
-                <label className="block text-[11px] text-navy-700 dark:text-slate-200">
+                <label className="block text-[11px] text-navy-700 dark:text-neutral-200">
                   Missed qualified calls / month: <span className="font-semibold">{sideMenuCallsPerMonth}</span>
                 </label>
                 <input
@@ -1289,9 +1284,9 @@ const App: React.FC = () => {
                   step={1}
                   value={sideMenuCallsPerMonth}
                   onChange={(e) => setSideMenuCallsPerMonth(Number(e.target.value))}
-                  className="w-full accent-emerald-600"
+                  className="w-full accent-neutral-600"
                 />
-                <label className="block text-[11px] text-navy-700 dark:text-slate-200">
+                <label className="block text-[11px] text-navy-700 dark:text-neutral-200">
                   Average deal value: <span className="font-semibold">${sideMenuAvgDeal.toLocaleString()}</span>
                 </label>
                 <input
@@ -1301,11 +1296,11 @@ const App: React.FC = () => {
                   step={250}
                   value={sideMenuAvgDeal}
                   onChange={(e) => setSideMenuAvgDeal(Number(e.target.value))}
-                  className="w-full accent-emerald-600"
+                  className="w-full accent-neutral-600"
                 />
-                <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900/25 border border-emerald-200 dark:border-emerald-500/20 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300">Est. monthly recovered</p>
-                  <p className="text-lg font-bold text-emerald-900 dark:text-emerald-100">${sideMenuRecoveredMonthly.toLocaleString()}</p>
+                <div className="rounded-xl bg-neutral-100 dark:bg-neutral-900/25 border border-neutral-200 dark:border-neutral-500/20 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-neutral-700 dark:text-neutral-300">Est. monthly recovered</p>
+                  <p className="text-lg font-bold text-neutral-900 dark:text-neutral-100">${sideMenuRecoveredMonthly.toLocaleString()}</p>
                 </div>
                 <button
                   type="button"
@@ -1319,9 +1314,9 @@ const App: React.FC = () => {
                 </button>
               </div>
             </div>
-            <div className="mt-6 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-900/20 p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-emerald-800 dark:text-emerald-300">ROI reminder</p>
-              <p className="mt-2 text-xs text-emerald-900 dark:text-emerald-100">
+            <div className="mt-6 rounded-2xl border border-neutral-200 dark:border-neutral-500/20 bg-neutral-50 dark:bg-neutral-900/20 p-4">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-800 dark:text-neutral-300">ROI reminder</p>
+              <p className="mt-2 text-xs text-neutral-900 dark:text-neutral-100">
                 Recovering one serious customer can pay for multiple months of concierge coverage and analytics.
               </p>
             </div>
@@ -1402,7 +1397,7 @@ const App: React.FC = () => {
       <button
         type="button"
         onClick={() => navigate(AppView.ADMIN)}
-        className="fixed bottom-4 left-4 z-[120] h-3 w-3 rounded-full bg-navy-900/20 dark:bg-white/20 hover:bg-navy-900/50 dark:hover:bg-white/50 transition-colors"
+        className="fixed bottom-4 left-4 z-[120] h-3 w-3 rounded-full after:absolute after:-inset-3 after:content-[''] bg-navy-900/20 dark:bg-white/20 hover:bg-navy-900/50 dark:hover:bg-white/50 transition-colors"
         aria-label="Hidden admin access"
         title="Admin access"
       />
@@ -1414,11 +1409,11 @@ const App: React.FC = () => {
           style={{
             background: isDarkMode
               ? currentView === AppView.LEAD_MAGNET
-                ? 'linear-gradient(to bottom, #102a43 0%, #0a2238 28%, #071a2c 58%, #051b2d 100%)'
-                : 'linear-gradient(to bottom, rgba(5,27,45,0) 0%, rgba(5,27,45,0.85) 32%, #051b2d 100%)'
+                ? 'linear-gradient(to bottom, #262626 0%, #0c0c0c 28%, #090909 58%, #090909 100%)'
+                : 'linear-gradient(to bottom, rgba(9,9,9,0) 0%, rgba(9,9,9,0.85) 32%, #090909 100%)'
               : currentView === AppView.LEAD_MAGNET
-                ? 'linear-gradient(to bottom, #f2e8d2 0%, #f6efdf 28%, #f8f1e2 58%, #faf5ea 100%)'
-                : 'linear-gradient(to bottom, rgba(250,245,234,0) 0%, rgba(248,241,226,0.92) 32%, #faf5ea 100%)',
+                ? 'linear-gradient(to bottom, #e9e9e9 0%, #efefef 28%, #f1f1f1 58%, #f5f5f5 100%)'
+                : 'linear-gradient(to bottom, rgba(245,245,245,0) 0%, rgba(241,241,241,0.92) 32%, #f5f5f5 100%)',
           }}
         />
         <div
@@ -1426,7 +1421,7 @@ const App: React.FC = () => {
           style={{
             backgroundImage: isDarkMode
               ? 'linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)'
-              : 'linear-gradient(rgba(15,23,42,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.06) 1px, transparent 1px)',
+              : 'linear-gradient(rgba(9,9,9,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(9,9,9,0.06) 1px, transparent 1px)',
             backgroundSize: currentView === AppView.LEAD_MAGNET ? '28px 28px' : '32px 32px',
             opacity: isDarkMode ? 0.14 : 0.22,
             maskImage: 'linear-gradient(to bottom, black 0%, black 35%, transparent 72%)',

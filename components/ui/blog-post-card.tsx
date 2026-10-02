@@ -39,8 +39,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       className={[
         'flex w-full flex-col gap-3 overflow-hidden rounded-[2rem] border shadow-xl transition-colors',
         isDarkMode
-          ? 'border-white/10 bg-slate-200/90 text-navy-950 shadow-[0_20px_50px_rgba(0,0,0,0.35)] backdrop-blur-sm'
-          : 'bg-slate-950 text-slate-50 border-slate-900',
+          ? 'border-white/10 bg-neutral-200/90 text-navy-950 shadow-[0_20px_50px_rgba(0,0,0,0.35)] backdrop-blur-sm'
+          : 'bg-neutral-950 text-neutral-50 border-neutral-900',
       ].join(' ')}
     >
       <div className="relative h-64 w-full overflow-hidden">
@@ -56,7 +56,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           <div
             className={[
               'mb-4 flex flex-wrap items-center gap-2 text-xs font-medium',
-              isDarkMode ? 'text-slate-600' : 'text-slate-300',
+              isDarkMode ? 'text-neutral-600' : 'text-neutral-300',
             ].join(' ')}
           >
             {tag && (
@@ -64,14 +64,14 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
                 className={[
                   'inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em]',
                   isDarkMode
-                    ? 'border-slate-300/80 bg-white/55 text-slate-700'
-                    : 'border-slate-700 bg-slate-900 text-slate-100',
+                    ? 'border-neutral-300/80 bg-white/55 text-neutral-700'
+                    : 'border-neutral-700 bg-neutral-900 text-neutral-100',
                 ].join(' ')}
               >
                 {tag}
               </span>
             )}
-            {tag && readingTimeSeconds && <span className="mx-1 text-slate-300 dark:text-navy-600">•</span>}
+            {tag && readingTimeSeconds && <span className="mx-1 text-neutral-300 dark:text-navy-600">•</span>}
             {readingTimeSeconds && <span>{formatReadTime(readingTimeSeconds)}</span>}
           </div>
         )}
@@ -83,7 +83,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         <p
           className={[
             'text-sm leading-relaxed overflow-hidden text-ellipsis [-webkit-box-orient:vertical] [display:-webkit-box]',
-            isDarkMode ? 'text-slate-600' : 'text-slate-200',
+            isDarkMode ? 'text-neutral-600' : 'text-neutral-200',
           ].join(' ')}
           style={{ WebkitLineClamp: clampLines }}
         >
@@ -95,7 +95,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         <div
           className={[
             'flex items-center justify-between px-6 pb-5 text-xs font-medium',
-            isDarkMode ? 'text-slate-600' : 'text-slate-300',
+            isDarkMode ? 'text-neutral-600' : 'text-neutral-300',
           ].join(' ')}
         >
           {writer && (

@@ -37,15 +37,15 @@ const formatMoney = (value: number) =>
   value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
 function statusTone(status: string, isDarkMode: boolean) {
-  if (status === 'live') return isDarkMode ? 'text-emerald-300' : 'text-emerald-700';
-  if (status === 'booked' || status.includes('Booked')) return isDarkMode ? 'text-[#e8d5a8]' : 'text-amber-800';
-  if (status === 'follow_up' || status === 'escalated') return isDarkMode ? 'text-sky-300' : 'text-sky-800';
+  if (status === 'live') return isDarkMode ? 'text-neutral-300' : 'text-neutral-700';
+  if (status === 'booked' || status.includes('Booked')) return isDarkMode ? 'text-[#d6d6d6]' : 'text-neutral-800';
+  if (status === 'follow_up' || status === 'escalated') return isDarkMode ? 'text-neutral-300' : 'text-neutral-800';
   return isDarkMode ? 'text-white/60' : 'text-navy-600';
 }
 
 function actionTone(state: ActionState, isDarkMode: boolean) {
-  if (state === 'done') return isDarkMode ? 'text-emerald-300' : 'text-emerald-700';
-  if (state === 'pending') return isDarkMode ? 'text-[#e8d5a8]' : 'text-amber-800';
+  if (state === 'done') return isDarkMode ? 'text-neutral-300' : 'text-neutral-700';
+  if (state === 'pending') return isDarkMode ? 'text-[#d6d6d6]' : 'text-neutral-800';
   return isDarkMode ? 'text-white/40' : 'text-navy-400';
 }
 
@@ -204,14 +204,14 @@ export const CRMView: React.FC<CRMViewProps> = ({
   const pageClass = isDarkMode ? 'text-[#e8eef4]' : 'text-navy-900';
   const tabShellClass = isDarkMode
     ? 'rounded-full border border-white/10 bg-black/50 p-1 backdrop-blur-xl'
-    : 'rounded-full border border-slate-200 bg-slate-100/95 p-1 shadow-sm';
+    : 'rounded-full border border-neutral-200 bg-neutral-100/95 p-1 shadow-sm';
   const tabActiveClass = isDarkMode
-    ? 'bg-gradient-to-r from-[#e8d5a8] to-[#c8b58f] text-[#1a140c]'
+    ? 'bg-gradient-to-r from-[#d6d6d6] to-[#b6b6b6] text-[#080808]'
     : 'bg-navy-900 text-white';
   const tabInactiveClass = isDarkMode ? 'text-white/70 hover:text-white' : 'text-navy-600 hover:text-navy-900';
   const panelClass = isDarkMode
     ? 'relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-2xl'
-    : 'relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-4 shadow-sm';
+    : 'relative overflow-hidden rounded-3xl border border-neutral-200/90 bg-white p-4 shadow-sm';
   const muted = isDarkMode ? 'text-white/55' : 'text-navy-500';
   const ink = isDarkMode ? 'text-white' : 'text-navy-900';
 
@@ -220,8 +220,9 @@ export const CRMView: React.FC<CRMViewProps> = ({
       <div
         className="pointer-events-none absolute inset-0"
         style={{
+          filter: 'grayscale(1)',
           background: isDarkMode
-            ? 'linear-gradient(180deg, rgba(4,12,20,0.55), rgba(4,12,20,0.78)), url("/assets/plates/plate_hud_atmosphere.png") center / cover no-repeat'
+            ? 'linear-gradient(180deg, rgba(4,4,4,0.55), rgba(4,4,4,0.78)), url("/assets/plates/plate_hud_atmosphere.png") center / cover no-repeat'
             : undefined,
         }}
         aria-hidden
@@ -235,7 +236,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
               Voice agent
               {location ? ` · ${location}` : ''}
             </p>
-            <h1 className={`fx-hud mt-2 text-[13px] md:text-sm ${isDarkMode ? 'text-[#f4efe4]' : 'text-navy-800'}`}>
+            <h1 className={`fx-hud mt-2 text-[13px] md:text-sm ${isDarkMode ? 'text-[#efefef]' : 'text-navy-800'}`}>
               Fourcee ops
             </h1>
             <p className={`mt-1 text-[11px] ${muted}`}>
@@ -273,7 +274,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
                 { id: 'WEB', load: channelLoad.web },
               ].map((ch) => (
                 <span key={ch.id} className="fx-chip">
-                  <span className={ch.load > 0 ? 'fx-dot' : 'h-1.5 w-1.5 rounded-full bg-slate-500'} />
+                  <span className={ch.load > 0 ? 'fx-dot' : 'h-1.5 w-1.5 rounded-full bg-neutral-500'} />
                   {ch.id} {ch.load.toString().padStart(2, '0')}
                 </span>
               ))}
@@ -341,23 +342,23 @@ export const CRMView: React.FC<CRMViewProps> = ({
                     {displayConversation.isLive ? `LIVE ${liveDuration}` : displayConversation.status}
                   </span>
                 </div>
-                <div className={`mt-3 rounded-xl border px-3 py-2 ${isDarkMode ? 'border-white/10 bg-black/50' : 'border-slate-200 bg-white'}`}>
+                <div className={`mt-3 rounded-xl border px-3 py-2 ${isDarkMode ? 'border-white/10 bg-black/50' : 'border-neutral-200 bg-white'}`}>
                   <p className={`text-[10px] uppercase tracking-[0.18em] ${muted}`}>Voice activity</p>
                   <div className="mt-2 flex h-8 items-end gap-1">
                     {waveHeights.map((h, i) => (
                       <span
                         key={i}
-                        className={`w-1.5 rounded-full ${isDarkMode ? 'bg-emerald-300/80' : 'bg-navy-500/70'}`}
+                        className={`w-1.5 rounded-full ${isDarkMode ? 'bg-neutral-300/80' : 'bg-navy-500/70'}`}
                         style={{ height: `${h}px` }}
                       />
                     ))}
                   </div>
                 </div>
-                <div className={`mt-3 max-h-[340px] space-y-2 overflow-auto rounded-xl border p-3 ${isDarkMode ? 'border-white/10 bg-black/40' : 'border-slate-200 bg-white'}`}>
+                <div tabIndex={0} role="region" aria-label="Live call transcript" className={`mt-3 max-h-[340px] space-y-2 overflow-auto rounded-xl border p-3 ${isDarkMode ? 'border-white/10 bg-black/40' : 'border-neutral-200 bg-white'}`}>
                   {displayConversation.transcript.map((row, idx) => (
-                    <div key={`${displayConversation.id}-${idx}`} className={`rounded-lg border p-2.5 ${isDarkMode ? 'border-white/5 bg-white/[0.02]' : 'border-slate-100 bg-slate-50'}`}>
+                    <div key={`${displayConversation.id}-${idx}`} className={`rounded-lg border p-2.5 ${isDarkMode ? 'border-white/5 bg-white/[0.02]' : 'border-neutral-100 bg-neutral-50'}`}>
                       <div className="flex items-center justify-between">
-                        <span className={`text-[11px] font-semibold ${row.speaker === 'Agent' ? ink : isDarkMode ? 'text-sky-300' : 'text-sky-800'}`}>
+                        <span className={`text-[11px] font-semibold ${row.speaker === 'Agent' ? ink : isDarkMode ? 'text-neutral-300' : 'text-neutral-800'}`}>
                           {row.speaker}
                         </span>
                         <span className={`text-[10px] ${muted}`}>{row.at}</span>
@@ -432,7 +433,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
                 onChange={(event) => setPlainEnglish(event.target.value)}
                 rows={8}
                 className={`mt-4 w-full rounded-2xl border px-4 py-3 text-[14px] leading-relaxed outline-none ${
-                  isDarkMode ? 'border-white/10 bg-black/40 text-[#f4efe4]' : 'border-slate-200 bg-white text-navy-900'
+                  isDarkMode ? 'border-white/10 bg-black/40 text-[#efefef]' : 'border-neutral-200 bg-white text-navy-900'
                 }`}
               />
               <div className="mt-4 flex flex-wrap gap-2">
@@ -442,7 +443,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
                     type="button"
                     onClick={() => setOnboardStep(index)}
                     className={`rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] ${
-                      onboardStep === index ? tabActiveClass : `border ${isDarkMode ? 'border-white/15 text-white/70' : 'border-slate-200 text-navy-600'}`
+                      onboardStep === index ? tabActiveClass : `border ${isDarkMode ? 'border-white/15 text-white/70' : 'border-neutral-200 text-navy-600'}`
                     }`}
                   >
                     {index + 1} {label}
@@ -454,9 +455,9 @@ export const CRMView: React.FC<CRMViewProps> = ({
               <p className="fx-kicker">We heard</p>
               <div className="mt-3 space-y-2">
                 {heard.map((card) => (
-                  <div key={card.title} className={`rounded-2xl border px-3 py-2.5 ${isDarkMode ? 'border-white/10 bg-black/30' : 'border-slate-200 bg-slate-50'}`}>
+                  <div key={card.title} className={`rounded-2xl border px-3 py-2.5 ${isDarkMode ? 'border-white/10 bg-black/30' : 'border-neutral-200 bg-neutral-50'}`}>
                     <p className={`text-[13px] ${ink}`}>{card.title}</p>
-                    <p className={`mt-1 text-[11px] uppercase tracking-[0.12em] ${isDarkMode ? 'text-emerald-300' : 'text-emerald-700'}`}>{card.state}</p>
+                    <p className={`mt-1 text-[11px] uppercase tracking-[0.12em] ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'}`}>{card.state}</p>
                   </div>
                 ))}
               </div>
@@ -499,7 +500,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
                     <ul className="mt-3 space-y-2">
                       {HANDOVER_ITEMS.map((item) => (
                         <li key={item.id} className={`text-[13px] ${ink}`}>
-                          <span className={item.ready ? 'text-emerald-400' : isDarkMode ? 'text-[#e8d5a8]' : 'text-amber-700'}>
+                          <span className={item.ready ? 'text-neutral-400' : isDarkMode ? 'text-[#d6d6d6]' : 'text-neutral-700'}>
                             {item.ready ? '☑' : '☐'}
                           </span>{' '}
                           {item.label}
@@ -550,14 +551,14 @@ function parsePlainEnglish(text: string) {
 }
 
 const Kpi: React.FC<{ label: string; value: string; isDarkMode: boolean }> = ({ label, value, isDarkMode }) => (
-  <div className={`rounded-2xl border px-4 py-3 ${isDarkMode ? 'border-white/10 bg-white/[0.04]' : 'border-slate-200 bg-white'}`}>
+  <div className={`rounded-2xl border px-4 py-3 ${isDarkMode ? 'border-white/10 bg-white/[0.04]' : 'border-neutral-200 bg-white'}`}>
     <p className={`text-[10px] uppercase tracking-[0.2em] ${isDarkMode ? 'text-white/55' : 'text-navy-500'}`}>{label}</p>
-    <p className={`mt-1 text-xl font-medium tracking-tight ${isDarkMode ? 'text-[#c8b58f]' : 'text-navy-900'}`}>{value}</p>
+    <p className={`mt-1 text-xl font-medium tracking-tight ${isDarkMode ? 'text-[#b6b6b6]' : 'text-navy-900'}`}>{value}</p>
   </div>
 );
 
 const Fact: React.FC<{ label: string; body: string; isDarkMode: boolean }> = ({ label, body, isDarkMode }) => (
-  <div className={`rounded-2xl border px-4 py-3 ${isDarkMode ? 'border-white/10 bg-white/[0.04]' : 'border-slate-200 bg-white'}`}>
+  <div className={`rounded-2xl border px-4 py-3 ${isDarkMode ? 'border-white/10 bg-white/[0.04]' : 'border-neutral-200 bg-white'}`}>
     <p className="fx-kicker">{label}</p>
     <p className={`mt-2 text-[13px] leading-relaxed ${isDarkMode ? 'text-white/80' : 'text-navy-800'}`}>{body}</p>
   </div>
@@ -577,11 +578,11 @@ const LogRow: React.FC<{
     className={`w-full rounded-2xl border px-3 py-2.5 text-left ${
       selected
         ? isDarkMode
-          ? 'border-amber-300/35 bg-amber-100/5'
+          ? 'border-neutral-300/35 bg-neutral-100/5'
           : 'border-navy-400 bg-navy-50'
         : isDarkMode
           ? 'border-white/10 bg-black/40'
-          : 'border-slate-200 bg-slate-50'
+          : 'border-neutral-200 bg-neutral-50'
     }`}
   >
     <p className={`text-[13px] font-medium ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>{title}</p>

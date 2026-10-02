@@ -139,7 +139,13 @@ export const CrystalRingCanvas: React.FC<CrystalRingCanvasProps> = ({
       camera.lookAt(0, 0.08, 0);
     }
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch {
+      // No WebGL (blocked / unsupported): skip the decorative 3D instead of crashing the whole app.
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
     renderer.setSize(width, height);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -157,10 +163,10 @@ export const CrystalRingCanvas: React.FC<CrystalRingCanvasProps> = ({
     scene.environment = pmrem.fromScene(room, 0.04).texture;
     room.dispose();
 
-    const key = new THREE.DirectionalLight(0xfff4e0, 1.7);
+    const key = new THREE.DirectionalLight(0xffffff, 1.7);
     key.position.set(2.6, 3.4, 2.4);
     scene.add(key);
-    const fill = new THREE.DirectionalLight(0xdbe7f3, 0.85);
+    const fill = new THREE.DirectionalLight(0xe8e8e8, 0.85);
     fill.position.set(-2.4, 0.9, 1.8);
     scene.add(fill);
     const rim = new THREE.PointLight(0xffffff, 0.9, 12);
@@ -328,15 +334,16 @@ export const CrystalRingCanvas: React.FC<CrystalRingCanvasProps> = ({
       <div
         ref={mountRef}
         style={{ touchAction: 'none', cursor: 'grab', width: '100%', height: '100%' }}
+        role="img"
         aria-label="Interactive 3D ring. Drag to rotate."
       />
       {loadState === 'loading' ? (
-        <p className="pointer-events-none absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-[0.18em] text-[#c8b58f]">
+        <p className="pointer-events-none absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-[0.18em] text-[#b6b6b6]">
           Loading ring
         </p>
       ) : null}
       {loadState === 'error' ? (
-        <p className="pointer-events-none absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-[0.18em] text-rose-300">
+        <p className="pointer-events-none absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-300">
           Ring mesh failed
         </p>
       ) : null}

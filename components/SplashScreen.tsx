@@ -32,7 +32,7 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
         className="absolute inset-0 z-0 pointer-events-none"
         style={{
           backgroundImage:
-            'linear-gradient(to right, rgba(148,163,184,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(148,163,184,0.12) 1px, transparent 1px)',
+            'linear-gradient(to right, rgba(161,161,161,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(161,161,161,0.12) 1px, transparent 1px)',
           backgroundSize: '36px 36px',
         }}
       />

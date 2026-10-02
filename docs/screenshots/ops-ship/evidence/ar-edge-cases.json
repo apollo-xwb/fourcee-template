@@ -1,0 +1,24 @@
+{
+ "deepLinkAr": {
+  "sheet": true,
+  "href": "/assets/ar/ring-white-gold.usdz#allowsContentScaling=0",
+  "iosSrc": "/assets/ar/ring-white-gold.usdz",
+  "errors": []
+ },
+ "cameraDenied": {
+  "status": "Camera permission was blocked. Allow it in your browser settings, or upload a photo of your hand instead.",
+  "phase": "error",
+  "uploadStillThere": true,
+  "pageErrors": []
+ },
+ "noWebGL": {
+  "text": "",
+  "status": "This browser could not start 3D graphics (WebGL). Try the AR button instead.",
+  "landingH1": "The gold standard\nof voice AI",
+  "dialog": true,
+  "alerts": [
+   "This browser could not start 3D graphics (WebGL). Try the AR button instead."
+  ],
+  "pageErrors": []
+ }
+}

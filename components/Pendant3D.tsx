@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 
 const pendantObjUrl = new URL('../assets/uploads_files_6588064_f410.3.obj', import.meta.url).href;
 
@@ -35,10 +35,16 @@ export const Pendant3D: React.FC<Pendant3DProps> = ({ height = 260 }) => {
     const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 1000);
     camera.position.set(0, 0.4, 3);
 
-    const renderer = new THREE.WebGLRenderer({
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
     });
+    } catch {
+      // No WebGL (blocked / unsupported): skip the decorative 3D instead of crashing the whole app.
+      return;
+    }
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);

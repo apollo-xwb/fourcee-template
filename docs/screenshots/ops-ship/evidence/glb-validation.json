@@ -1,0 +1,46 @@
+{
+ "ring-platinum.glb": {
+  "numErrors": 0,
+  "numWarnings": 0,
+  "numInfos": 0,
+  "messages": [],
+  "info": {
+   "drawCallCount": 8,
+   "totalVertexCount": 57746,
+   "totalTriangleCount": 109650
+  }
+ },
+ "ring-rose-gold.glb": {
+  "numErrors": 0,
+  "numWarnings": 0,
+  "numInfos": 0,
+  "messages": [],
+  "info": {
+   "drawCallCount": 8,
+   "totalVertexCount": 57746,
+   "totalTriangleCount": 109650
+  }
+ },
+ "ring-white-gold.glb": {
+  "numErrors": 0,
+  "numWarnings": 0,
+  "numInfos": 0,
+  "messages": [],
+  "info": {
+   "drawCallCount": 8,
+   "totalVertexCount": 57746,
+   "totalTriangleCount": 109650
+  }
+ },
+ "ring-yellow-gold.glb": {
+  "numErrors": 0,
+  "numWarnings": 0,
+  "numInfos": 0,
+  "messages": [],
+  "info": {
+   "drawCallCount": 8,
+   "totalVertexCount": 57746,
+   "totalTriangleCount": 109650
+  }
+ }
+}

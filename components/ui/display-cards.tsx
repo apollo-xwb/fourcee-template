@@ -16,12 +16,12 @@ interface DisplayCardProps {
 
 function DisplayCard({
   className,
-  icon = <Sparkles className="size-4 text-blue-300" />,
+  icon = <Sparkles className="size-4 text-neutral-300" />,
   title = "Featured",
   description = "Discover amazing content",
   date = "Just now",
-  iconClassName = "text-blue-500",
-  titleClassName = "text-blue-500",
+  iconClassName = "text-neutral-500",
+  titleClassName = "text-neutral-500",
 }: DisplayCardProps) {
   return (
     <div
@@ -31,7 +31,7 @@ function DisplayCard({
       )}
     >
       <div>
-        <span className="relative inline-block rounded-full bg-blue-800 p-1">
+        <span className="relative inline-block rounded-full bg-neutral-800 p-1">
           {icon}
         </span>
         <p className={cn("text-sm sm:text-base md:text-lg font-medium", titleClassName)}>{title}</p>

@@ -1,0 +1,79 @@
+[
+ {
+  "i": 0,
+  "tag": "INPUT",
+  "type": "text",
+  "n": "E.g. Royal Diamonds Ltd",
+  "fs": 16,
+  "scale": 1,
+  "step": 2,
+  "device": "desktop",
+  "pass": true
+ },
+ {
+  "i": 1,
+  "tag": "INPUT",
+  "type": "text",
+  "n": "Full name",
+  "fs": 16,
+  "scale": 1,
+  "step": 2,
+  "device": "desktop",
+  "pass": true
+ },
+ {
+  "i": 2,
+  "tag": "INPUT",
+  "type": "email",
+  "n": "you@showroom.com",
+  "fs": 16,
+  "scale": 1,
+  "step": 2,
+  "device": "desktop",
+  "pass": true
+ },
+ {
+  "i": 3,
+  "tag": "SELECT",
+  "type": "select-one",
+  "n": "",
+  "fs": 16,
+  "scale": 1,
+  "step": 2,
+  "device": "desktop",
+  "pass": true
+ },
+ {
+  "i": 0,
+  "tag": "INPUT",
+  "type": "text",
+  "n": "4242 4242 4242 4242",
+  "fs": 16,
+  "scale": 1,
+  "step": 3,
+  "device": "desktop",
+  "pass": true
+ },
+ {
+  "i": 1,
+  "tag": "INPUT",
+  "type": "text",
+  "n": "MM/YY",
+  "fs": 16,
+  "scale": 1,
+  "step": 3,
+  "device": "desktop",
+  "pass": true
+ },
+ {
+  "i": 2,
+  "tag": "INPUT",
+  "type": "text",
+  "n": "123",
+  "fs": 16,
+  "scale": 1,
+  "step": 3,
+  "device": "desktop",
+  "pass": true
+ }
+]
