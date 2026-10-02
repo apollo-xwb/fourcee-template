@@ -52,6 +52,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
   businessName,
 }) => {
   const scrollRoot = useRef<HTMLDivElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const stickyRef = useRef<HTMLDivElement | null>(null);
   const hudRef = useRef<HTMLDivElement | null>(null);
   const [metalId, setMetalId] = useState(config.defaultMetalId);
@@ -67,6 +68,10 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
     const link = readRingDeepLink();
     if (link.metalId && config.metals.some((m) => m.id === link.metalId)) setMetalId(link.metalId);
     if (link.gemId && config.gems.some((g) => g.id === link.gemId)) setGemId(link.gemId);
+    // The page mounts this component twice (desktop hero rail + phone section, one of them display:none). Only the visible instance may
+    // open the deep-linked sheet, otherwise two stacked dialogs open (the lower one inert).
+    const visible = (rootRef.current?.getClientRects().length ?? 0) > 0;
+    if (!visible) return;
     if (link.openAr) setSheet('ar');
     else if (link.openTryOn) setSheet('tryon');
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -199,7 +204,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
       ? 'relative mt-3 min-h-[380px] flex-1 w-full overflow-hidden rounded-2xl'
       : 'relative mt-3 h-[340px] w-full overflow-hidden rounded-2xl';
     return (
-      <div className={shell}>
+      <div className={shell} ref={rootRef}>
         <p className="fx-kicker">{businessName ? `${businessName} · ` : ''}Showroom demo</p>
         <p className="mt-1 text-[11px] text-[#a8957a]">
           {heroEmbed ? 'Drag to orbit · swap metal & stone' : '3D ring · not the voice SOP'}
@@ -250,7 +255,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
 
   // —— One continuous scene: short scroll → same ring docks → HUD customize ——
   return (
-    <div className="relative">
+    <div className="relative" ref={rootRef}>
       <div ref={scrollRoot} className="relative h-[185vh] sm:h-[200vh]">
         <div
           ref={stickyRef}
