@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { RingBuilderConfig } from '../types/audit';
 import { ErrorBoundary } from './ErrorBoundary';
 import { RingBuilder } from './RingBuilder';
-import { preloadRingAssets } from '../lib/preload-ring';
+import { schedulePreloadRing } from '../lib/preload-ring';
 
 interface LazyRingBuilderSectionProps {
   config: Required<RingBuilderConfig>;
@@ -25,7 +25,7 @@ export const LazyRingBuilderSection: React.FC<LazyRingBuilderSectionProps> = (pr
   const [visible, setVisible] = useState(Boolean(props.heroEmbed || props.compact || props.eager));
 
   useEffect(() => {
-    void preloadRingAssets();
+    schedulePreloadRing(); // idempotent: network now, webgi runtime when idle / on first interaction
     if (props.heroEmbed || props.compact || props.eager) {
       setVisible(true);
       return;

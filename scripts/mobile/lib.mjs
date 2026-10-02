@@ -19,7 +19,7 @@ export const GL_REGISTRY = `(() => {
   HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
     const ctx = orig.call(this, type, ...rest);
     if (ctx && /webgl/.test(String(type)) && !this.__tracked) {
-      this.__tracked = true; reg.created++; reg.canvases.add(this);
+      this.__tracked = true; this.__gl = ctx; reg.created++; reg.canvases.add(this);
       this.addEventListener('webglcontextlost', () => { reg.lost++; reg.events.push(['lost', Math.round(performance.now())]); });
       this.addEventListener('webglcontextrestored', () => { reg.restored++; reg.events.push(['restored', Math.round(performance.now())]); });
     }
@@ -28,7 +28,8 @@ export const GL_REGISTRY = `(() => {
   window.__glStats = () => {
     const live = [...reg.canvases].filter((c) => c.isConnected);
     const mb = live.reduce((a, c) => a + (c.width * c.height * 4) / 1048576, 0);
-    return { created: reg.created, liveConnected: live.length, lost: reg.lost, restored: reg.restored,
+    const alive = [...reg.canvases].filter((c) => { try { return !c.__gl.isContextLost(); } catch { return false; } });
+    return { created: reg.created, liveConnected: live.length, aliveContexts: alive.length, lost: reg.lost, restored: reg.restored,
       bufferMB: +mb.toFixed(1), canvases: live.map((c) => ({ id: c.id || null, w: c.width, h: c.height, inView: (() => { const r = c.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; })() })) };
   };
 })();`;

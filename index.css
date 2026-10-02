@@ -389,6 +389,16 @@ model-viewer > button:focus-visible {
   0%, 100% { transform: translate3d(0, 0, 0); }
   50%      { transform: translate3d(0, -6px, 0); }
 }
+@keyframes fx-splash-dots {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, 28px, 0); }
+}
+.fx-splash-dots {
+  background-image: radial-gradient(circle, rgba(12, 11, 9, 0.8) 0 2.2px, transparent 2.8px);
+  background-size: 28px 28px;
+  animation: fx-splash-dots 2.6s linear infinite;
+  will-change: transform;
+}
 @keyframes fx-splash-fade { from { opacity: 0; } to { opacity: 1; } }
 .fx-splash-card-in {
   animation: fx-splash-card-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -406,6 +416,7 @@ model-viewer > button:focus-visible {
   /* static: a short opacity fade only, no movement, no loop */
   .fx-splash-card-in, .fx-splash-in { animation: fx-splash-fade 200ms linear both; animation-delay: 0ms; }
   .fx-splash-float { animation: none; will-change: auto; }
+  .fx-splash-dots { animation: none; will-change: auto; }
 }
 
 /* Ring canvases: WebGi sets touch-action:none on its canvas, which turned the docked ring into a scroll trap on phones (a vertical swipe

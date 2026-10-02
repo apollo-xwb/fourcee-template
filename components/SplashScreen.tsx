@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PhoneCall } from 'lucide-react';
-import { DottedSurface } from './ui/dotted-surface';
 import DisplayCards from './ui/display-cards';
 import fcShad from '../public/assets/fcshad.png';
-import { preloadRingAssets } from '../lib/preload-ring';
+import { preloadRingNetwork } from '../lib/preload-ring';
 
 const STATS = [
   "Jewelers lose 40% of leads to missed calls.",
@@ -60,16 +59,16 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
   onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    // Warm GLB + Draco + WebGL for the ring, but only after the cards' entrance has played: the GLB/Draco parse is a 50-125 ms
-    // main-thread task and used to land in the middle of the animation.
-    const warm = window.setTimeout(() => void preloadRingAssets(), 1300);
+    // Only the cheap, off-main-thread part of the ring preload runs here (plain fetches of the GLB + Draco files into the HTTP cache).
+    // Parsing the 2 MB webgi runtime and creating a WebGL context used to land in the middle of the entrance (the 41.7 ms frame where all
+    // three cards jumped together on GPU); that CPU work now starts after the splash, see App.tsx.
+    preloadRingNetwork();
     let done: number | undefined;
     const timer = window.setTimeout(() => {
       setFade(true);
       done = window.setTimeout(() => onCompleteRef.current(), 700);
     }, 2800);
     return () => {
-      window.clearTimeout(warm);
       window.clearTimeout(timer);
       if (done) window.clearTimeout(done);
     };
@@ -100,12 +99,11 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
             'radial-gradient(ellipse 70% 45% at 30% 30%, rgba(200,181,143,0.20), transparent 70%), radial-gradient(ellipse 60% 40% at 75% 62%, rgba(200,181,143,0.14), transparent 70%)',
         }}
       />
-      {/* Smooth black dots rising from bottom */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56">
-        <DottedSurface
-          isDarkMode={false}
-          className="h-full w-full opacity-80 [mask-image:linear-gradient(to_top,black,transparent)]"
-        />
+      {/* Dots rising from the bottom: pure CSS (a repeating radial-gradient drifting one tile per loop, transform only). The WebGL
+          DottedSurface that used to sit here created a WebGL context + shader compile during the entrance (main-thread hitch) and was one
+          of the 6 simultaneous contexts on mobile. */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56 overflow-hidden opacity-70 [mask-image:linear-gradient(to_top,black,transparent)]" aria-hidden>
+        <div className="fx-splash-dots absolute inset-x-0 -top-7 bottom-0" />
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-lg px-4">
@@ -121,8 +119,8 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
         <div className="h-[2px] w-12 bg-[#0c0b09]/35 mx-auto mb-6" />
 
         {/* Floating missed-opportunity trio: CSS keyframes, transform/opacity only, one shared easing */}
-        <div className="relative w-full flex items-center justify-center h-[200px] sm:h-[240px] md:h-[280px] overflow-visible">
-          <div className="relative z-10 scale-[0.52] sm:scale-[0.65] md:scale-[0.78] origin-center">
+        <div className="relative w-full flex items-center justify-center h-[230px] sm:h-[260px] md:h-[300px] overflow-visible">
+          <div className="relative z-10 scale-[0.9] min-[380px]:scale-100 sm:scale-[0.82] md:scale-[0.92] origin-center">
             <div className="fx-splash-float">
               <DisplayCards cards={SPLASH_OPPORTUNITY_CARDS} staggerEntrance />
             </div>
