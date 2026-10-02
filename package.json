@@ -35,11 +35,13 @@
     "webgi": "https://storage.googleapis.com/dist.pixotronics.com/webgi/runtime/bundle-0.4.6.tgz"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "1.63.0",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.17",
     "@types/three": "^0.183.1",
     "@vitejs/plugin-react": "^5.0.0",
+    "axe-core": "^4.13.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vitest": "^3.2.7"

@@ -406,7 +406,7 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
       style={{
         width: '100%',
         height: '100%',
-        touchAction: docked && wantInteract ? 'none' : 'pan-y',
+        touchAction: 'pan-y' /* vertical swipes over the ring must still scroll the page; horizontal drags orbit it */,
         pointerEvents: docked && wantInteract ? 'auto' : 'none',
         cursor: docked && wantInteract ? 'grab' : 'default',
       }}

@@ -405,3 +405,7 @@ model-viewer > button:focus-visible {
   .fx-splash-card-in, .fx-splash-in { animation: fx-splash-fade 200ms linear both; animation-delay: 0ms; }
   .fx-splash-float { animation: none; will-change: auto; }
 }
+
+/* Ring canvases: WebGi sets touch-action:none on its canvas, which turned the docked ring into a scroll trap on phones (a vertical swipe
+   starting on the ring could not scroll the page). pan-y: vertical swipes scroll the page, horizontal drags still orbit the ring. */
+canvas[id^="webgi-canvas"], #ring-studio canvas, #ring-studio-hero canvas { touch-action: pan-y !important; }

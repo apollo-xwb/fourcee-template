@@ -49,8 +49,9 @@ export class RingOverlay {
     this.camera.position.set(0, 0, 1000);
   }
 
-  async load(url: string) {
-    const gltf = await new GLTFLoader().loadAsync(url);
+  async load(source: string | ArrayBuffer) {
+    const loader = new GLTFLoader();
+    const gltf = typeof source === 'string' ? await loader.loadAsync(source) : await loader.parseAsync(source, '');
     const model = gltf.scene;
     model.scale.setScalar(1000); // metres -> millimetres
     model.traverse((o) => {

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { RingSwatch } from '../types/audit';
-import { HAND_MODEL_URL, MEDIAPIPE_WASM_URL, arGlbUrl, pickArMetal } from '../lib/ar-assets';
+import { arGlbVersionedUrl, pickArMetal } from '../lib/ar-assets';
+import { getProgress, prefetchTryOn, subscribeProgress, type TryOnProgress } from '../lib/tryon-preload';
 import { computeRingPose, smoothPose, type RingPose } from '../lib/hand-pose';
 import { RingOverlay } from '../lib/ring-overlay';
 import { useModalA11y } from '../lib/use-modal-a11y';
@@ -21,6 +22,8 @@ const isTouch = typeof window !== 'undefined' && window.matchMedia?.('(pointer: 
  * All processing is on-device (WASM + WebGL). No frame is uploaded or stored.
  */
 export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
+  const metalKeyRef = useRef(pickArMetal(metal));
+  const [prog, setProg] = useState<TryOnProgress>(() => getProgress());
   const [phase, setPhase] = useState<Phase>('idle');
   const [message, setMessage] = useState('Allow camera access, then show the back of your hand with the ring finger up.');
   const [facing, setFacing] = useState<'user' | 'environment'>(isTouch ? 'environment' : 'user');
@@ -51,6 +54,12 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
     if (videoRef.current) videoRef.current.srcObject = null;
   }, []);
 
+  // start the parallel download as soon as the sheet opens (the user just tapped "Try on your hand") and follow its progress
+  useEffect(() => {
+    void prefetchTryOn(metalKeyRef.current).catch(() => undefined);
+    return subscribeProgress(setProg);
+  }, []);
+
   // overlay lifecycle
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -66,7 +75,8 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
       return;
     }
     overlayRef.current = overlay;
-    overlay.load(arGlbUrl(pickArMetal(metal))).then(
+    // GLB comes from the shared parallel prefetch (falls back to a plain URL load if that failed)
+    prefetchTryOn(pickArMetal(metal)).then((a) => a.glb, () => arGlbVersionedUrl(pickArMetal(metal))).then((src) => overlay.load(src)).then(
       () => !disposed && overlay.render(),
       (err) => {
         console.error('[RingTryOn] ring model failed to load', err);
@@ -102,11 +112,12 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
 
   const ensureLandmarker = useCallback(async (mode: 'VIDEO' | 'IMAGE') => {
     if (!landmarkerRef.current) {
-      const { FilesetResolver, HandLandmarker } = await import('@mediapipe/tasks-vision');
-      const fileset = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
+      const assets = await prefetchTryOn(metalKeyRef.current);
+      const { HandLandmarker } = assets.tasks;
+      const fileset = { wasmLoaderPath: assets.wasmLoaderPath, wasmBinaryPath: assets.wasmBinaryUrl };
       const make = (delegate: 'GPU' | 'CPU') =>
         HandLandmarker.createFromOptions(fileset, {
-          baseOptions: { modelAssetPath: HAND_MODEL_URL, delegate },
+          baseOptions: { modelAssetBuffer: delegate === 'GPU' ? assets.model : assets.model.slice(), delegate },
           runningMode: mode,
           numHands: 1,
           minHandDetectionConfidence: 0.5,
@@ -181,7 +192,7 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
         const h = video.videoHeight || 720;
         setFrameSize({ w, h });
         overlayRef.current?.resize(w, h, 1);
-        setMessage('Loading hand tracking (about 19 MB on first use)…');
+        setMessage(`Loading hand tracking (about ${Math.max(1, Math.round(getProgress().total / 1e6))} MB, first use only)…`);
         const landmarker = await ensureLandmarker('VIDEO');
         setPhase('live');
         setMessage('Show the back of your hand, fingers up. The ring snaps to your ring finger.');
@@ -327,6 +338,24 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
           )}
         </div>
 
+        {!prog.done && prog.loaded > 0 && phase !== 'error' && (
+          <div className="mt-3" data-testid="tryon-progress">
+            <div className="flex items-center justify-between text-[11px] text-[#c9bda6]">
+              <span>Preparing hand tracking · first use only</span>
+              <span>{Math.round(prog.fraction * 100)}%</span>
+            </div>
+            <div
+              className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/10"
+              role="progressbar"
+              aria-label="Preparing hand tracking"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(prog.fraction * 100)}
+            >
+              <div className="h-full origin-left rounded-full bg-[#c8b58f] transition-transform duration-200" style={{ transform: `scaleX(${prog.fraction})` }} />
+            </div>
+          </div>
+        )}
         <p className="mt-3 min-h-[2.5rem] text-sm text-[#ece4d4]" role="status" aria-live="polite" data-testid="tryon-status">{message}</p>
 
         <div className="mt-3 flex flex-wrap items-center gap-3">

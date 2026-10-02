@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { RingSwatch } from '../types/audit';
-import { arGlbUrl, arThumbUrl, arUsdzUrl, buildRingShareUrl, pickArMetal, supportsQuickLook } from '../lib/ar-assets';
+import { arGlbVersionedUrl, arThumbUrl, arUsdzUrl, buildRingShareUrl, pickArMetal, supportsQuickLook } from '../lib/ar-assets';
+import { warmTryOn } from '../lib/tryon-preload';
 import { QrCodeSvg } from './QrCodeSvg';
 import { useModalA11y } from '../lib/use-modal-a11y';
 
@@ -27,7 +28,8 @@ interface Props {
  */
 export const ArViewSheet: React.FC<Props> = ({ metal, gem, onClose, onTryOn }) => {
   const key = pickArMetal(metal);
-  const glb = arGlbUrl(key);
+  const warm = () => warmTryOn(key);
+  const glb = arGlbVersionedUrl(key);
   const usdz = arUsdzUrl(key);
   const thumb = arThumbUrl(key);
   const viewerRef = useRef<HTMLElement | null>(null);
@@ -194,7 +196,7 @@ export const ArViewSheet: React.FC<Props> = ({ metal, gem, onClose, onTryOn }) =
               <span>View in AR</span>
             </a>
           )}
-          <button type="button" onClick={onTryOn} className={ghost} data-testid="open-tryon-from-ar">
+          <button type="button" onClick={onTryOn} onPointerEnter={warm} onPointerDown={warm} onFocus={warm} onTouchStart={warm} className={ghost} data-testid="open-tryon-from-ar">
             Try on your finger
           </button>
         </div>

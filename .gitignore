@@ -56,3 +56,7 @@ yarn-error.log*
 
 # Optional: Vercel
 .vercel
+
+dist-e2e
+e2e-results
+test-results

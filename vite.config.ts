@@ -21,6 +21,9 @@ const arMimePlugin = (): Plugin => {
     const path = (req.url ?? '').split('?')[0].toLowerCase();
     const ext = path.slice(path.lastIndexOf('.'));
     if (AR_MIME[ext]) res.setHeader('Content-Type', AR_MIME[ext]);
+    // versioned (?v=) AR/MediaPipe binaries never change under the same URL -> long-lived immutable cache (dev/preview only; production
+    // headers are set by the web server, see docs/AR-TRYON.md)
+    if (/[?&]v=/.test(req.url ?? '') && /\.(wasm|gz|task|glb)$/.test(path)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     next();
   };
   return {

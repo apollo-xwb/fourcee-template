@@ -39,7 +39,11 @@ export function pickArMetal(metal: Pick<RingSwatch, 'id' | 'color'>): ArMetalKey
   return best;
 }
 
+/** Bump when public/assets/ar, public/ar or public/mediapipe change: the query makes the URLs safe to cache as `immutable`. */
+export const AR_ASSET_VERSION = '1';
 export const arGlbUrl = (key: ArMetalKey) => `${AR_BASE}ring-${key}.glb`;
+/** Same file, version-stamped: this is the URL the app actually requests (model-viewer and the try-on share one HTTP-cache entry). */
+export const arGlbVersionedUrl = (key: ArMetalKey) => `${arGlbUrl(key)}?v=${AR_ASSET_VERSION}`;
 export const arUsdzUrl = (key: ArMetalKey) => `${AR_BASE}ring-${key}.usdz`;
 /** Per-metal poster/thumbnail (ring-thumb-<metal>.png). */
 export const arThumbUrl = (key: ArMetalKey) => `${AR_BASE}ring-thumb-${key}.png`;

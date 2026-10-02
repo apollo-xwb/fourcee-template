@@ -286,11 +286,11 @@ export const CrystalRingCanvas: React.FC<CrystalRingCanvasProps> = ({
     container.appendChild(renderer.domElement);
 
     const setPointerMode = (on: boolean) => {
-      renderer.domElement.style.touchAction = on ? 'none' : 'pan-y';
+      renderer.domElement.style.touchAction = 'pan-y';
       renderer.domElement.style.cursor = on ? 'grab' : 'default';
       renderer.domElement.style.pointerEvents = on ? 'auto' : 'none';
       if (mountRef.current) {
-        mountRef.current.style.touchAction = on ? 'none' : 'pan-y';
+        mountRef.current.style.touchAction = 'pan-y';
         mountRef.current.style.pointerEvents = on ? 'auto' : 'none';
         mountRef.current.style.cursor = on ? 'grab' : 'default';
       }
@@ -538,7 +538,7 @@ export const CrystalRingCanvas: React.FC<CrystalRingCanvasProps> = ({
       <div
         ref={mountRef}
         style={{
-          touchAction: docked && wantInteract ? 'none' : 'pan-y',
+          touchAction: 'pan-y' /* vertical swipes over the ring must still scroll the page; horizontal drags orbit it */,
           cursor: docked && wantInteract ? 'grab' : 'default',
           width: '100%',
           height: '100%',
