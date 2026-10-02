@@ -3,7 +3,23 @@ import { createRequire } from 'module';
 import path from 'path';
 import fs from 'fs';
 const require = createRequire(path.join(process.env.PW_ROOT || process.cwd(), 'package.json'));
-export const { chromium, devices } = require('playwright');
+const pw = require('playwright');
+export const devices = pw.devices;
+// OVERRIDE_DIR: serve index.html + /assets/<hashed files> of BASE's origin from a local folder (a build that is NOT deployed), and let every
+// other request (GLB, Draco, MediaPipe, AR assets, content.json ...) go to the real origin. Lets a farm PC test a PR build without deploying it.
+const MIME = { js: 'text/javascript', css: 'text/css', html: 'text/html', png: 'image/png', jpg: 'image/jpeg', svg: 'image/svg+xml', webp: 'image/webp', woff2: 'font/woff2' };
+export async function applyOverride(context) {
+  const dir = process.env.OVERRIDE_DIR; if (!dir) return;
+  const origin = new URL(process.env.BASE).origin;
+  await context.route((u) => u.origin === origin && (u.pathname === '/' || u.pathname === '/index.html' || u.pathname.startsWith('/assets/')), async (route) => {
+    const u = new URL(route.request().url());
+    const rel = u.pathname === '/' ? 'index.html' : u.pathname.slice(1);
+    const f = path.join(dir, rel);
+    if (fs.existsSync(f) && fs.statSync(f).isFile()) return route.fulfill({ status: 200, body: fs.readFileSync(f), contentType: MIME[f.split('.').pop()] || 'application/octet-stream', headers: { 'cache-control': 'no-store' } });
+    return route.continue();
+  });
+}
+export const chromium = { launch: async (o) => { const b = await pw.chromium.launch(o); const nc = b.newContext.bind(b); b.newContext = async (...a) => { const c = await nc(...a); await applyOverride(c); return c; }; return b; } };
 export const OUT = (process.env.OUT || './mobile-probe-out/').replace(/([^\\/])$/, '$1/');
 export const PROFILES = {
   iphone14: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, userAgent: devices['iPhone 14'].userAgent },

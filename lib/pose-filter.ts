@@ -16,12 +16,12 @@ export type Quat = [number, number, number, number]; // x y z w
 
 export const RING_DIAMETER_MM = 22;
 export const FILTER_DEFAULTS = {
-  posMinCutoff: 1.2, // Hz at rest
-  posBeta: 0.9, // cutoff growth per (ring diameter / s)
-  rotMinCutoff: 1.6, // Hz at rest
-  rotBeta: 0.9, // cutoff growth per (rad / s)
+  posMinCutoff: 0.6, // Hz at rest
+  posBeta: 0.6, // cutoff growth per (ring diameter / s)
+  rotMinCutoff: 0.8, // Hz at rest
+  rotBeta: 0.6, // cutoff growth per (rad / s)
   scaleMinCutoff: 0.6,
-  dCutoff: 1.0,
+  dCutoff: 1.5,
   posDeadbandMm: 0.5,
   rotDeadbandDeg: 0.8,
   scaleDeadbandPct: 1.5,
@@ -40,6 +40,13 @@ export const softDeadband = (e: number, db: number) => (Math.abs(e) <= db ? 0 : 
 
 // ---- quaternion helpers -------------------------------------------------
 export const qDot = (a: Quat, b: Quat) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+export const qConj = (a: Quat): Quat => [-a[0], -a[1], -a[2], a[3]];
+export const qMul = (a: Quat, b: Quat): Quat => [
+  a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1],
+  a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0],
+  a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3],
+  a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2],
+];
 export const qNorm = (a: Quat): Quat => {
   const l = Math.hypot(a[0], a[1], a[2], a[3]) || 1;
   return [a[0] / l, a[1] / l, a[2] / l, a[3] / l];
@@ -120,6 +127,7 @@ export class PoseFilter {
   private lastSeenT = -1e9;
   private dPos: Vec3 = [0, 0, 0];
   private dRot = 0;
+  private dRotV: Vec3 = [0, 0, 0];
   private pending: { position: Vec3; t: number } | null = null;
   rejectedJumps = 0;
   holds = 0;
@@ -136,6 +144,7 @@ export class PoseFilter {
     this.pending = null;
     this.dPos = [0, 0, 0];
     this.dRot = 0;
+    this.dRotV = [0, 0, 0];
   }
 
   private out(held: boolean): FilteredPose | null {
@@ -173,6 +182,7 @@ export class PoseFilter {
       this.lastSeenT = tMs;
       this.dPos = [0, 0, 0];
       this.dRot = 0;
+      this.dRotV = [0, 0, 0];
       this.pending = null;
       return this.out(false);
     }
@@ -202,6 +212,7 @@ export class PoseFilter {
       this.lastSeenT = tMs;
       this.dPos = [0, 0, 0];
       this.dRot = 0;
+      this.dRotV = [0, 0, 0];
       return this.out(false);
     }
     this.pending = null;
@@ -212,11 +223,17 @@ export class PoseFilter {
     for (let i = 0; i < 3; i++) {
       const e = softDeadband(raw.position[i] - pos[i], dbPx);
       const target = pos[i] + e;
-      const speed = Math.abs((target - pos[i]) / dt) / ringPx; // diameters / s
-      const ad = alphaFor(o.dCutoff, dt);
-      this.dPos[i] = this.dPos[i] + (speed - this.dPos[i]) * ad;
-      const fc = o.posMinCutoff + o.posBeta * this.dPos[i];
-      newPos[i] = pos[i] + (target - pos[i]) * alphaFor(fc, dt);
+      // SIGNED velocity (diameters / s) low-passed first, magnitude after: white noise averages out, real motion does not. (Filtering the
+      // magnitude, as a naive One-Euro does per axis, treats noise as speed, raises the cutoff and lets the jitter through.)
+      const vel = (target - pos[i]) / dt / ringPx;
+      this.dPos[i] = this.dPos[i] + (vel - this.dPos[i]) * alphaFor(o.dCutoff, dt);
+    }
+    const speedP = Math.hypot(this.dPos[0], this.dPos[1], this.dPos[2]);
+    const fcP = o.posMinCutoff + o.posBeta * speedP;
+    const aP = alphaFor(fcP, dt);
+    for (let i = 0; i < 3; i++) {
+      const target = pos[i] + softDeadband(raw.position[i] - pos[i], dbPx);
+      newPos[i] = pos[i] + (target - pos[i]) * aP;
     }
     this.pos = newPos;
 
@@ -226,12 +243,20 @@ export class PoseFilter {
     const eff = softDeadband(ang, dbRad);
     if (eff > 0 && ang > 1e-6) {
       const tgt = qSlerp(q, rq, eff / ang);
-      const speed = eff / dt;
-      this.dRot = this.dRot + (speed - this.dRot) * alphaFor(o.dCutoff, dt);
+      // signed angular velocity as a world-frame rotation vector, low-passed, then its magnitude drives the cutoff
+      const dq = qMul(qConj(q), tgt); // local-frame delta
+      const sgn = dq[3] < 0 ? -1 : 1;
+      const half = Math.min(1, Math.hypot(dq[0], dq[1], dq[2]));
+      const th = 2 * Math.asin(half);
+      const k = half > 1e-9 ? (sgn * th) / half / dt : 0;
+      const ad = alphaFor(o.dCutoff, dt);
+      for (let i = 0; i < 3; i++) this.dRotV[i] += (dq[i] * k - this.dRotV[i]) * ad;
+      this.dRot = Math.hypot(this.dRotV[0], this.dRotV[1], this.dRotV[2]);
       const fc = o.rotMinCutoff + o.rotBeta * this.dRot;
       this.q = qSlerp(q, tgt, alphaFor(fc, dt));
     } else {
-      this.dRot = this.dRot * 0.5;
+      this.dRot *= 0.5;
+      for (let i = 0; i < 3; i++) this.dRotV[i] *= 0.5;
     }
 
     // scale (log domain, strong, deadband in percent)

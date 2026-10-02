@@ -57,7 +57,7 @@ const rawM = tr.some((e) => e.raw) ? metrics((e) => (e.raw ? { p: e.raw.p, axis:
 // orientation: stone (ring +y == dorsal) vs the camera: for a back-of-hand view the stone must point TOWARD the camera (+z)
 const dz = tr.filter((e) => e.hand).map((e) => e.dorsal[2]); const labels = {}; tr.forEach((e) => { labels[e.label] = (labels[e.label] || 0) + 1; });
 const flips = (() => { let n = 0; let prev; for (const e of tr) { if (!e.hand) continue; const s = Math.sign(e.dorsal[2]); if (prev && s !== prev) n++; prev = s; } return n; })();
-const out = { base: BASE, label: LABEL, profile: PROF, video: VIDEO.split('/').pop(), detectedFrames: tr.filter((e) => e.hand).length, hookWrites: tr.length, segments: seg.length, uiFps: fps, pageErrors: errs, dorsalZ: { mean: +(dz.reduce((a, v) => a + v, 0) / dz.length).toFixed(3), min: +Math.min(...dz).toFixed(3), max: +Math.max(...dz).toFixed(3), signFlips: flips }, handednessLabels: labels, filtered, raw: rawM };
+const out = { base: BASE, label: LABEL, profile: PROF, video: VIDEO.split(/[\\/]/).pop(), detectedFrames: tr.filter((e) => e.hand).length, hookWrites: tr.length, segments: seg.length, uiFps: fps, pageErrors: errs, dorsalZ: { mean: +(dz.reduce((a, v) => a + v, 0) / dz.length).toFixed(3), min: +Math.min(...dz).toFixed(3), max: +Math.max(...dz).toFixed(3), signFlips: flips }, handednessLabels: labels, filtered, raw: rawM };
 fs.writeFileSync(`${dir}tryon-jitter-${PROF}.json`, JSON.stringify(out, null, 1));
 console.log(JSON.stringify(out, null, 1));
 await b.close();
