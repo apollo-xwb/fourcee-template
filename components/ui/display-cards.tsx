@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Sparkles } from "lucide-react";
 
@@ -29,7 +28,7 @@ export function DisplayCard({
   return (
     <div
       className={cn(
-        "relative flex h-28 w-64 max-w-[85vw] sm:h-32 sm:w-72 md:h-36 md:w-[22rem] -skew-y-[8deg] select-none flex-col justify-between rounded-lg md:rounded-xl border-2 bg-muted/70 backdrop-blur-sm px-3 py-2.5 sm:px-4 sm:py-3 transition-all duration-700 after:absolute after:-right-1 after:top-[-5%] after:h-[110%] after:w-[14rem] sm:after:w-[18rem] md:after:w-[20rem] after:bg-gradient-to-l after:from-background after:to-transparent after:content-[''] hover:border-white/20 hover:bg-muted [&>*]:flex [&>*]:items-center [&>*]:gap-2",
+        "relative flex h-28 w-64 max-w-[85vw] sm:h-32 sm:w-72 md:h-36 md:w-[22rem] -skew-y-[8deg] select-none flex-col justify-between rounded-lg md:rounded-xl border-2 bg-muted/70 backdrop-blur-sm px-3 py-2.5 sm:px-4 sm:py-3 transition-[translate,border-color,background-color] duration-700 after:absolute after:-right-1 after:top-[-5%] after:h-[110%] after:w-[14rem] sm:after:w-[18rem] md:after:w-[20rem] after:bg-gradient-to-l after:from-background after:to-transparent after:content-[''] hover:border-white/20 hover:bg-muted [&>*]:flex [&>*]:items-center [&>*]:gap-2",
         className
       )}
     >
@@ -67,34 +66,20 @@ export default function DisplayCards({ cards, staggerEntrance = false }: Display
   const displayCards = cards || defaultCards;
 
   if (staggerEntrance) {
+    // CSS keyframes (opacity + transform only, see .fx-splash-card-in in index.css): runs on the compositor, no JS per frame,
+    // does not restart when a parent re-renders, and honours prefers-reduced-motion.
     return (
-      <motion.div
-        className="grid [grid-template-areas:'stack'] place-items-center opacity-100"
-        initial="hidden"
-        animate="show"
-        variants={{
-          hidden: {},
-          show: { transition: { staggerChildren: 0.2, delayChildren: 0.25 } },
-        }}
-      >
+      <div className="grid [grid-template-areas:'stack'] place-items-center opacity-100">
         {displayCards.map((cardProps, index) => (
-          <motion.div
+          <div
             key={index}
-            className="[grid-area:stack]"
-            variants={{
-              hidden: { opacity: 0, y: 24, scale: 0.94 },
-              show: {
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                transition: { type: "spring", stiffness: 140, damping: 18 },
-              },
-            }}
+            className="fx-splash-card-in [grid-area:stack]"
+            style={{ ['--i' as string]: index }}
           >
             <DisplayCard {...cardProps} />
-          </motion.div>
+          </div>
         ))}
-      </motion.div>
+      </div>
     );
   }
 

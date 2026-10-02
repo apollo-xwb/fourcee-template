@@ -372,3 +372,36 @@ model-viewer > button:focus-visible {
     #faf5ea 100%
   );
 }
+
+/* Splash: transform/opacity only, one easing (ease-out-expo-ish) for every entrance, a gentle ease-in-out loop for the float.
+   will-change only on the single floating wrapper. */
+@keyframes fx-splash-card-in {
+  from { opacity: 0; transform: translate3d(0, 24px, 0) scale(0.94); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes fx-splash-in {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes fx-splash-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -6px, 0); }
+}
+@keyframes fx-splash-fade { from { opacity: 0; } to { opacity: 1; } }
+.fx-splash-card-in {
+  animation: fx-splash-card-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(250ms + var(--i, 0) * 180ms);
+}
+.fx-splash-in {
+  animation: fx-splash-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+.fx-splash-float {
+  animation: fx-splash-float 3.2s cubic-bezier(0.45, 0, 0.55, 1) 1.4s infinite both;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* static: a short opacity fade only, no movement, no loop */
+  .fx-splash-card-in, .fx-splash-in { animation: fx-splash-fade 200ms linear both; animation-delay: 0ms; }
+  .fx-splash-float { animation: none; will-change: auto; }
+}

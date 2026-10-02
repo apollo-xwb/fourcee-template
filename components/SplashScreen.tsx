@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
 import { PhoneCall } from 'lucide-react';
-import { EtherealShadow } from './ui/etheral-shadow';
 import { DottedSurface } from './ui/dotted-surface';
 import DisplayCards from './ui/display-cards';
 import fcShad from '../public/assets/fcshad.png';
@@ -26,7 +24,7 @@ const SPLASH_OPPORTUNITY_CARDS = [
     titleClassName: "text-[#0c0b09]",
     iconWrapperClassName: "bg-[#0c0b09]",
     className:
-      "[grid-area:stack] -translate-y-6 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-[#0c0b09]/15 before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-[#faf5ea]/40 grayscale-[40%] before:left-0 before:top-0 border-[#0c0b09]/20 bg-[#faf5ea]/85 text-[#0c0b09] after:from-[#faf5ea]",
+      "[grid-area:stack] backdrop-blur-none -translate-y-6 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-[#0c0b09]/15 before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-[#faf5ea]/40 before:left-0 before:top-0 border-[#0c0b09]/20 bg-[#faf5ea]/85 text-[#0c0b09] after:from-[#faf5ea]",
   },
   {
     icon: <PhoneCall className="size-4 text-[#faf5ea]" />,
@@ -37,7 +35,7 @@ const SPLASH_OPPORTUNITY_CARDS = [
     titleClassName: "text-[#0c0b09]",
     iconWrapperClassName: "bg-[#0c0b09]",
     className:
-      "[grid-area:stack] translate-x-12 translate-y-2 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-[#0c0b09]/15 before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-[#faf5ea]/25 grayscale-[20%] before:left-0 before:top-0 border-[#0c0b09]/25 bg-[#faf5ea]/90 text-[#0c0b09] after:from-[#faf5ea]",
+      "[grid-area:stack] backdrop-blur-none translate-x-12 translate-y-2 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-[#0c0b09]/15 before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-[#faf5ea]/25 before:left-0 before:top-0 border-[#0c0b09]/25 bg-[#faf5ea]/90 text-[#0c0b09] after:from-[#faf5ea]",
   },
   {
     icon: <PhoneCall className="size-4 text-[#faf5ea]" />,
@@ -48,29 +46,41 @@ const SPLASH_OPPORTUNITY_CARDS = [
     titleClassName: "text-[#0c0b09]",
     iconWrapperClassName: "bg-[#0c0b09]",
     className:
-      "[grid-area:stack] translate-x-24 translate-y-10 border-[#0c0b09]/30 bg-[#faf5ea] text-[#0c0b09] shadow-lg after:from-[#faf5ea]",
+      "[grid-area:stack] backdrop-blur-none translate-x-24 translate-y-10 border-[#0c0b09]/30 bg-[#faf5ea] text-[#0c0b09] shadow-lg after:from-[#faf5ea]",
   },
 ];
 
 export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [stat] = useState(() => STATS[Math.floor(Math.random() * STATS.length)]);
   const [fade, setFade] = useState(false);
+  // App passes a fresh arrow function on every render. With [onComplete] as the effect dependency the 2.8 s timer (and the ring
+  // preload) were cancelled and restarted on every App re-render (6 restarts in the first 3.3 s: the splash stayed up ~6.8 s instead
+  // of ~3.5 s, and the "loop" never settled). Keep the latest callback in a ref and run the timers exactly once.
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    // Warm GLB + Draco + WebGL while splash is up so the ring is ready
-    void preloadRingAssets();
-    const timer = setTimeout(() => {
+    // Warm GLB + Draco + WebGL for the ring, but only after the cards' entrance has played: the GLB/Draco parse is a 50-125 ms
+    // main-thread task and used to land in the middle of the animation.
+    const warm = window.setTimeout(() => void preloadRingAssets(), 1300);
+    let done: number | undefined;
+    const timer = window.setTimeout(() => {
       setFade(true);
-      setTimeout(onComplete, 700);
+      done = window.setTimeout(() => onCompleteRef.current(), 700);
     }, 2800);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
+    return () => {
+      window.clearTimeout(warm);
+      window.clearTimeout(timer);
+      if (done) window.clearTimeout(done);
+    };
+  }, []);
 
   return (
     <div
       className={`fixed inset-0 z-[9999] bg-[#faf5ea] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-700 ${
         fade ? 'opacity-0' : 'opacity-100'
       }`}
+      data-testid="splash"
     >
       {/* Soft beige grid */}
       <div
@@ -81,14 +91,15 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
           backgroundSize: '36px 36px',
         }}
       />
-      {/* Warm ethereal glow */}
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-50">
-        <EtherealShadow
-          color="rgba(200, 181, 143, 0.22)"
-          animation={{ scale: 100, speed: 20 }}
-          noise={{ opacity: 0.28, scale: 1.2 }}
-        />
-      </div>
+      {/* Warm glow: static gradients. The animated SVG turbulence/displacement filter (EtherealShadow) repainted the full screen on
+          the main thread every frame and was the biggest single cause of dropped frames here. */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 45% at 30% 30%, rgba(200,181,143,0.20), transparent 70%), radial-gradient(ellipse 60% 40% at 75% 62%, rgba(200,181,143,0.14), transparent 70%)',
+        }}
+      />
       {/* Smooth black dots rising from bottom */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56">
         <DottedSurface
@@ -98,41 +109,32 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-lg px-4">
-        {/* Single prominent wordmark — top stacked logo.png removed */}
-        <motion.div
-          className="mb-6 md:mb-8"
-          initial={{ opacity: 0, scale: 0.88, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        >
+        {/* Single prominent wordmark */}
+        <div className="fx-splash-in mb-6 md:mb-8" style={{ ['--d' as string]: '0ms' }}>
           <img
             src={fcShad}
             alt="fourcee concierge"
             className="w-64 sm:w-72 md:w-[22rem] mx-auto object-contain drop-shadow-sm"
           />
-        </motion.div>
+        </div>
 
         <div className="h-[2px] w-12 bg-[#0c0b09]/35 mx-auto mb-6" />
 
-        {/* Floating missed-opportunity trio — staggered entrance + soft float while waiting */}
+        {/* Floating missed-opportunity trio: CSS keyframes, transform/opacity only, one shared easing */}
         <div className="relative w-full flex items-center justify-center h-[200px] sm:h-[240px] md:h-[280px] overflow-visible">
-          <motion.div
-            className="relative z-10 scale-[0.52] sm:scale-[0.65] md:scale-[0.78] origin-center"
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <DisplayCards cards={SPLASH_OPPORTUNITY_CARDS} staggerEntrance />
-          </motion.div>
+          <div className="relative z-10 scale-[0.52] sm:scale-[0.65] md:scale-[0.78] origin-center">
+            <div className="fx-splash-float">
+              <DisplayCards cards={SPLASH_OPPORTUNITY_CARDS} staggerEntrance />
+            </div>
+          </div>
         </div>
 
-        <motion.p
-          className="mt-4 max-w-xs text-center text-sm font-medium text-[#3a342b] uppercase tracking-widest leading-relaxed px-6"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9, duration: 0.5 }}
+        <p
+          className="fx-splash-in mt-4 max-w-xs text-center text-sm font-medium text-[#3a342b] uppercase tracking-widest leading-relaxed px-6"
+          style={{ ['--d' as string]: '900ms' }}
         >
           {stat}
-        </motion.p>
+        </p>
       </div>
     </div>
   );

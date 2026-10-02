@@ -79,8 +79,9 @@ export function DottedSurface({ className, isDarkMode = false, ...props }: Dotte
 		const positionAttr = geometry.attributes.position;
 		const posArray = positionAttr.array as Float32Array;
 
+		const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 		const animate = () => {
-			rafIdRef.current = requestAnimationFrame(animate);
+			if (!reduceMotion) rafIdRef.current = requestAnimationFrame(animate);
 			// Stay mounted + painted: skip sim when offscreen, still keep canvas
 			if (!visibleRef.current) return;
 			let i = 0;
