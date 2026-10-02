@@ -7,6 +7,15 @@ import { useModalA11y } from '../lib/use-modal-a11y';
 
 const ModelViewer = 'model-viewer' as unknown as React.ElementType;
 
+/**
+ * In-sheet framing. The ring is ~22 mm across (17.2 mm inner diameter), so model-viewer's default `camera-orbit ... auto` (a 45 degree
+ * field of view with generous margins) drew it at ~40% of the box. A 30 degree vertical FOV at 60 mm puts the ~24 mm tall ring at ~75%
+ * of the box height; pinch/scroll can still zoom between 38 and 150 mm. AR itself (Scene Viewer / Quick Look / WebXR) always places the
+ * real-size model, and now lets the user pinch it bigger (ar-scale auto, Quick Look content scaling on): a true-size 22 mm ring on the
+ * floor is tiny by nature.
+ */
+export const AR_FRAME = { fovDeg: 30, radiusMm: 60, minRadiusMm: 38, maxRadiusMm: 150 } as const;
+
 const IS_IOS = typeof navigator !== 'undefined' && (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
 const IS_IOS_SAFARI = IS_IOS && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(typeof navigator !== 'undefined' ? navigator.userAgent : '');
@@ -116,7 +125,7 @@ export const ArViewSheet: React.FC<Props> = ({ metal, gem, onClose, onTryOn }) =
             <p className="fx-kicker">Augmented reality</p>
             <h3 id="ar-sheet-title" className="fx-display mt-1 text-3xl leading-none text-[#f4efe4]">See it in your space</h3>
             <p className="mt-2 text-sm text-[#ddd4c6]">
-              {metal.label}, true size (about 22&nbsp;mm across). AR shows your chosen metal only; the stone appears clear. The {gem.label.toLowerCase()} colour you picked is shown in the 3D studio and the hand try-on.
+              {metal.label}, true size (about 22&nbsp;mm across, 17&nbsp;mm inner diameter). In AR, pinch to enlarge it. AR shows your chosen metal only; the stone appears clear. The {gem.label.toLowerCase()} colour you picked is shown in the 3D studio and the hand try-on.
             </p>
           </div>
           <button ref={closeRef} type="button" onClick={onClose} aria-label="Close" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#c8b58f]/40 text-lg text-[#f4efe4] hover:bg-white/10">
@@ -139,14 +148,18 @@ export const ArViewSheet: React.FC<Props> = ({ metal, gem, onClose, onTryOn }) =
                 poster={thumb}
                 ar
                 ar-modes="webxr scene-viewer quick-look"
-                ar-scale="fixed"
+                ar-scale="auto"
                 ar-placement="floor"
                 camera-controls
                 touch-action="pan-y"
                 environment-image="neutral"
                 shadow-intensity="0.6"
                 exposure="1.05"
-                camera-orbit="25deg 65deg auto"
+                camera-orbit={`25deg 68deg ${AR_FRAME.radiusMm}mm`}
+                min-camera-orbit={`auto auto ${AR_FRAME.minRadiusMm}mm`}
+                max-camera-orbit={`auto auto ${AR_FRAME.maxRadiusMm}mm`}
+                field-of-view={`${AR_FRAME.fovDeg}deg`}
+                camera-target="0m 0m 0m"
                 interaction-prompt="none"
                 style={{ display: 'block', width: '100%', height: 'clamp(180px, 34svh, 340px)', background: 'transparent', ['--poster-color' as string]: 'transparent' }}
                 data-testid="model-viewer"
@@ -187,7 +200,7 @@ export const ArViewSheet: React.FC<Props> = ({ metal, gem, onClose, onTryOn }) =
           {quickLook && (
             <a
               rel="ar"
-              href={`${usdz}#allowsContentScaling=0`}
+              href={usdz}
               className={`${btn} gap-3`}
               data-testid="quick-look-link"
               aria-label="Open in AR Quick Look"

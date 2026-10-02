@@ -158,6 +158,9 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
       if (!smooth) {
         // single photo: no temporal filtering
         poseRef.current = raw;
+        if (import.meta.env.VITE_E2E_HOOKS === '1') {
+          (window as unknown as Record<string, unknown>).__ringTryOn = { landmarks: lm, pose: raw, raw, w, h, handedness: cat?.categoryName, score: cat?.score };
+        }
         overlayRef.current?.setPose(raw);
         setHandSeen(!!raw);
         return !!raw;

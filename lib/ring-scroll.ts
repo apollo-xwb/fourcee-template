@@ -7,7 +7,7 @@ export const RING_HUD_AT = 0.5;
 export const RING_HUD_AT_NOT_READY = 0.08;
 
 export function clamp01(v: number): number {
-  return v < 0 ? 0 : v > 1 ? 1 : v;
+  return !(v > 0) ? 0 : v > 1 ? 1 : v; // NaN and -0 -> 0
 }
 
 /**
@@ -38,4 +38,9 @@ export function findScroller(el: HTMLElement | null): HTMLElement | null {
     s = s.parentElement;
   }
   return null;
+}
+
+/** Pure: pixel-ratio cap. Phones/tablets (coarse pointer) are capped at 1.5, desktops at 2. */
+export function ringPixelRatio(dpr: number, coarse: boolean): number {
+  return Math.min(dpr || 1, coarse ? 1.5 : 2);
 }

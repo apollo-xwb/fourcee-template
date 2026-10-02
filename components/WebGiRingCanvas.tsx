@@ -4,6 +4,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { assetUrl } from '../lib/asset-url';
+import { ringPixelRatio } from '../lib/ring-scroll';
 
 const RING_URL = assetUrl('assets/3D/ring_webgi.glb');
 
@@ -74,10 +75,7 @@ interface WebGiRingCanvasProps {
   onFatal?: () => void;
 }
 
-/** Pure: pixel-ratio cap. Phones/tablets (coarse pointer) are capped at 1.5, desktops at 2. */
-export function ringPixelRatio(dpr: number, coarse: boolean): number {
-  return Math.min(dpr || 1, coarse ? 1.5 : 2);
-}
+
 
 export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
   metalColor,
@@ -411,8 +409,16 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
           raf = requestAnimationFrame(loop);
           step();
         };
+        let readySent = false;
+        const sendReady = () => {
+          if (readySent) return;
+          readySent = true;
+          // two rAFs: the first pipeline frame has been drawn; only then drop the poster (no flash of an empty canvas)
+          requestAnimationFrame(() => requestAnimationFrame(() => !cancelled && onReadyRef.current?.()));
+        };
         const wake = () => {
           if (raf || !canRun()) return;
+          sendReady();
           viewer.renderEnabled = true;
           wasPosed = false;
           viewer.setDirty?.();
@@ -424,9 +430,7 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
         disposers.push(() => document.removeEventListener('visibilitychange', onVis));
         step();
         wake();
-        if (!activeRef.current) viewer.renderEnabled = false;
-        // two rAFs: the first pipeline frame has been drawn; only then drop the poster (no flash of an empty canvas)
-        requestAnimationFrame(() => requestAnimationFrame(() => !cancelled && onReadyRef.current?.()));
+        if (!activeRef.current) viewer.renderEnabled = false; // scene is built but offscreen: stays paused until the section is near the viewport
 
 
         const onResize = () => {
