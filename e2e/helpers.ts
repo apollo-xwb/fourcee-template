@@ -22,4 +22,9 @@ export async function axeSerious(page: Page, include: string, tags = ['wcag2a', 
   return r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.map((n) => n.target.join(' ')) }));
 }
 
-export const MEDIA = '/workspace/tmp-fourcee4-harness/media/';
+import fs from 'node:fs';
+import path from 'node:path';
+/** Folder with woman_hands.jpg / woman_hands.y4m (a back-of-hand photo and the same as a Y4M for Chromium's fake camera). Not committed
+ *  (third-party stock image): set E2E_MEDIA=/path/to/folder. Tests that need it are skipped when it is missing. */
+export const MEDIA = (process.env.E2E_MEDIA || '').replace(/([^\\/])$/, '$1/');
+export const hasMedia = (f: string) => !!MEDIA && fs.existsSync(path.join(MEDIA, f));

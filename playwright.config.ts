@@ -4,7 +4,8 @@ import { defineConfig } from '@playwright/test';
 // serves the static build. Software GL (swiftshader) so it also runs on CI boxes / the farm PCs without a GPU.
 // Fake camera: tests that need a live camera pass --use-file-for-fake-video-capture themselves.
 const PORT = Number(process.env.E2E_PORT || 4199);
-const ARGS = ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'];
+const GL = (process.env.E2E_GL_ARGS || '--use-gl=swiftshader --enable-unsafe-swiftshader').split(' ').filter(Boolean); // e.g. '--use-angle=d3d11 --ignore-gpu-blocklist' on a machine with a GPU
+const ARGS = [...GL, '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'];
 const use = { launchOptions: { args: ARGS }, baseURL: `http://127.0.0.1:${PORT}` };
 
 export default defineConfig({

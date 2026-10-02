@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
-import { MEDIA, axeSerious, openApp, watchConsole } from './helpers';
+import { MEDIA, axeSerious, hasMedia, openApp, watchConsole } from './helpers';
 
-const FAKE_CAM = ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', `--use-file-for-fake-video-capture=${MEDIA}woman_hands.y4m`];
+const FAKE_CAM = [...(process.env.E2E_GL_ARGS || '--use-gl=swiftshader --enable-unsafe-swiftshader').split(' ').filter(Boolean), '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', ...(hasMedia('woman_hands.y4m') ? [`--use-file-for-fake-video-capture=${MEDIA}woman_hands.y4m`] : [])];
 test.use({ launchOptions: { args: FAKE_CAM }, permissions: ['camera'] });
 test.beforeEach(({}, info) => { test.skip(info.project.name === 'desktop-1280x800', 'covered by the other desktop size'); });
 
@@ -35,6 +35,7 @@ test('try-on: closing while the camera is starting leaves no console error and e
 });
 
 test('try-on: live camera detects the hand, Stop ends the tracks', async ({ page }) => {
+  test.skip(!hasMedia('woman_hands.y4m'), 'set E2E_MEDIA to a folder with woman_hands.y4m');
   const errors = watchConsole(page);
   await page.addInitScript(spyGum);
   await openApp(page, '?ring=white-gold,sapphire&tryon=1');
@@ -48,6 +49,7 @@ test('try-on: live camera detects the hand, Stop ends the tracks', async ({ page
 });
 
 test('try-on: photo upload detects the hand; sheet has zero serious axe violations', async ({ page }, info) => {
+  test.skip(!hasMedia('woman_hands.jpg'), 'set E2E_MEDIA to a folder with woman_hands.jpg');
   const errors = watchConsole(page);
   await openApp(page, '?ring=white-gold,sapphire&tryon=1');
   await page.getByTestId('tryon-file').setInputFiles(MEDIA + 'woman_hands.jpg');
