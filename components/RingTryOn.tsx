@@ -141,8 +141,10 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
     const raw = computeRingPose(lm, w, h, result.handedness?.[0]?.[0]?.categoryName);
     if (!raw) return false;
     poseRef.current = smooth ? smoothPose(poseRef.current, raw) : raw;
-    // read-only test hook (used by e2e to compare the drawn ring against the landmarks)
-    (window as unknown as Record<string, unknown>).__ringTryOn = { landmarks: lm, pose: poseRef.current, w, h };
+    // read-only e2e hook; compiled in ONLY when built with VITE_E2E_HOOKS=1 (never in a normal build)
+    if (import.meta.env.VITE_E2E_HOOKS === '1') {
+      (window as unknown as Record<string, unknown>).__ringTryOn = { landmarks: lm, pose: poseRef.current, w, h };
+    }
     overlayRef.current?.setPose(poseRef.current);
     setHandSeen(true);
     return true;

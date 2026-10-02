@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { RingSwatch } from '../types/audit';
-import { arGlbUrl, arUsdzUrl, buildRingShareUrl, pickArMetal, supportsQuickLook } from '../lib/ar-assets';
+import { arGlbUrl, arThumbUrl, arUsdzUrl, buildRingShareUrl, pickArMetal, supportsQuickLook } from '../lib/ar-assets';
 import { QrCodeSvg } from './QrCodeSvg';
 import { useModalA11y } from '../lib/use-modal-a11y';
 
@@ -29,7 +29,7 @@ export const ArViewSheet: React.FC<Props> = ({ metal, gem, onClose, onTryOn }) =
   const key = pickArMetal(metal);
   const glb = arGlbUrl(key);
   const usdz = arUsdzUrl(key);
-  const thumb = `${import.meta.env.BASE_URL}assets/ar/ring-thumb-${key}.png`.replace(/\/{2,}/g, '/');
+  const thumb = arThumbUrl(key);
   const viewerRef = useRef<HTMLElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -54,6 +54,25 @@ export const ArViewSheet: React.FC<Props> = ({ metal, gem, onClose, onTryOn }) =
 
   // focus trap + inert background + Escape + focus return to the trigger (see lib/use-modal-a11y.ts)
   useModalA11y(dialogRef, onClose, closeRef);
+
+  // model-viewer keeps its focusable element in a shadow root, so :focus-visible never matches the host. Track keyboard vs pointer
+  // use on <html> and let index.css draw the focus ring only for keyboard users.
+  useEffect(() => {
+    const root = document.documentElement;
+    const kbd = (e: KeyboardEvent) => {
+      if (e.key === 'Tab' || e.key.startsWith('Arrow')) root.dataset.inputModality = 'keyboard';
+    };
+    const ptr = () => {
+      root.dataset.inputModality = 'pointer';
+    };
+    window.addEventListener('keydown', kbd, true);
+    window.addEventListener('pointerdown', ptr, true);
+    return () => {
+      window.removeEventListener('keydown', kbd, true);
+      window.removeEventListener('pointerdown', ptr, true);
+      delete root.dataset.inputModality;
+    };
+  }, []);
 
   // model-viewer decides asynchronously (WebXR support is a promise) and does not expose which mode it chose,
   // so report only what we can observe: canActivateAR.

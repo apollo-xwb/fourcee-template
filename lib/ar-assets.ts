@@ -41,7 +41,8 @@ export function pickArMetal(metal: Pick<RingSwatch, 'id' | 'color'>): ArMetalKey
 
 export const arGlbUrl = (key: ArMetalKey) => `${AR_BASE}ring-${key}.glb`;
 export const arUsdzUrl = (key: ArMetalKey) => `${AR_BASE}ring-${key}.usdz`;
-export const AR_THUMB_URL = `${AR_BASE}ring-thumb.png`;
+/** Per-metal poster/thumbnail (ring-thumb-<metal>.png). */
+export const arThumbUrl = (key: ArMetalKey) => `${AR_BASE}ring-thumb-${key}.png`;
 export const HAND_MODEL_URL = `${import.meta.env.BASE_URL}ar/hand_landmarker.task`.replace(/\/{2,}/g, '/');
 export const MEDIAPIPE_WASM_URL = `${import.meta.env.BASE_URL}mediapipe/wasm`.replace(/\/{2,}/g, '/');
 
