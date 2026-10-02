@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { RingSwatch } from '../types/audit';
 import { arGlbUrl, arUsdzUrl, buildRingShareUrl, pickArMetal, supportsQuickLook } from '../lib/ar-assets';
 import { QrCodeSvg } from './QrCodeSvg';
+import { useModalA11y } from '../lib/use-modal-a11y';
 
 const ModelViewer = 'model-viewer' as unknown as React.ElementType;
 
@@ -31,6 +32,7 @@ export const ArViewSheet: React.FC<Props> = ({ metal, gem, onClose, onTryOn }) =
   const thumb = `${import.meta.env.BASE_URL}assets/ar/ring-thumb-${key}.png`.replace(/\/{2,}/g, '/');
   const viewerRef = useRef<HTMLElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
   const [mvReady, setMvReady] = useState(false);
   const [mvError, setMvError] = useState(false);
   const [status, setStatus] = useState<ArStatus>('checking');
@@ -50,16 +52,8 @@ export const ArViewSheet: React.FC<Props> = ({ metal, gem, onClose, onTryOn }) =
     };
   }, []);
 
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      previous?.focus?.();
-    };
-  }, [onClose]);
+  // focus trap + inert background + Escape + focus return to the trigger (see lib/use-modal-a11y.ts)
+  useModalA11y(dialogRef, onClose, closeRef);
 
   // model-viewer decides asynchronously (WebXR support is a promise) and does not expose which mode it chose,
   // so report only what we can observe: canActivateAR.
@@ -92,7 +86,7 @@ export const ArViewSheet: React.FC<Props> = ({ metal, gem, onClose, onTryOn }) =
   const ghost = 'inline-flex min-h-[44px] items-center justify-center rounded-full border border-white/30 px-6 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-white/10';
 
   return (
-    <div className="fixed inset-0 z-[1500] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="ar-sheet-title" data-testid="ar-sheet">
+    <div className="fixed inset-0 z-[1500] flex items-end justify-center sm:items-center" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="ar-sheet-title" data-testid="ar-sheet">
       <button type="button" aria-label="Close AR sheet" className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} tabIndex={-1} />
       <div className="relative z-10 flex max-h-[96svh] w-full max-w-xl flex-col overflow-y-auto rounded-t-[2rem] border border-white/15 bg-black/80 p-5 text-white shadow-2xl backdrop-blur-2xl sm:rounded-[2rem] sm:p-7">
         <div className="flex items-start justify-between gap-4">

@@ -3,6 +3,7 @@ import type { RingSwatch } from '../types/audit';
 import { HAND_MODEL_URL, MEDIAPIPE_WASM_URL, arGlbUrl, pickArMetal } from '../lib/ar-assets';
 import { computeRingPose, smoothPose, type RingPose } from '../lib/hand-pose';
 import { RingOverlay } from '../lib/ring-overlay';
+import { useModalA11y } from '../lib/use-modal-a11y';
 
 type Phase = 'idle' | 'starting' | 'live' | 'photo' | 'error';
 type HandLandmarkerT = import('@mediapipe/tasks-vision').HandLandmarker;
@@ -37,6 +38,7 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
   const poseRef = useRef<RingPose | null>(null);
   const missRef = useRef(0);
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
   const modeRef = useRef<'VIDEO' | 'IMAGE'>('VIDEO');
   const liveRef = useRef(false);
   const mirror = phase === 'live' && facing === 'user';
@@ -86,16 +88,8 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
     overlayRef.current?.setColors(metal.color, gem.color);
   }, [metal.color, gem.color]);
 
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      previous?.focus?.();
-    };
-  }, [onClose]);
+  // focus trap + inert background + Escape + focus return to the trigger (see lib/use-modal-a11y.ts)
+  useModalA11y(dialogRef, onClose, closeRef);
 
   useEffect(
     () => () => {
@@ -293,7 +287,7 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
   const mediaVisible = phase === 'live' || phase === 'photo';
 
   return (
-    <div className="fixed inset-0 z-[1500] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="tryon-title" data-testid="tryon-sheet">
+    <div className="fixed inset-0 z-[1500] flex items-end justify-center sm:items-center" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="tryon-title" data-testid="tryon-sheet">
       <button type="button" aria-label="Close try-on" className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} tabIndex={-1} />
       <div className="relative z-10 flex max-h-[96svh] w-full max-w-2xl flex-col overflow-y-auto rounded-t-[2rem] border border-white/15 bg-black/85 p-5 text-white shadow-2xl backdrop-blur-2xl sm:rounded-[2rem] sm:p-7">
         <div className="flex items-start justify-between gap-4">
