@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ringPixelRatio, RING_DOCK_AT, RING_HUD_AT, RING_HUD_AT_NOT_READY, clamp01, hudVisible, isDocked, ringProgress } from '../lib/ring-scroll';
+import { splashTrioLayout } from '../lib/splash-layout';
 import { AMOUNTX, AMOUNTY, dotHeight, dottedFrameInterval, dottedPixelRatio } from '../lib/dotted-renderer';
 
 describe('ring scroll progress', () => {
@@ -34,4 +35,18 @@ describe('pixel ratio caps', () => {
     for (let ix = 0; ix < AMOUNTX; ix++) for (let iy = 0; iy < AMOUNTY; iy++) expect(Math.abs(dotHeight(ix, iy, 3.3))).toBeLessThanOrEqual(84);
     expect(dotHeight(3, 4, 1)).toBe(dotHeight(3, 4, 1));
   });
+});
+
+describe('splash trio layout', () => {
+  it('fills a phone screen (>= 340 px of a 390 px viewport) and never overflows it, at common phone widths', () => {
+    for (const vw of [320, 360, 375, 390, 412, 430, 480, 600]) {
+      const { scale } = splashTrioLayout(vw);
+      const stackW = 448 * scale;
+      expect(stackW).toBeLessThanOrEqual(vw - 24 + 0.5);
+      if (vw >= 390) expect(stackW).toBeGreaterThanOrEqual(Math.min(vw - 24, 448) * 0.99 - 1);
+    }
+    expect(splashTrioLayout(390).scale).toBeGreaterThan(0.78); // was 0.52 before
+  });
+  it('re-centres the stack: shift = -96 px * scale', () => { const l = splashTrioLayout(390); expect(l.shiftPx).toBeCloseTo(-96 * l.scale, 1); });
+  it('tablet / desktop widths stay capped', () => { expect(splashTrioLayout(768).scale).toBeLessThanOrEqual(0.9); expect(splashTrioLayout(1440).scale).toBeLessThanOrEqual(0.9); });
 });

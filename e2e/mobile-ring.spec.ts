@@ -42,8 +42,8 @@ test('fast scroll to the ring section: HUD is visible even when the 3D scene nev
   const before = await stage();
   await page.evaluate(() => { const sc = (window as any).__sc, el = document.querySelector('#ring-studio .relative.h-\\[150vh\\]') as HTMLElement; const r = el.getBoundingClientRect(); sc.scrollTop += r.top - sc.getBoundingClientRect().top + (el.offsetHeight - sc.clientHeight); });
   await expect.poll(async () => (await hud(page)).on, { timeout: 5000 }).toBe('1');
+  await expect.poll(async () => (await hud(page)).opacity, { timeout: 3000 }).toBe(1); // 500 ms fade-in
   const h = await hud(page);
-  expect(h.opacity).toBe(1);
   expect(h.pe).not.toBe('none');
   expect(h.inViewport, `HUD inside viewport (top ${h.top}, bottom ${h.bottom}, vh ${h.vh})`).toBe(true);
   // poster is the placeholder while the scene is not ready, and the sticky stage keeps the same size (no layout jump)
@@ -127,7 +127,7 @@ test('splash: the three-card trio is large on phones (>= 300 px wide stack, fits
     return { n: cards.length, stackW: Math.round(right - left), left: Math.round(left), right: Math.round(right), vw: window.innerWidth, canvases: document.querySelectorAll('[data-testid=splash] canvas').length, cardH: Math.round(rs[0].height) };
   });
   expect(m.n).toBe(3);
-  expect(m.stackW).toBeGreaterThanOrEqual(300);
+  expect(m.stackW).toBeGreaterThanOrEqual(340);
   expect(m.left).toBeGreaterThanOrEqual(0);
   expect(m.right).toBeLessThanOrEqual(m.vw);
   expect(m.canvases).toBe(0);

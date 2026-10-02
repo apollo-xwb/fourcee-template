@@ -3,6 +3,7 @@ import { PhoneCall } from 'lucide-react';
 import DisplayCards from './ui/display-cards';
 import fcShad from '../public/assets/fcshad.png';
 import { preloadRingNetwork } from '../lib/preload-ring';
+import { splashTrioLayout } from '../lib/splash-layout';
 
 const STATS = [
   "Jewelers lose 40% of leads to missed calls.",
@@ -52,6 +53,7 @@ const SPLASH_OPPORTUNITY_CARDS = [
 export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [stat] = useState(() => STATS[Math.floor(Math.random() * STATS.length)]);
   const [fade, setFade] = useState(false);
+  const [trio] = useState(() => splashTrioLayout(typeof window !== 'undefined' ? window.innerWidth : 390));
   // App passes a fresh arrow function on every render. With [onComplete] as the effect dependency the 2.8 s timer (and the ring
   // preload) were cancelled and restarted on every App re-render (6 restarts in the first 3.3 s: the splash stayed up ~6.8 s instead
   // of ~3.5 s, and the "loop" never settled). Keep the latest callback in a ref and run the timers exactly once.
@@ -119,8 +121,8 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
         <div className="h-[2px] w-12 bg-[#0c0b09]/35 mx-auto mb-6" />
 
         {/* Floating missed-opportunity trio: CSS keyframes, transform/opacity only, one shared easing */}
-        <div className="relative w-full flex items-center justify-center h-[230px] sm:h-[260px] md:h-[300px] overflow-visible">
-          <div className="relative z-10 scale-[0.9] min-[380px]:scale-100 sm:scale-[0.82] md:scale-[0.92] origin-center">
+        <div className="relative w-full flex items-center justify-center h-[250px] sm:h-[280px] md:h-[320px] overflow-visible">
+          <div className="relative z-10 origin-center" style={{ scale: String(trio.scale), translate: `${trio.shiftPx}px 0` }} data-testid="splash-trio" data-scale={trio.scale}>
             <div className="fx-splash-float">
               <DisplayCards cards={SPLASH_OPPORTUNITY_CARDS} staggerEntrance />
             </div>
