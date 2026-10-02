@@ -401,10 +401,10 @@ const App: React.FC = () => {
             <p className="mt-4 text-[11px] uppercase tracking-[0.28em] text-[#cbcbcb]">
               Tailored exclusively for high-end jewelers
             </p>
-            <div className="fx-tile mt-7 max-w-[440px] px-5 py-4">
+            <div className="fx-tile fx-hero-card mt-7 max-w-[440px] px-5 py-4">
               <p className="fx-kicker">Prepared for</p>
-              <p className="mt-2 text-xl text-[#efefef]">{businessName}</p>
-              <p className="mt-2 text-[13px] leading-relaxed text-[#9d9d9d]">
+              <p className="mt-2 text-xl text-[#111111] dark:text-[#efefef]">{businessName}</p>
+              <p className="mt-2 text-[13px] leading-relaxed text-[#262626] dark:text-[#9d9d9d]">
                 One recovered client can cover months of platform cost.
               </p>
             </div>
