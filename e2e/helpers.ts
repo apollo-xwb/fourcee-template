@@ -13,8 +13,8 @@ export function watchConsole(page: Page) {
 export async function openApp(page: Page, query = '') {
   await page.goto('/' + query);
   await page.locator('[data-testid=splash]').waitFor({ state: 'detached', timeout: 60_000 });
-  const gotIt = page.getByRole('button', { name: 'Got it' });
-  if (await gotIt.isVisible().catch(() => false)) await gotIt.evaluate((el: HTMLElement) => el.click()); // DOM click: a deep-linked sheet may already cover it
+  // DOM click, no auto-wait: the tip can auto-dismiss between the check and the click, and a deep-linked sheet may already cover it
+  await page.getByRole('button', { name: 'Got it' }).evaluateAll((els) => els.forEach((el) => (el as HTMLElement).click()));
 }
 
 export async function axeSerious(page: Page, include: string, tags = ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']) {
