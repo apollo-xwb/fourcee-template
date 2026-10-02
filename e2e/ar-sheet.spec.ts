@@ -29,10 +29,16 @@ test('AR sheet: Try-on button is fully visible and not overlapped; zero serious 
   }, [box.x + box.width / 2, box.y + box.height / 2]);
   expect(top, 'Try-on button must be the top element at its centre').toBe(true);
 
-  // iOS Quick Look hook
-  const ql = page.getByTestId('quick-look-link');
-  await expect(ql).toHaveAttribute('rel', /\bar\b/);
-  await expect(ql).toHaveAttribute('href', /\.usdz/);
+  // iOS: AR Quick Look anchor (rel=ar -> .usdz). Android / desktop: model-viewer drives WebXR / Scene Viewer instead.
+  const ios = await page.evaluate(() => /iPhone|iPad/.test(navigator.userAgent));
+  if (ios) {
+    const ql = page.getByTestId('quick-look-link');
+    await expect(ql).toHaveAttribute('rel', /\bar\b/);
+    await expect(ql).toHaveAttribute('href', /\.usdz/);
+  } else {
+    await expect(page.locator('model-viewer')).toHaveAttribute('ar-modes', /scene-viewer|webxr/);
+    await expect(page.getByTestId('quick-look-link')).toHaveCount(0);
+  }
 
   // body scrolls on small viewports, actions stay pinned (footer is outside the scroll body)
   const pinned = await page.evaluate(() => {

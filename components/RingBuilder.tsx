@@ -28,7 +28,9 @@ function RingCanvas(props: React.ComponentProps<typeof CrystalRingCanvas>) {
 }
 
 /** Lower edge of the docked ring as a fraction of the sticky viewport height (measured, iPhone 14 + Pixel). */
-const RING_BOTTOM_RATIO = 0.64;
+const RING_BOTTOM_RATIO = 0.63;
+/** The docked ring is ~5-8% wider than a phone screen; 0.84 leaves a small margin on both sides (checked on iPhone 14 / Pixel). */
+const RING_PHONE_SCALE = 0.84;
 
 function findSwatch(list: RingSwatch[], id: string, fallback: RingSwatch): RingSwatch {
   return list.find((item) => item.id === id) ?? fallback;
@@ -82,8 +84,13 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
       const sh = sticky.clientHeight;
       const padBottom = parseFloat(getComputedStyle(hud.parentElement as HTMLElement).paddingBottom) || 0;
       const hudTop = sh - padBottom - hud.offsetHeight;
-      const lift = phone ? Math.max(0, Math.round(sh * RING_BOTTOM_RATIO - (hudTop - 16))) : 0;
+      // phones: the docked ring is wider than the screen (clipped at both edges) -> shrink it slightly about its own centre, then lift
+      const scale = phone ? RING_PHONE_SCALE : 1;
+      const originY = sh * 0.42;
+      const bottom = originY + (sh * RING_BOTTOM_RATIO - originY) * scale;
+      const lift = phone ? Math.max(0, Math.round(bottom - (hudTop - 16))) : 0;
       sticky.style.setProperty('--ring-lift', `${lift}px`);
+      sticky.style.setProperty('--ring-scale', String(scale));
     };
     update();
     const ro = new ResizeObserver(update);
@@ -254,7 +261,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
               ring sits entirely above it. transform only (compositor), animated once when the ring docks; no canvas resize, no camera jump. */}
           <div
             className="absolute inset-0 transition-transform duration-500 ease-out"
-            style={{ transform: docked ? `translate3d(0, calc(var(--ring-lift, 0px) * -1), 0)` : 'translate3d(0,0,0)', willChange: docked ? 'transform' : undefined }}
+            style={{ transformOrigin: '50% 42%', transform: docked ? `translate3d(0, calc(var(--ring-lift, 0px) * -1), 0) scale(var(--ring-scale, 1))` : 'translate3d(0,0,0) scale(1)', willChange: docked ? 'transform' : undefined }}
             data-testid="ring-lift"
           >
             <RingCanvas
