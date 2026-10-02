@@ -111,10 +111,17 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
       <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-lg px-4">
         {/* Single prominent wordmark */}
         <div className="fx-splash-in mb-6 md:mb-8" style={{ ['--d' as string]: '0ms' }}>
+          {/* width/height = the PNG's intrinsic 831x271: without them the <img> is ~0 px tall until it loads, and when it does the whole
+              vertically-centred column grows by 83.5 px (iPhone: w-64 -> 256x83.5), so the card trio jumps 41.7 px in one frame (seen on the
+              live site every run). Reserving the box up front removes the jump; Tailwind preflight's `height:auto` keeps the aspect ratio. */}
           <img
             src={fcShad}
             alt="fourcee concierge"
-            className="w-64 sm:w-72 md:w-[22rem] mx-auto object-contain drop-shadow-sm"
+            width={831}
+            height={271}
+            decoding="async"
+            fetchPriority="high"
+            className="w-64 sm:w-72 md:w-[22rem] h-auto mx-auto object-contain drop-shadow-sm"
           />
         </div>
 
