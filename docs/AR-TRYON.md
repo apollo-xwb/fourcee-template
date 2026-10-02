@@ -59,3 +59,13 @@ Verified (Chromium via Playwright, software GL, emulated devices):
 - Try-on against a Chrome fake camera (looped MediaPipe sample hand video) and against uploaded photos: hand detected, ring placed on the ring-finger segment, "Save picture" produces a PNG, no console errors.
 
 **Not tested:** real iPhone Quick Look, real Android Scene Viewer / WebXR session, a real camera, real-device performance (software GL runs the try-on at ~1 fps; a phone GPU will differ), try-on accuracy on an open back-of-hand (sample photos are mostly fists/pointing), Safari/WebKit at all, finger sizing.
+
+
+## Accessibility, copy and test hooks (PR #4 review fixes)
+
+- **Dialogs.** `ArViewSheet` and `RingTryOn` both use `lib/use-modal-a11y.ts`: focus moves in on open, Tab/Shift+Tab cycle inside, Escape closes, the rest of `<body>` gets `inert` + `aria-hidden="true"` while open (restored exactly on close) and focus returns to the trigger.
+- **What AR shows.** The AR files (GLB/USDZ) change **metal only**; the stone is baked clear. The AR sheet says so. The chosen stone colour is shown in the 3D studio and in the camera/photo try-on.
+- **Download size.** First camera try-on fetches about 19 MB (hand model 7.8 MB + MediaPipe WASM 11.2 MB + JS 0.3 MB). The try-on copy says "about 19 MB on first use".
+- **`window.__ringTryOn`** (landmarks + pose for e2e) exists **only** in a build made with `VITE_E2E_HOOKS=1` (`VITE_E2E_HOOKS=1 npm run build`). Normal builds do not contain it.
+- **Licences.** The vendored MediaPipe runtime and hand model are Apache-2.0 (Google LLC): see `THIRD_PARTY_NOTICES.md`, `public/mediapipe/{LICENSE,NOTICE}`, `public/ar/{LICENSE,NOTICE}`.
+- **Tests.** `npm test` runs the vitest suite in `tests/` (pose maths, AR asset helpers, asset files present).
