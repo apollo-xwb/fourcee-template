@@ -345,3 +345,17 @@ html:not(.dark) .fx-grid {
     0 0 1px rgba(12, 11, 9, 1),
     0 1px 2px rgba(0, 0, 0, 0.9);
 }
+
+/* model-viewer is a custom element whose focusable element lives in its shadow root (the host matches :focus but never
+   :focus-visible), and it draws no focus indicator of its own. ArViewSheet sets html[data-input-modality="keyboard"] while the
+   user is on the keyboard, so the ring shows for Tab/arrow users and not on mouse/touch orbiting.
+   Inset, because the AR sheet wraps it in an overflow-hidden rounded box that would clip an outer outline. */
+html[data-input-modality="keyboard"] model-viewer:focus,
+model-viewer:focus-visible {
+  outline: 2px solid #f4efe4;
+  outline-offset: -4px;
+}
+model-viewer > button:focus-visible {
+  outline: 2px solid #f4efe4 !important;
+  outline-offset: 2px;
+}

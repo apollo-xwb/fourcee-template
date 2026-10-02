@@ -1,7 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { readRingDeepLink } from '../lib/ar-assets';
 import type { RingBuilderConfig, RingSwatch } from '../types/audit';
 import { CrystalRingCanvas } from './CrystalRingCanvas';
 import { WebGiRingCanvas } from './WebGiRingCanvas';
+
+// AR + camera try-on are loaded on demand: model-viewer and MediaPipe never touch the first paint.
+const ArViewSheet = lazy(() => import('./ArViewSheet').then((m) => ({ default: m.ArViewSheet })));
+const RingTryOn = lazy(() => import('./RingTryOn').then((m) => ({ default: m.RingTryOn })));
 
 interface RingBuilderProps {
   config: Required<RingBuilderConfig>;
@@ -43,9 +49,20 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
   const [metalId, setMetalId] = useState(config.defaultMetalId);
   const [gemId, setGemId] = useState(config.defaultGemId);
   const [docked, setDocked] = useState(false);
+  const [sheet, setSheet] = useState<'ar' | 'tryon' | null>(null);
   const dockedRef = useRef(false);
   const progressRef = useRef(0);
   const lastUiRef = useRef(0);
+
+  // QR / share deep link: ?ring=metal,gem[&ar=1|tryon=1]
+  useEffect(() => {
+    const link = readRingDeepLink();
+    if (link.metalId && config.metals.some((m) => m.id === link.metalId)) setMetalId(link.metalId);
+    if (link.gemId && config.gems.some((g) => g.id === link.gemId)) setGemId(link.gemId);
+    if (link.openAr) setSheet('ar');
+    else if (link.openTryOn) setSheet('tryon');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const metal = useMemo(
     () => findSwatch(config.metals, metalId, config.metals[0]),
@@ -83,6 +100,41 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
       hintLabelRef.current.textContent = nextDocked ? 'Customize · drag to turn' : 'Scroll to dock ↓';
     }
   };
+
+  const arButtons = (
+    <div className="mt-4 flex flex-wrap gap-2" data-testid="ar-actions">
+      <button
+        type="button"
+        onClick={() => setSheet('ar')}
+        className="min-h-11 rounded-full bg-[#f4efe4] px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#07080c] active:scale-95"
+        data-testid="open-ar"
+      >
+        View in AR
+      </button>
+      <button
+        type="button"
+        onClick={() => setSheet('tryon')}
+        className="min-h-11 rounded-full border border-[#c8b58f]/60 bg-white/5 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f4efe4] active:scale-95"
+        data-testid="open-tryon"
+      >
+        Try on your hand
+      </button>
+    </div>
+  );
+
+  const sheets =
+    sheet && typeof document !== 'undefined'
+      ? createPortal(
+          <Suspense fallback={null}>
+            {sheet === 'ar' ? (
+              <ArViewSheet metal={metal} gem={gem} onClose={() => setSheet(null)} onTryOn={() => setSheet('tryon')} />
+            ) : (
+              <RingTryOn metal={metal} gem={gem} onClose={() => setSheet(null)} />
+            )}
+          </Suspense>,
+          document.body
+        )
+      : null;
 
   const chipClass = (active: boolean, accent: 'copper' | 'ice') =>
     `inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] ${
@@ -146,6 +198,8 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
             </button>
           ))}
         </div>
+        {arButtons}
+        {sheets}
       </div>
     );
   }
@@ -298,11 +352,13 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
                   </button>
                 ))}
               </div>
+              {arButtons}
               <p className="mt-3 text-[11px] leading-relaxed text-[#a8957a]">{config.subhead}</p>
             </div>
           </div>
         </div>
       </div>
+      {sheets}
     </div>
   );
 };
