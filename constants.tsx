@@ -25,7 +25,7 @@ export const PACKAGES: Package[] = [
     price: 5000,
     monthly: 997,
     yearlyPrice: 9564,
-    description: 'or $9,564/year (setup fee waived)',
+    description: 'Recommended · or $9,564/year (setup fee waived)',
     features: [
       '2,000 minutes/month',
       'Voice cloning + custom accents',
@@ -137,7 +137,7 @@ export const BLOG_POSTS: BlogPost[] = [
     title: 'How AI is Revolutionizing Jewelry Retail in 2026',
     excerpt: 'The luxury market is evolving. Discover how AI agents are becoming the standard for client interactions.',
     date: 'Oct 24, 2025',
-    imageUrl: 'https://picsum.photos/800/600?random=1',
+    imageUrl: 'assets/plates/plate_hero_ring.png',
     youtubeUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     content: `
       ## The New Era of Luxury
@@ -157,7 +157,7 @@ export const BLOG_POSTS: BlogPost[] = [
     title: 'Top 5 Pain Points for Jewelers and How Voice AI Solves Them',
     excerpt: 'From missed calls to staffing shortages, see why jewelers are turning to Fourcee.',
     date: 'Oct 20, 2025',
-    imageUrl: 'https://picsum.photos/800/600?random=2',
+    imageUrl: 'assets/plates/plate_missed_call_phone.png',
     youtubeUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     content: `
       ## Solving the Jewelry Business Bottlenecks
@@ -174,7 +174,7 @@ export const BLOG_POSTS: BlogPost[] = [
     title: 'Maximizing ROI with Custom AI Receptionists',
     excerpt: 'A deep dive into the numbers behind the investment in voice AI for jewelry stores.',
     date: 'Oct 15, 2025',
-    imageUrl: 'https://picsum.photos/800/600?random=3',
+    imageUrl: 'assets/plates/plate_ring_studio.png',
     youtubeUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     content: `
       ## The ROI Equation

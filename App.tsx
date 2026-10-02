@@ -23,7 +23,6 @@ import {
   FileSearch,
   LayoutDashboard,
   CreditCard,
-  Newspaper,
   CalendarDays,
   Gem,
 } from 'lucide-react';
@@ -32,6 +31,7 @@ import { CheckoutFlow } from './components/CheckoutFlow';
 import { CRMView } from './components/CRMView';
 import { AdminDashboard } from './components/AdminDashboard';
 import { SplashScreen } from './components/SplashScreen';
+import { preloadRingAssets } from './lib/preload-ring';
 import { PhoneTester } from './components/PhoneTester';
 import { FaqMonochrome } from './components/ui/faq-monochrome.tsx';
 import { ArticleCard } from './components/ui/blog-post-card';
@@ -42,6 +42,8 @@ import { LazyRingBuilderSection } from './components/LazyRingBuilderSection';
 import type { AuditData } from './types/audit';
 import { loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from './lib/audit-content';
 import { resolveRingBuilder } from './lib/ring-builder';
+import { assetUrl } from './lib/asset-url';
+import { renderSimpleMarkdown } from './lib/markdown';
 
 const INTEGRATIONS_DATA = [
   {
@@ -156,7 +158,9 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.LANDING);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  useEffect(() => { void preloadRingAssets(); }, []);
+  const [isDarkMode] = useState(false); // light theme only — dark mode retired
   const [showTester, setShowTester] = useState(false);
   const [expandedIntegration, setExpandedIntegration] = useState<number | null>(null);
   const [preSelectedPackageId, setPreSelectedPackageId] = useState<string | null>(null);
@@ -165,6 +169,14 @@ const App: React.FC = () => {
   const [portalNotifCount, setPortalNotifCount] = useState<1 | 2>(1);
   const [showPortalGuide, setShowPortalGuide] = useState(false);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
+  const [heroRingDesktop, setHeroRingDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const apply = () => setHeroRingDesktop(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
   const [sideMenuCallsPerMonth, setSideMenuCallsPerMonth] = useState(12);
   const [sideMenuAvgDeal, setSideMenuAvgDeal] = useState(4200);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -201,12 +213,8 @@ const App: React.FC = () => {
   }, [currentView]);
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+    document.documentElement.classList.remove('dark');
+  }, []);
 
   useEffect(() => {
     let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
@@ -220,8 +228,11 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const isHidden = window.localStorage.getItem('fourcee-hide-portal-guide') === 'true';
-    if (!isHidden) setShowPortalGuide(true);
+    const forever = window.localStorage.getItem('fourcee-hide-portal-guide') === 'true';
+    const seenSession = window.sessionStorage.getItem('fourcee-portal-guide-seen') === 'true';
+    if (forever || seenSession) return;
+    const t = window.setTimeout(() => setShowPortalGuide(true), 2800);
+    return () => window.clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -245,20 +256,86 @@ const App: React.FC = () => {
       if (el) el.scrollTo({ top: 0, behavior: 'instant' });
       else window.scrollTo({ top: 0, behavior: 'instant' });
     } else setPreSelectedPackageId(null);
+    const nextHash = (() => {
+      switch (view) {
+        case AppView.LEAD_MAGNET: return '#/audit';
+        case AppView.DASHBOARD: return '#/ops';
+        case AppView.CHECKOUT: return '#/checkout';
+        case AppView.BLOG: return '#/insights';
+        case AppView.BLOG_POST: return post?.slug ? `#/insights/${post.slug}` : '#/insights';
+        case AppView.TERMS: return '#/terms';
+        case AppView.ADMIN: return '#/admin';
+        default: return '#/';
+      }
+    })();
+    if (window.location.hash !== nextHash) {
+      window.history.pushState(null, '', nextHash);
+    }
   }, []);
+
+
+  const viewToHash = useCallback((view: AppView, post?: BlogPost | null) => {
+    switch (view) {
+      case AppView.LEAD_MAGNET: return '#/audit';
+      case AppView.DASHBOARD: return '#/ops';
+      case AppView.CHECKOUT: return '#/checkout';
+      case AppView.BLOG: return '#/insights';
+      case AppView.BLOG_POST: return post?.slug ? `#/insights/${post.slug}` : '#/insights';
+      case AppView.TERMS: return '#/terms';
+      case AppView.ADMIN: return '#/admin';
+      case AppView.LANDING:
+      default: return '#/';
+    }
+  }, []);
+
+  const applyHashRoute = useCallback(() => {
+    const raw = (window.location.hash || '#/').replace(/^#/, '') || '/';
+    const path = raw.startsWith('/') ? raw : `/${raw}`;
+    const parts = path.split('/').filter(Boolean);
+    const head = (parts[0] || '').toLowerCase();
+    if (head === 'audit' || head === 'lead-magnet') setCurrentView(AppView.LEAD_MAGNET);
+    else if (head === 'ops' || head === 'dashboard' || head === 'crm') setCurrentView(AppView.DASHBOARD);
+    else if (head === 'checkout' || head === 'pricing') setCurrentView(AppView.CHECKOUT);
+    else if (head === 'insights' || head === 'blog') {
+      if (parts[1]) {
+        const post = BLOG_POSTS.find((bp) => bp.slug === parts[1] || bp.id === parts[1]);
+        if (post) {
+          setSelectedPost(post);
+          setCurrentView(AppView.BLOG_POST);
+          return;
+        }
+      }
+      setCurrentView(AppView.BLOG);
+    } else if (head === 'terms') setCurrentView(AppView.TERMS);
+    else if (head === 'admin') setCurrentView(AppView.ADMIN);
+    else setCurrentView(AppView.LANDING);
+  }, []);
+
+  useEffect(() => {
+    applyHashRoute();
+    const onRoute = () => applyHashRoute();
+    window.addEventListener('hashchange', onRoute);
+    window.addEventListener('popstate', onRoute);
+    return () => {
+      window.removeEventListener('hashchange', onRoute);
+      window.removeEventListener('popstate', onRoute);
+    };
+  }, [applyHashRoute]);
 
   const goToRingBuilder = useCallback(() => {
     setCurrentView(AppView.LANDING);
     window.setTimeout(() => {
       const container = scrollContainerRef.current;
-      const target = container?.querySelector<HTMLElement>('#ring-studio');
+      const wide = window.matchMedia('(min-width: 1024px)').matches;
+      const sel = wide ? '#ring-studio-hero' : '#ring-studio';
+      const target = container?.querySelector<HTMLElement>(sel);
       if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 280);
   }, []);
 
-  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
+  const toggleDarkMode = () => {}; // dark mode retired
   const sideMenuRecoveredMonthly = Math.round(sideMenuCallsPerMonth * sideMenuAvgDeal * 0.22);
   const openCalendarBooking = () => {
     const win = window as Window & {
@@ -333,8 +410,72 @@ const App: React.FC = () => {
     window.setTimeout(() => triggerEl?.click(), 180);
   };
 
+
+  // ROOT-CAUSE FIX: LandingPage component type must be stable.
+  // Previously useMemo([auditData, ringBuilder, ...]) recreated the component
+  // function whenever content.json resolved → React unmounted the entire tree
+  // (3D canvas, DottedSurface WebGL, FAQ, cards) mid-scroll = flash/reload.
+  const landingLiveRef = useRef({
+    isDarkMode,
+    businessName,
+    auditData,
+    navigate,
+    ringBuilder,
+    expandedIntegration,
+    setExpandedIntegration,
+    showTester,
+    setShowTester,
+    heroRingDesktop,
+  });
+  landingLiveRef.current = {
+    isDarkMode,
+    businessName,
+    auditData,
+    navigate,
+    ringBuilder,
+    expandedIntegration,
+    setExpandedIntegration,
+    showTester,
+    setShowTester,
+    heroRingDesktop,
+  };
+  const [, landingBump] = useState(0);
+  useEffect(() => {
+    landingBump((n) => n + 1);
+  }, [isDarkMode, businessName, auditData, ringBuilder, expandedIntegration, showTester, heroRingDesktop]);
+
+
+  // Scroll-linked horizontal carousels (mobile): vertical scroll drives scrollLeft
+  const scrollLinkedHorizontal = (
+    container: HTMLElement | null,
+    track: HTMLElement | null,
+  ) => {
+    if (!container || !track) return;
+    const maxX = Math.max(0, track.scrollWidth - track.clientWidth);
+    if (maxX <= 0) return;
+    const rect = container.getBoundingClientRect();
+    const viewH = window.innerHeight || 1;
+    const start = viewH * 0.85;
+    const end = viewH * 0.15;
+    const t = Math.min(1, Math.max(0, (start - rect.top) / (start - end)));
+    track.scrollLeft = maxX * t;
+  };
+
   const LandingPage = useMemo(() => {
+    // LANDING_PAGE_STABLE — created once; reads live values via landingLiveRef
     return function LandingPageImpl({ scrollContainerRef }: { scrollContainerRef: React.RefObject<HTMLDivElement | null> }) {
+    const {
+      isDarkMode,
+      businessName,
+      auditData,
+      navigate,
+      ringBuilder,
+      expandedIntegration,
+      setExpandedIntegration,
+      showTester,
+      setShowTester,
+      heroRingDesktop,
+    } = landingLiveRef.current;
     const [showDemoCallModal, setShowDemoCallModal] = useState(false);
     const problemRef = useRef<HTMLElement>(null);
     const demoRef = useRef<HTMLElement>(null);
@@ -349,10 +490,11 @@ const App: React.FC = () => {
       container: scrollContainerRef,
     });
 
-    const cardsY = useTransform(problemScroll, [0, 1], [-150, 150]);
-    const demoScale = useTransform(demoScroll, [0, 0.5, 1], [0.94, 1, 1]);
-    const demoOpacity = useTransform(demoScroll, [0, 0.4], [0.7, 1]);
-    const demoY = useTransform(demoScroll, [0, 0.5], [16, 0]);
+    // Keep parallax subtle — large Y travel + overflow-hidden = elements vanish on fast scroll
+    const cardsY = useTransform(problemScroll, [0, 1], [-8, 8]);
+    const demoScale = useTransform(demoScroll, [0, 0.5, 1], [1, 1, 1]);
+    const demoOpacity = useTransform(demoScroll, [0, 0.4], [1, 1]);
+    const demoY = useTransform(demoScroll, [0, 0.5], [0, 0]);
 
     const scrollToSectionById = (id: string) => {
       const container = scrollContainerRef.current;
@@ -366,7 +508,10 @@ const App: React.FC = () => {
     const scrollToRoi = () => scrollToSectionById('roi-calculator');
     const scrollToPricing = () => navigate(AppView.CHECKOUT);
     const goToAudit = () => navigate(AppView.LEAD_MAGNET);
-    const scrollToRingStudio = () => scrollToSectionById('ring-studio');
+    const scrollToRingStudio = () => {
+      const wide = typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches;
+      scrollToSectionById(wide ? 'ring-studio-hero' : 'ring-studio');
+    };
 
     const handleDemoCallCompleted = () => {
       window.setTimeout(() => {
@@ -375,46 +520,94 @@ const App: React.FC = () => {
       }, 1700);
     };
 
+    useEffect(() => {
+      const root = scrollContainerRef.current;
+      if (!root) return;
+      const onScroll = () => {
+        if (window.matchMedia('(min-width: 768px)').matches) return;
+        const boutiqueSec = root.querySelector('#boutique-h-track')?.closest('section') as HTMLElement | null;
+        const boutiqueTrack = root.querySelector('#boutique-h-track') as HTMLElement | null;
+        scrollLinkedHorizontal(boutiqueSec, boutiqueTrack);
+        const integSec = root.querySelector('#integrations-h-track')?.closest('section') as HTMLElement | null;
+        const integTrack = root.querySelector('#integrations-h-track') as HTMLElement | null;
+        scrollLinkedHorizontal(integSec, integTrack);
+        const journeyTrack = root.querySelector('#faq-journey-track') as HTMLElement | null;
+        const faqSec = journeyTrack?.closest('section') as HTMLElement | null;
+        scrollLinkedHorizontal(faqSec, journeyTrack);
+      };
+      root.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+      return () => root.removeEventListener('scroll', onScroll);
+    }, [scrollContainerRef]);
+
+
     return (
-    <div className="animate-in fade-in duration-1000 pb-32 md:pb-40">
-      {/* Hero: cinematic ring plate + right-rail copy — matches founder frame 01 */}
-      <section className="snap-start snap-always relative min-h-screen overflow-hidden bg-[#051b2d]">
+    <div className="dock-safe-pad pb-32 md:pb-40" style={{ contentVisibility: 'visible' }}>
+      {/* Hero: ribbed gold-glow texture + desktop ring-left / copy-right */}
+      <section
+        id="hero"
+        className="fourcee-hero-beige relative min-h-[100svh] overflow-hidden"
+      >
         <div
-          className="pointer-events-none absolute inset-0"
+          className="fourcee-hero-beige-veil pointer-events-none absolute inset-0"
           style={{
+            opacity: 0.55,
             background:
-              'linear-gradient(90deg, rgba(5,27,45,0.08) 0%, rgba(5,27,45,0.16) 40%, rgba(5,27,45,0.78) 66%, rgba(5,27,45,0.94) 100%), url("/assets/plates/plate_hero_ring.png") center / cover no-repeat',
+              `linear-gradient(105deg, rgba(250,245,234,0.22) 0%, rgba(250,245,234,0.12) 42%, rgba(246,239,223,0.16) 72%, rgba(250,245,234,0.2) 100%), radial-gradient(ellipse 70% 60% at 28% 55%, rgba(200,181,143,0.08), transparent 58%)`,
           }}
           aria-hidden
         />
         <div className="fx-grid z-[1]" aria-hidden />
-        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center px-5 py-24 sm:px-8 md:px-12 lg:items-end">
-          <div className="w-full max-w-xl text-left">
-            <div className="fx-chip mb-5">
+        <div className="relative z-10 mx-auto grid min-h-[100svh] w-full max-w-7xl grid-cols-1 content-start items-start gap-5 px-5 pt-16 pb-28 sm:px-8 sm:pt-20 md:px-12 md:items-center lg:grid-cols-2 lg:gap-10 lg:content-center lg:py-20">
+          {/* Desktop: Ring Builder inhabiting the left rail */}
+          <div
+            id="ring-studio-hero"
+            className="relative hidden min-h-[560px] w-full lg:block"
+          >
+            {ringBuilder && heroRingDesktop ? (
+              <LazyRingBuilderSection
+                config={ringBuilder}
+                isDarkMode
+                heroEmbed
+                businessName={businessName}
+              />
+            ) : ringBuilder ? (
+              <div className="flex min-h-[560px] items-center justify-center rounded-[2rem] border border-white/10 text-[10px] uppercase tracking-[0.22em] text-[#c8b58f]">
+                Ring studio
+              </div>
+            ) : (
+              <div
+                className="flex h-full min-h-[520px] items-center justify-center rounded-[2rem] border border-[rgba(200,181,143,0.22)] bg-[#050910]/40"
+                aria-hidden
+              >
+                <p className="text-[10px] uppercase tracking-[0.22em] text-[#a8957a]">Showroom loading</p>
+              </div>
+            )}
+          </div>
+
+          {/* Copy / CTAs — full width on mobile, right rail on desktop */}
+          <div className="w-full max-w-xl text-left lg:justify-self-end">
+            <div className="fx-chip mb-3 sm:mb-5">
               <span className="fx-dot" />
               Concierge standby · audit compiled
             </div>
-            <motion.h1
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              className="fx-display text-[32px] leading-[0.95] text-[#f4efe4] sm:text-4xl md:text-5xl"
+            <h1
+              className="fx-display text-[22px] leading-[1.05] text-[#0c0b09] sm:text-[30px] md:text-4xl lg:text-5xl"
             >
-              The gold standard
-              <br />
-              of voice AI
-            </motion.h1>
-            <p className="mt-4 text-[11px] uppercase tracking-[0.28em] text-[#c2ccd6]">
+              <span className="block">The gold standard</span>
+              <span className="block">of voice AI</span>
+            </h1>
+            <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-[#3a342b] sm:mt-4 sm:text-[11px] sm:tracking-[0.22em]">
               Tailored exclusively for high-end jewelers
             </p>
-            <div className="fx-tile mt-7 max-w-[440px] px-5 py-4">
+            <div className="liquid-glass mt-4 max-w-[440px] rounded-2xl px-5 py-3.5 sm:mt-6 sm:py-4">
               <p className="fx-kicker">Prepared for</p>
-              <p className="mt-2 text-xl text-[#f4efe4]">{businessName}</p>
-              <p className="mt-2 text-[13px] leading-relaxed text-[#8aa0b5]">
+              <p className="mt-1.5 text-sm sm:text-base text-[#0c0b09] font-medium tracking-wide">{businessName}</p>
+              <p className="mt-1.5 text-[12px] sm:text-[13px] leading-relaxed text-[#3a342b]">
                 One recovered client can cover months of platform cost.
               </p>
             </div>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-4 flex flex-wrap gap-2.5 sm:mt-6 sm:gap-3">
               <button type="button" onClick={scrollToRingStudio} className="fx-btn fx-btn-primary">
                 Try the Ring Builder
               </button>
@@ -425,9 +618,10 @@ const App: React.FC = () => {
                 Calculate ROI
               </button>
             </div>
-            <div className="mt-8 max-w-sm opacity-90">
+            {/* Raised on mobile so phone demo is visible without deep scroll */}
+            <div className="mt-4 max-w-sm sm:mt-6 opacity-95 -translate-y-1 sm:translate-y-0">
               <MiniPhone
-                isDarkMode
+                isDarkMode={false}
                 businessName={businessName}
                 leadId={auditData?.lead_id}
                 phoneCountryDefault={auditData?.liveDemo.phoneCountryDefault}
@@ -439,27 +633,31 @@ const App: React.FC = () => {
         </div>
       </section>
 
+      {/* Mobile / tablet: keep cinematic scroll Ring Builder journey */}
       {ringBuilder && (
-        <section id="ring-studio" className="snap-start snap-always min-h-screen flex flex-col justify-center px-3 sm:px-6 py-10 md:py-16 bg-[#07080c]">
-          <div className="mx-auto mb-6 w-full max-w-6xl px-1 text-center sm:text-left">
+        <section
+          id="ring-studio"
+          className="fourcee-ribbed-wash px-0 pt-8 pb-16 sm:px-6 md:pt-12 md:pb-24 lg:hidden"
+        >
+          <div className="mx-auto mb-4 w-full max-w-6xl px-4 text-center sm:px-1 sm:text-left">
             <p className="fx-kicker text-[#c8b58f]">Lead magnet · private showroom</p>
-            <h2 className="fx-display mt-3 text-3xl leading-[0.95] text-[#f4efe4] md:text-4xl">
+            <h2 className="fx-display mt-2 text-[1.55rem] leading-[1.02] text-[#f4efe4] sm:text-2xl md:text-3xl">
               Ring Builder
             </h2>
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#8aa0b5]">
-              Let buyers play with metal and stone in 3D — a polished entry to the concierge experience, not a raw tool dump.
+            <p className="mt-2 max-w-xl text-[12px] sm:text-sm leading-relaxed text-[#ddd4c6]">
+              One short scroll docks the ring into the studio — then customize metal and stone.
             </p>
           </div>
-          <div className="mx-auto w-full max-w-6xl">
-            <LazyRingBuilderSection config={ringBuilder} isDarkMode={isDarkMode} businessName={businessName} />
+          <div className="mx-auto w-full max-w-6xl px-0 sm:px-1">
+            <LazyRingBuilderSection config={ringBuilder} isDarkMode={false} eager businessName={businessName} />
           </div>
         </section>
       )}
 
       {/* Demo Video Section - now directly after hero; 9:16 portrait on mobile */}
-      <section ref={demoRef} id="demo" className="snap-start snap-always min-h-screen flex flex-col justify-center py-24 md:py-32 px-4 sm:px-6 bg-transparent relative">
+      <section ref={demoRef} id="demo" className="min-h-screen flex flex-col justify-center py-24 md:py-32 px-4 sm:px-6 bg-transparent relative">
         <div className="max-w-6xl mx-auto flex flex-col items-center w-full min-w-0">
-          <h2 className="text-2xl md:text-3xl font-bold serif text-navy-900 dark:text-white mb-8 md:mb-12 text-center tracking-tighter">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif text-navy-900 mb-6 md:mb-10 text-center tracking-tighter">
             <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-emerald-700 dark:from-white dark:via-slate-200 dark:to-emerald-300 bg-clip-text text-transparent">
               Experience the Demo
             </span>
@@ -530,7 +728,7 @@ const App: React.FC = () => {
       )}
 
       {/* Value Calculator Section - before ROI messaging; its own snap after demo */}
-      <section id="roi-calculator" className="snap-start snap-always min-h-screen flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent">
+      <section id="roi-calculator" className="min-h-screen flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent">
         <div className="w-full max-w-4xl mx-auto">
           <ValueCalculator isDarkMode={isDarkMode} businessName={businessName} />
           <div className="mt-6 flex justify-center">
@@ -546,13 +744,13 @@ const App: React.FC = () => {
       </section>
 
       {/* ROI Messaging Section (without calculator, stacked on mobile) */}
-      <section className="snap-start snap-always min-h-screen flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent">
+      <section className="min-h-screen flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent">
         <div className="w-full max-w-6xl mx-auto grid gap-10 lg:gap-16 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] items-start">
           <div className="space-y-6">
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-navy-400 dark:text-navy-300">
               See if the numbers make sense
             </p>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif text-navy-900 dark:text-white tracking-tight">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold serif text-navy-900 tracking-tight">
               Is Fourcee actually worth it
               <br className="hidden md:block" /> for your showroom?
             </h2>
@@ -595,15 +793,12 @@ const App: React.FC = () => {
       </section>
 
       {/* Problem Step - moved below calculator: blue + grid faded at top and bottom */}
-      <section ref={problemRef} className="snap-start snap-always min-h-screen flex flex-col justify-center py-32 px-6 text-white relative overflow-hidden border-y border-white/5">
+      <section ref={problemRef} className="fourcee-ribbed-wash min-h-screen flex flex-col justify-center py-32 px-6 text-white relative overflow-x-hidden overflow-y-visible border-y border-white/5">
         <div
-          className="absolute inset-0 pointer-events-none bg-navy-950"
+          className="absolute inset-0 pointer-events-none"
           style={{
-            backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)`,
-            backgroundSize: '40px 40px',
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
-            maskSize: '100% 100%',
+            backgroundImage: `linear-gradient(180deg, rgba(5,5,4,0.55) 0%, rgba(5,5,4,0.35) 40%, rgba(5,5,4,0.7) 100%), linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px)`,
+            backgroundSize: 'auto, 40px 40px, 40px 40px',
           }}
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 md:h-72">
@@ -614,10 +809,10 @@ const App: React.FC = () => {
         </div>
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20 items-center relative z-10">
           <div className="space-y-10">
-            <h2 className="text-2xl md:text-4xl font-bold serif leading-tight">
-              Silence is <br/><span className="italic text-silver-400">Expensive</span>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif leading-tight text-white">
+              Silence is <br/><span className="italic text-silver-200">Expensive</span>
             </h2>
-            <p className="text-xl text-silver-300 font-light leading-relaxed max-w-lg">
+            <p className="text-base sm:text-lg text-silver-100 font-light leading-relaxed max-w-lg">
               Every missed call after 6 PM is a client wandering into your competitor's showroom. Fourcee captures the revenue you're currently leaving on the table.
             </p>
             <div className="flex gap-12">
@@ -685,15 +880,15 @@ const App: React.FC = () => {
       </section>
 
       {/* Outbound Calls Section */}
-      <section className="snap-start snap-always min-h-screen flex flex-col justify-center py-20 px-6 bg-transparent transition-colors relative">
+      <section className="min-h-screen flex flex-col justify-center py-20 px-6 bg-transparent transition-colors relative">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: isDarkMode
               ? `linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
                  linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)`
-              : `linear-gradient(to right, rgba(16,42,67,0.14) 1px, transparent 1px),
-                 linear-gradient(to bottom, rgba(16,42,67,0.14) 1px, transparent 1px)`,
+              : `linear-gradient(to right, rgba(12,11,9,0.14) 1px, transparent 1px),
+                 linear-gradient(to bottom, rgba(12,11,9,0.14) 1px, transparent 1px)`,
             backgroundSize: '32px 32px',
             maskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
             WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
@@ -707,9 +902,9 @@ const App: React.FC = () => {
           />
         </div>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-20 relative z-10">
-          <div className="order-2 md:order-1 flex-1 space-y-8 animate-in slide-in-from-left duration-1000">
-            <h2 className="text-2xl md:text-4xl font-bold serif leading-[1.1] text-slate-900 dark:text-white">Proactive <br/><span className="italic shimmer-text">Reach</span></h2>
-            <p className="text-xl text-navy-600 dark:text-navy-300 font-light leading-relaxed">
+          <div className="order-2 md:order-1 flex-1 space-y-8">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif leading-[1.1] text-slate-900">Proactive <br/><span className="italic shimmer-text">Reach</span></h2>
+            <p className="text-base sm:text-lg text-navy-800 font-light leading-relaxed">
               Fourcee doesn't just wait for customers. It actively nurtures your pipeline with high-fidelity outbound reminders and follow-ups.
             </p>
             <div className="grid grid-cols-2 gap-8 pt-4">
@@ -730,17 +925,17 @@ const App: React.FC = () => {
               <span>Select a package</span>
             </button>
           </div>
-          <div className="order-1 md:order-2 flex-1 relative animate-in slide-in-from-right duration-1000 flex items-center justify-center">
+          <div className="order-1 md:order-2 flex-1 relative flex items-center justify-center">
             <IncomingCallPhone className="w-full max-w-[260px] sm:max-w-[320px]" isDarkMode={isDarkMode} />
           </div>
         </div>
       </section>
 
       {/* Integrations Section - contained on mobile, no horizontal overflow */}
-      <section className="snap-start snap-always min-h-screen flex flex-col justify-center pt-32 pb-16 overflow-x-hidden bg-transparent transition-colors">
+      <section className="min-h-screen flex flex-col justify-center pt-32 pb-16 overflow-x-hidden bg-transparent transition-colors">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 min-w-0">
           <div className="text-center mb-16 md:mb-24 max-w-3xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold serif text-slate-900 dark:text-white mb-6 md:mb-8 tracking-tighter break-words">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif text-slate-900 mb-5 md:mb-7 tracking-tighter break-words">
               <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-amber-700 dark:from-white dark:via-slate-200 dark:to-amber-200 bg-clip-text text-transparent">
                 Unified Workflow
               </span>
@@ -778,7 +973,7 @@ const App: React.FC = () => {
               className="absolute inset-0 pointer-events-none z-[1]"
               style={{
                 background: isDarkMode
-                  ? 'radial-gradient(ellipse 75% 75% at 50% 50%, transparent 35%, rgba(5,27,45,0.92) 100%)'
+                  ? 'radial-gradient(ellipse 75% 75% at 50% 50%, transparent 35%, rgba(5,5,4,0.92) 100%)'
                   : 'radial-gradient(ellipse 75% 75% at 50% 50%, transparent 35%, rgba(255,255,255,0.92) 100%)',
               }}
               aria-hidden
@@ -792,9 +987,9 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="md:grid md:grid-cols-2 lg:grid-cols-3 gap-8 flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-6 pb-2 md:overflow-visible md:flex-none scrollbar-thin">
+          <div id="integrations-h-track" className="md:grid md:grid-cols-2 lg:grid-cols-3 gap-8 flex w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain gap-4 sm:gap-6 pb-2 md:overflow-visible md:flex-none scrollbar-thin" data-scroll-link="1">
             {INTEGRATIONS_DATA.map((cat, idx) => (
-              <div key={idx} className="glass-card p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border border-navy-50 dark:border-navy-800 flex flex-col flex-shrink-0 w-[calc(50%-0.5rem)] min-w-[calc(50%-0.5rem)] sm:min-w-0 snap-center md:w-auto">
+              <div key={idx} className="glass-card p-5 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border border-navy-50 dark:border-navy-800 flex flex-col flex-shrink-0 w-[min(86vw,320px)] min-w-[min(86vw,320px)] sm:min-w-0 md:w-auto md:min-w-0">
                 <h4 className="text-[11px] font-bold uppercase tracking-[0.2em] text-navy-400 mb-6">{cat.category}</h4>
                 <div className="flex flex-wrap gap-2 mb-6">
                   {cat.popular.map(p => (
@@ -832,7 +1027,7 @@ const App: React.FC = () => {
 
       {/* Nivoda Deep Integration Section - inverts for light mode */}
       <section
-        className="snap-start snap-always min-h-[80vh] flex flex-col justify-center px-6 py-16 md:py-24 relative transition-colors"
+        className="min-h-[80vh] flex flex-col justify-center px-6 py-16 md:py-24 relative transition-colors"
         style={{
           backgroundColor: isDarkMode ? '#090906' : '#f4f5f7',
           maskImage:
@@ -846,7 +1041,7 @@ const App: React.FC = () => {
           style={{
             backgroundImage: isDarkMode
               ? `repeating-radial-gradient(circle at 0 0, rgba(194,204,214,0.12) 0, rgba(194,204,214,0.12) 1px, transparent 1px, transparent 3px)`
-              : `repeating-radial-gradient(circle at 0 0, rgba(16,42,67,0.08) 0, rgba(16,42,67,0.08) 1px, transparent 1px, transparent 3px)`,
+              : `repeating-radial-gradient(circle at 0 0, rgba(12,11,9,0.08) 0, rgba(12,11,9,0.08) 1px, transparent 1px, transparent 3px)`,
             opacity: 0.9,
           }}
         />
@@ -890,24 +1085,24 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="space-y-6 text-left order-2">
-            <p className={`text-[10px] font-bold uppercase tracking-[0.3em] ${isDarkMode ? 'text-[#C2CCD6]/80' : 'text-navy-600/80'}`}>
+            <p className={`text-[10px] font-bold uppercase tracking-[0.3em] ${isDarkMode ? 'text-[#ddd4c6]/80' : 'text-navy-600/80'}`}>
               Nivoda-native inventory intelligence
             </p>
             <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold serif tracking-tight ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>
               Your AI hears<br className="hidden sm:block" /> the same diamonds you see.
             </h2>
-            <p className={`text-sm sm:text-base max-w-xl leading-relaxed ${isDarkMode ? 'text-[#C2CCD6]/90' : 'text-navy-700/90'}`}>
+            <p className={`text-sm sm:text-base max-w-xl leading-relaxed ${isDarkMode ? 'text-[#ddd4c6]/90' : 'text-navy-700/90'}`}>
               Fourcee doesn&apos;t guess what&apos;s in your case - it reads live data from Nivoda. Every search,
               estimate and availability check is backed by the same inventory spine your buyers already trust.
             </p>
-            <div className={`grid gap-4 sm:grid-cols-2 text-xs sm:text-sm ${isDarkMode ? 'text-[#C2CCD6]' : 'text-navy-700'}`}>
+            <div className={`grid gap-4 sm:grid-cols-2 text-xs sm:text-sm ${isDarkMode ? 'text-[#ddd4c6]' : 'text-navy-700'}`}>
               <div className={`rounded-2xl border px-4 py-3 backdrop-blur-md ${isDarkMode ? 'border-[#535B68]/60 bg-black/40' : 'border-navy-200 bg-white/80'}`}>
                 <p className={`font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>Real-time availability</p>
                 <p className="leading-relaxed">
                   Quote from live Nivoda feeds so your AI never offers stones that have already left the pipeline.
                 </p>
               </div>
-              <div className={`rounded-2xl border px-4 py-3 backdrop-blur-md ${isDarkMode ? 'border-[#3A5A88]/70 bg-black/40' : 'border-navy-200 bg-white/80'}`}>
+              <div className={`rounded-2xl border px-4 py-3 backdrop-blur-md ${isDarkMode ? 'border-[#8a7349]/70 bg-black/40' : 'border-navy-200 bg-white/80'}`}>
                 <p className={`font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-navy-900'}`}>Smart search logic</p>
                 <p className="leading-relaxed">
                   Translate vague requests (&quot;oval, lab-grown, under 3 carats&quot;) into structured Nivoda queries
@@ -922,7 +1117,7 @@ const App: React.FC = () => {
                 </p>
               </div>
             </div>
-            <p className={`text-[10px] uppercase tracking-[0.25em] pt-2 ${isDarkMode ? 'text-[#C2CCD6]/70' : 'text-navy-600/70'}`}>
+            <p className={`text-[10px] uppercase tracking-[0.25em] pt-2 ${isDarkMode ? 'text-[#ddd4c6]/70' : 'text-navy-600/70'}`}>
               Built to sit on top of your existing Nivoda workflows - not replace them.
             </p>
             <button
@@ -944,36 +1139,40 @@ const App: React.FC = () => {
 
 
 
-      {/* Solutions / Features */}
-      <section className="snap-start snap-always min-h-screen flex flex-col justify-center pt-16 pb-16 md:pt-20 md:pb-20 px-6 bg-transparent transition-colors relative">
+      {/* Solutions / Features — horizontal liquid-glass cards */}
+      <section className="min-h-[70vh] flex flex-col justify-center pt-12 pb-12 md:pt-16 md:pb-16 px-6 bg-transparent transition-colors relative">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: isDarkMode
               ? `linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
                  linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)`
-              : `linear-gradient(to right, rgba(16,42,67,0.14) 1px, transparent 1px),
-                 linear-gradient(to bottom, rgba(16,42,67,0.14) 1px, transparent 1px)`,
+              : `linear-gradient(to right, rgba(12,11,9,0.14) 1px, transparent 1px),
+                 linear-gradient(to bottom, rgba(12,11,9,0.14) 1px, transparent 1px)`,
             backgroundSize: '32px 32px',
             maskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
             WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)',
             maskSize: '100% 100%',
           }}
         />
-        <div className="max-w-4xl mx-auto text-center relative z-10 px-4">
-          <h2 className="text-3xl md:text-4xl font-bold serif text-navy-900 dark:text-white mb-6 tracking-tighter">Boutique Intelligence</h2>
-          <div className="grid md:grid-cols-3 gap-3 md:gap-4 mt-2">
+        <div className="max-w-4xl mx-auto text-center relative z-10 px-4 w-full min-w-0 overflow-x-hidden">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold serif text-navy-900 mb-4 tracking-tight">Boutique Intelligence</h2>
+          <p className="mb-4 text-[10px] uppercase tracking-[0.2em] text-navy-500">Swipe · cards sequence as you scroll</p>
+          <div id="boutique-h-track" className="-mx-4 px-4 flex w-full min-w-0 max-w-full gap-3 overflow-x-auto overscroll-x-contain pb-3 scrollbar-thin md:mx-0 md:px-0 md:grid md:grid-cols-3 md:overflow-visible md:gap-4" data-scroll-link="1">
             {[
               { title: "Voice Cloning", desc: "Your actual voice, scaled across 100 simultaneous calls." },
               { title: "Live Estimates", desc: "Instant pricing based on daily market spot rates." },
               { title: "VIP Escalation", desc: "Automatically connects ultra-high net worth leads to your personal line." }
             ].map((f, i) => (
-              <div key={i} className="p-12 rounded-[2.5rem] bg-white/80 dark:bg-white/5 dark:backdrop-blur-xl border border-navy-100 dark:border-white/10 hover:shadow-2xl transition-all group shadow-sm">
-                <div className="w-12 h-12 bg-navy-900 dark:bg-white rounded-2xl mb-8 flex items-center justify-center text-white dark:text-navy-950 font-bold text-xl group-hover:scale-110 transition-transform">
+              <div
+                key={i}
+                className="liquid-glass shrink-0 w-[min(82vw,300px)] min-w-[min(82vw,300px)] max-w-sm rounded-2xl p-5 sm:p-6 text-left hover:shadow-xl transition-all group md:w-auto md:min-w-0 md:max-w-none md:shrink"
+              >
+                <div className="w-9 h-9 bg-navy-900 rounded-xl mb-4 flex items-center justify-center text-white font-bold text-sm group-hover:scale-105 transition-transform border border-[#c8b58f]/40">
                   {i + 1}
                 </div>
-                <h3 className="text-2xl font-bold serif mb-4 text-navy-900 dark:text-white">{f.title}</h3>
-                <p className="text-sm leading-relaxed text-navy-500 dark:text-navy-300 font-medium">{f.desc}</p>
+                <h3 className="text-sm sm:text-base font-bold serif mb-2 text-navy-900">{f.title}</h3>
+                <p className="text-[12px] sm:text-sm leading-relaxed text-navy-600 font-medium normal-case tracking-normal">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -989,7 +1188,7 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      <section className="snap-start snap-always min-h-screen flex flex-col justify-center py-16 md:py-20 px-6 bg-transparent transition-colors relative">
+      <section className="min-h-screen flex flex-col justify-center py-16 md:py-20 px-6 bg-transparent transition-colors relative">
         <div className="max-w-5xl mx-auto relative z-10 px-4 sm:px-6 w-full min-w-0">
           <div className="mb-5 flex justify-center">
             <button
@@ -1009,11 +1208,11 @@ const App: React.FC = () => {
       </section>
 
       {/* Final snap point just above footer so bottom doesn't bounce */}
-      <div className="snap-end snap-always h-0" />
+      <div className="h-0" />
 
       {showTester && <PhoneTester onClose={() => setShowTester(false)} />}
     </div>
-  ); }; }, [isDarkMode, businessName, auditData, navigate, ringBuilder]);
+  ); }; }, []); // stable component type — live data via landingLiveRef + landingBump
 
   const BlogPage = () => (
     <div className="pt-24 pb-12 px-6 max-w-6xl mx-auto animate-in fade-in duration-700 bg-transparent">
@@ -1038,7 +1237,7 @@ const App: React.FC = () => {
             <ArticleCard
               headline={post.title}
               excerpt={post.excerpt}
-              cover={post.imageUrl}
+              cover={post.imageUrl.startsWith('http') ? post.imageUrl : assetUrl(post.imageUrl)}
               tag="Insight"
               readingTimeSeconds={420}
               writer="Alyssa Peters"
@@ -1054,7 +1253,7 @@ const App: React.FC = () => {
 
   const TermsPage = () => (
     <div className="pt-24 pb-16 px-6 max-w-4xl mx-auto animate-in fade-in duration-700 bg-transparent">
-      <h1 className="text-4xl md:text-5xl font-bold serif mb-6 tracking-tighter dark:text-white">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold serif mb-5 tracking-tighter text-navy-950">
         Safeguards, Disclaimer & Terms
       </h1>
       <p className="text-sm text-navy-500 dark:text-navy-300 mb-8 leading-relaxed">
@@ -1152,31 +1351,24 @@ const App: React.FC = () => {
   return (
     <div
       ref={scrollContainerRef}
-      className={`relative h-screen flex flex-col overflow-y-auto overflow-x-hidden dark:bg-navy-950 transition-colors ${
-        currentView === AppView.LEAD_MAGNET ? 'snap-none' : 'snap-y snap-mandatory'
-      }`}
-      style={
-        isDarkMode
-          ? undefined
-          : {
-              background:
-                'linear-gradient(180deg, #faf5ea 0%, #f8f1e2 38%, #f6efdf 100%)',
-            }
-      }
+      className="relative h-screen flex flex-col overflow-y-auto overflow-x-hidden dark:bg-navy-950 transition-colors overscroll-y-contain snap-none"
+      style={{
+        background: 'linear-gradient(180deg, #faf5ea 0%, #f8f1e2 38%, #f6efdf 100%)',
+      }}
     >
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <EtherealShadow 
-          color={isDarkMode ? "rgba(255, 255, 255, 0.12)" : "rgba(16, 42, 67, 0.08)"}
-          animation={isDarkMode ? { scale: 100, speed: 45 } : { scale: 40, speed: 20 }}
-          noise={isDarkMode ? { opacity: 0.6, scale: 1.2 } : { opacity: 0.3, scale: 1 }}
+      <div className="fixed inset-0 z-0 pointer-events-none fourcee-grain-lite">
+        <EtherealShadow
+          color="rgba(12, 11, 9, 0.08)"
+          animation={{ scale: 40, speed: 20 }}
+          noise={{ opacity: 0.04, scale: 1 }}
         />
       </div>
 
       {currentView === AppView.LANDING && (
         <div className="pointer-events-none fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-6 py-5 sm:px-10">
-          <div className="fx-hud flex items-center gap-3 text-[11px] text-[#f4efe4]">
-            <span className="h-[18px] w-[18px] rounded-full border border-[#c8b58f] bg-[radial-gradient(circle_at_35%_30%,#f7e7b8,#b8913f_60%,#5c4318)]" />
-            Fourcee · Concierge
+          <div className="fx-logo-negative fx-hud inline-flex items-center gap-2.5 text-[11px]">
+            <span className="h-[18px] w-[18px] shrink-0 rounded-full border border-white/80 bg-[radial-gradient(circle_at_35%_30%,#f7e7b8,#b8913f_60%,#5c4318)]" />
+            <span>FOURCEE CONCIERGE</span>
           </div>
         </div>
       )}
@@ -1190,45 +1382,41 @@ const App: React.FC = () => {
             aria-label="Close side menu backdrop"
           />
           <aside
-            className="fourcee-surface-bg absolute left-0 top-0 h-full w-[min(92vw,420px)] border-r border-navy-200 dark:border-white/15 shadow-2xl p-5 overflow-y-auto"
+            className="fourcee-surface-bg absolute left-0 top-0 h-full w-[min(92vw,420px)] border-r border-[#d9c39a]/80 dark:border-[#c8b58f]/25 shadow-2xl overflow-y-auto"
           >
-            <div
-              className={`pointer-events-none absolute inset-0 ${
-                isDarkMode ? 'bg-navy-950/88' : 'bg-[#faf5ea]/94'
-              }`}
-              aria-hidden
-            />
-            <div className="relative z-10">
+            <div className="relative z-10 p-5">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] uppercase tracking-[0.24em] text-navy-700 dark:text-navy-200">Concierge app menu</p>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-[#3a342b] dark:text-[#c8b58f]">Concierge app menu</p>
               <button
                 type="button"
                 onClick={() => setIsSideMenuOpen(false)}
-                className="h-9 w-9 rounded-full border border-navy-200 dark:border-white/20 flex items-center justify-center text-navy-700 dark:text-slate-200"
+                className="h-9 w-9 rounded-full border border-[#d9c39a]/80 dark:border-[#c8b58f]/35 flex items-center justify-center text-[#0c0b09] dark:text-[#faf5ea]"
                 aria-label="Close side menu"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="mt-4 flex justify-center">
+            <div className="mt-5 flex justify-center">
               <img
                 src={isDarkMode ? fcWhite : fcBlack}
                 alt="Fourcee"
-                className="h-10 w-auto object-contain opacity-95"
+                className="h-16 w-auto object-contain sm:h-20 opacity-100"
               />
             </div>
-            <div className="mt-4 rounded-2xl border border-[#d9c39a]/70 bg-[#fbf4e7]/90 dark:bg-white/5 dark:border-white/10 p-4">
-              <p className="text-[11px] font-semibold text-navy-900 dark:text-white">{businessName}</p>
-              <p className="mt-1 text-xs text-navy-700 dark:text-slate-200">Voice agent ops: call logs, transcripts, actions, onboarding, handover.</p>
+            <div className="mt-5 rounded-2xl border border-[#d9c39a]/80 bg-[#0c0b09] dark:bg-[#faf5ea] p-4">
+              <p className="text-[11px] font-semibold text-[#faf5ea] dark:text-[#0c0b09]">{businessName}</p>
+              <p className="mt-1 text-xs text-[#ddd4c6] dark:text-[#3a342b]">Voice agent ops: call logs, transcripts, actions, onboarding, handover.</p>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
               {[
                 { label: 'Home', sub: 'Main journey', icon: <House className="h-4 w-4" />, action: () => setCurrentView(AppView.LANDING) },
                 { label: 'Ring Builder', sub: '3D lead magnet', icon: <Gem className="h-4 w-4" />, action: () => goToRingBuilder() },
                 { label: 'Audit', sub: 'Custom report', icon: <FileSearch className="h-4 w-4" />, action: () => setCurrentView(AppView.LEAD_MAGNET) },
-                { label: 'Fourcee', sub: 'Voice ops', icon: <LayoutDashboard className="h-4 w-4" />, action: () => setCurrentView(AppView.DASHBOARD) },
+                { label: 'CRM / Ops', sub: 'Demo portal · onboarding', icon: <LayoutDashboard className="h-4 w-4" />, action: () => {
+                  try { window.sessionStorage.setItem('fourcee-crm-tab', 'onboard'); } catch {}
+                  navigate(AppView.DASHBOARD);
+                } },
                 { label: 'Checkout', sub: 'Plans and pricing', icon: <CreditCard className="h-4 w-4" />, action: () => setCurrentView(AppView.CHECKOUT) },
-                { label: 'Insights', sub: 'Content library', icon: <Newspaper className="h-4 w-4" />, action: () => setCurrentView(AppView.BLOG) },
                 { label: 'Book Call', sub: 'Strategy meeting', icon: <CalendarDays className="h-4 w-4" />, action: () => openCalendarBooking() },
               ].map((item) => (
                 <button
@@ -1238,29 +1426,40 @@ const App: React.FC = () => {
                     item.action();
                     setIsSideMenuOpen(false);
                   }}
-                  className="rounded-[1.25rem] min-h-[96px] border border-navy-200/80 dark:border-white/15 px-3 py-3 text-left bg-white/80 dark:bg-black/30 hover:bg-white dark:hover:bg-white/10 transition"
+                  className="rounded-[1.25rem] min-h-[96px] border border-[#d9c39a]/70 dark:border-[#c8b58f]/30 px-3 py-3 text-left bg-[#fbf4e7] dark:bg-[#1a1712] hover:bg-white dark:hover:bg-[#242018] transition"
                 >
-                  <div className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-navy-100 dark:bg-white/10 text-navy-700 dark:text-slate-200">
+                  <div className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-[#0c0b09] dark:bg-[#faf5ea] text-[#faf5ea] dark:text-[#0c0b09]">
                     {item.icon}
                   </div>
-                  <p className="mt-2 text-xs font-semibold text-navy-900 dark:text-white">{item.label}</p>
-                  <p className="mt-1 text-[11px] text-navy-600 dark:text-slate-300">{item.sub}</p>
+                  <p className="mt-2 text-xs font-semibold text-[#0c0b09] dark:text-[#faf5ea]">{item.label}</p>
+                  <p className="mt-1 text-[11px] text-[#3a342b] dark:text-[#c8b58f]">{item.sub}</p>
                 </button>
               ))}
             </div>
-            <div className="mt-6 rounded-2xl border border-navy-200 dark:border-white/10 p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-navy-500 dark:text-slate-400">Onboarding & help</p>
-              <p className="mt-2 text-xs text-navy-700 dark:text-slate-300">
+            <div className="mt-6 rounded-2xl border border-[#d9c39a]/70 dark:border-[#c8b58f]/25 bg-[#fbf4e7]/90 dark:bg-[#1a1712] p-4">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-[#3a342b] dark:text-[#c8b58f]">Onboarding & help</p>
+              <p className="mt-2 text-xs text-[#0c0b09] dark:text-[#faf5ea]">
                 Re-open the portal walkthrough at any time or launch a demo call popup to guide buyers through your concierge journey.
               </p>
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { window.sessionStorage.setItem('fourcee-crm-tab', 'onboard'); } catch {}
+                    navigate(AppView.DASHBOARD);
+                    setIsSideMenuOpen(false);
+                  }}
+                  className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] bg-[#0c0b09] text-[#faf5ea] dark:bg-[#faf5ea] dark:text-[#0c0b09]"
+                >
+                  Open CRM / Ops
+                </button>
                 <button
                   type="button"
                   onClick={() => {
                     reopenPortalGuide();
                     setIsSideMenuOpen(false);
                   }}
-                  className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] bg-navy-900 text-white dark:bg-white dark:text-navy-950"
+                  className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] border border-[#d9c39a]/80 dark:border-[#c8b58f]/35 text-[#0c0b09] dark:text-[#faf5ea]"
                 >
                   Open walkthrough
                 </button>
@@ -1270,16 +1469,16 @@ const App: React.FC = () => {
                     setCurrentView(AppView.LANDING);
                     setIsSideMenuOpen(false);
                   }}
-                  className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] border border-navy-200 dark:border-white/20 text-navy-700 dark:text-slate-200"
+                  className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] border border-[#d9c39a]/80 dark:border-[#c8b58f]/35 text-[#0c0b09] dark:text-[#faf5ea]"
                 >
                   Return home
                 </button>
               </div>
             </div>
-            <div className="mt-6 rounded-2xl border border-[#d9c39a]/70 dark:border-white/15 bg-white/85 dark:bg-black/35 p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-navy-600 dark:text-slate-300">Quick ROI calculator</p>
+            <div className="mt-6 rounded-2xl border border-[#d9c39a]/80 dark:border-[#c8b58f]/30 bg-[#fbf4e7] dark:bg-[#1a1712] p-4">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-[#3a342b] dark:text-[#c8b58f]">Quick ROI calculator</p>
               <div className="mt-3 space-y-3">
-                <label className="block text-[11px] text-navy-700 dark:text-slate-200">
+                <label className="block text-[11px] text-[#0c0b09] dark:text-[#faf5ea]">
                   Missed qualified calls / month: <span className="font-semibold">{sideMenuCallsPerMonth}</span>
                 </label>
                 <input
@@ -1291,7 +1490,7 @@ const App: React.FC = () => {
                   onChange={(e) => setSideMenuCallsPerMonth(Number(e.target.value))}
                   className="w-full accent-emerald-600"
                 />
-                <label className="block text-[11px] text-navy-700 dark:text-slate-200">
+                <label className="block text-[11px] text-[#0c0b09] dark:text-[#faf5ea]">
                   Average deal value: <span className="font-semibold">${sideMenuAvgDeal.toLocaleString()}</span>
                 </label>
                 <input
@@ -1313,7 +1512,7 @@ const App: React.FC = () => {
                     setCurrentView(AppView.CHECKOUT);
                     setIsSideMenuOpen(false);
                   }}
-                  className="w-full rounded-xl bg-navy-900 text-white dark:bg-white dark:text-navy-950 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] shadow-md"
+                  className="w-full rounded-xl bg-[#0c0b09] text-[#faf5ea] dark:bg-[#faf5ea] dark:text-[#0c0b09] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] shadow-md"
                 >
                   Activate concierge plan
                 </button>
@@ -1339,9 +1538,13 @@ const App: React.FC = () => {
         onBookMeeting={openCalendarBooking}
         portalNotifCount={portalNotifCount}
         showPortalGuide={showPortalGuide}
-        onDismissPortalGuide={() => setShowPortalGuide(false)}
+        onDismissPortalGuide={() => {
+          window.sessionStorage.setItem('fourcee-portal-guide-seen', 'true');
+          setShowPortalGuide(false);
+        }}
         onHidePortalGuideForever={() => {
           window.localStorage.setItem('fourcee-hide-portal-guide', 'true');
+          window.sessionStorage.setItem('fourcee-portal-guide-seen', 'true');
           setShowPortalGuide(false);
         }}
         onReopenPortalGuide={reopenPortalGuide}
@@ -1374,8 +1577,15 @@ const App: React.FC = () => {
               <button onClick={() => navigate(AppView.BLOG)} className="px-6 py-12 text-navy-300 hover:text-navy-900 dark:hover:text-white uppercase text-[10px] font-bold tracking-widest transition-colors">← Back to Ledger</button>
               <div className="max-w-3xl mx-auto px-6 pb-12">
                 <h1 className="text-3xl md:text-4xl font-bold serif mb-12 leading-none dark:text-white">{selectedPost.title}</h1>
-                <div className="prose prose-navy dark:prose-invert max-w-none space-y-8 text-lg text-navy-800 dark:text-navy-100 font-light leading-relaxed">
-                  {selectedPost.content.split('\n').map((line, i) => <p key={i}>{line}</p>)}
+                <div className="prose prose-navy dark:prose-invert max-w-none">
+                  {selectedPost.imageUrl ? (
+                    <img
+                      src={selectedPost.imageUrl.startsWith('http') ? selectedPost.imageUrl : assetUrl(selectedPost.imageUrl)}
+                      alt=""
+                      className="mb-10 w-full max-h-80 object-cover rounded-2xl border border-navy-200/40 dark:border-white/10"
+                    />
+                  ) : null}
+                  {renderSimpleMarkdown(selectedPost.content)}
                 </div>
               </div>
            </div>
@@ -1407,45 +1617,37 @@ const App: React.FC = () => {
         title="Admin access"
       />
 
-      {/* Global footer — seamless blend from page bg into dotted terrain */}
-      <footer className="relative w-full min-h-[340px] h-[340px] flex-shrink-0 overflow-hidden z-20">
+      {/* Global footer — dotted ball field fills the band above Terms (no empty gap) */}
+      <footer className="relative w-full min-h-[120px] h-[min(18vh,160px)] flex-shrink-0 overflow-visible z-20 -mt-4">
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 rounded-t-[2rem]"
           style={{
-            background: isDarkMode
-              ? currentView === AppView.LEAD_MAGNET
-                ? 'linear-gradient(to bottom, #102a43 0%, #0a2238 28%, #071a2c 58%, #051b2d 100%)'
-                : 'linear-gradient(to bottom, rgba(5,27,45,0) 0%, rgba(5,27,45,0.85) 32%, #051b2d 100%)'
-              : currentView === AppView.LEAD_MAGNET
+            background:
+              currentView === AppView.LEAD_MAGNET
                 ? 'linear-gradient(to bottom, #f2e8d2 0%, #f6efdf 28%, #f8f1e2 58%, #faf5ea 100%)'
-                : 'linear-gradient(to bottom, rgba(250,245,234,0) 0%, rgba(248,241,226,0.92) 32%, #faf5ea 100%)',
+                : 'linear-gradient(to bottom, rgba(250,245,234,0) 0%, rgba(248,241,226,0.55) 18%, #faf5ea 55%, #f6efdf 100%)',
           }}
         />
         <div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none z-[1]"
           style={{
-            backgroundImage: isDarkMode
-              ? 'linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)'
-              : 'linear-gradient(rgba(15,23,42,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.06) 1px, transparent 1px)',
+            backgroundImage:
+              'linear-gradient(rgba(12,11,9,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(12,11,9,0.07) 1px, transparent 1px)',
             backgroundSize: currentView === AppView.LEAD_MAGNET ? '28px 28px' : '32px 32px',
-            opacity: isDarkMode ? 0.14 : 0.22,
-            maskImage: 'linear-gradient(to bottom, black 0%, black 35%, transparent 72%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 35%, transparent 72%)',
+            opacity: 0.28,
+            maskImage: 'linear-gradient(to bottom, black 0%, black 40%, transparent 78%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 40%, transparent 78%)',
           }}
         />
         <DottedSurface
-          isDarkMode={isDarkMode}
-          className="absolute inset-0 z-10 h-full w-full opacity-90 [mask-image:linear-gradient(to_top,black_50%,transparent_100%)]"
+          isDarkMode={false}
+          className="absolute inset-0 z-[5] h-full w-full opacity-100 -translate-y-3 [mask-image:linear-gradient(to_top,black_78%,transparent_100%)]"
         />
-        <div className="absolute inset-0 z-[15] flex items-end justify-center footer-terms-clearance px-4">
+        <div className="absolute inset-0 z-[20] flex items-end justify-center footer-terms-clearance px-4 pointer-events-none">
           <button
             type="button"
             onClick={() => navigate(AppView.TERMS)}
-            className={`text-[10px] font-bold uppercase tracking-[0.25em] rounded-full px-5 py-2 backdrop-blur-md transition-colors ${
-              isDarkMode
-                ? 'text-white bg-white/5 border border-white/20 hover:bg-white/10'
-                : 'text-navy-700 bg-white/85 border border-navy-200 hover:bg-white shadow-sm'
-            }`}
+            className="pointer-events-auto liquid-glass text-[10px] font-bold uppercase tracking-[0.18em] rounded-full px-5 py-2.5 transition-colors text-navy-900 hover:brightness-105"
           >
             Terms, safeguards &amp; disclaimer
           </button>

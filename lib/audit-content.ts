@@ -1,3 +1,4 @@
+import { assetUrl } from './asset-url';
 import { GBP_PLACEHOLDER_TOKENS } from '../components/audit-placeholders';
 import type { AuditData } from '../types/audit';
 
@@ -72,7 +73,7 @@ export function normalizeAuditData(raw: AuditData): AuditData {
       headline: recoveryPlan.headline || 'Recommended Recovery Plan',
       body: recoveryPlan.body || '',
       capabilities: recoveryPlan.capabilities || [],
-      supportingMediaUrl: recoveryPlan.supportingMediaUrl || '/assets/placeholder.gif',
+      supportingMediaUrl: recoveryPlan.supportingMediaUrl || assetUrl('assets/placeholder.gif'),
     },
     compliance: {
       ...compliance,

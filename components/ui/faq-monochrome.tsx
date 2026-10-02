@@ -44,21 +44,21 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
   return (
     <div
       className={[
-        'relative w-full max-w-full min-w-0 overflow-hidden rounded-3xl sm:rounded-[2.5rem] border box-border',
+        'relative w-full max-w-full min-w-0 overflow-x-clip overflow-y-visible rounded-3xl sm:rounded-[2.5rem] border box-border',
         'px-3 py-5 sm:px-5 sm:py-7 md:px-8 md:py-9',
         'backdrop-blur-2xl transition-colors duration-700',
         isDarkMode
           ? 'bg-navy-950/70 border-white/10 text-white shadow-[0_28px_120px_rgba(0,0,0,0.85)]'
-          : 'bg-white/90 border-navy-100 text-navy-950 shadow-[0_28px_80px_rgba(15,23,42,0.22)]',
-        hasEntered ? 'animate-in fade-in slide-in-from-bottom-4 duration-700' : 'opacity-0 translate-y-4',
+          : 'bg-white/90 border-navy-100 text-navy-950 shadow-[0_28px_80px_rgba(12,11,9,0.22)]',
+        'opacity-100 translate-y-0',
       ].join(' ')}
     >
       <div
         className="pointer-events-none absolute inset-0 opacity-80"
         style={{
           background: isDarkMode
-            ? 'radial-gradient(ellipse 120% 140% at 0% 0%, rgba(148,163,184,0.22), transparent 55%)'
-            : 'radial-gradient(ellipse 120% 140% at 0% 0%, rgba(15,23,42,0.08), rgba(255,255,255,0.9) 70%)',
+            ? 'radial-gradient(ellipse 120% 140% at 0% 0%, rgba(200,181,143,0.22), transparent 55%)'
+            : 'radial-gradient(ellipse 120% 140% at 0% 0%, rgba(12,11,9,0.08), rgba(255,255,255,0.9) 70%)',
           mixBlendMode: isDarkMode ? 'screen' : 'multiply',
         }}
         aria-hidden
@@ -81,8 +81,8 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
               className="relative z-10 flex-1 h-px"
               style={{
                 background: isDarkMode
-                  ? 'linear-gradient(90deg, transparent, rgba(148,163,184,0.8), transparent)'
-                  : 'linear-gradient(90deg, transparent, rgba(15,23,42,0.6), transparent)',
+                  ? 'linear-gradient(90deg, transparent, rgba(200,181,143,0.8), transparent)'
+                  : 'linear-gradient(90deg, transparent, rgba(12,11,9,0.6), transparent)',
               }}
             />
             <span
@@ -126,19 +126,19 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
           </div>
 
           <div className="md:max-w-sm w-full min-w-0">
-            <div className="rounded-[1.75rem] bg-white/90 dark:bg-white/5 border border-white/40 dark:border-white/20 px-3 sm:px-4 py-4 shadow-sm min-w-0 overflow-hidden">
+            <div className="rounded-[1.75rem] bg-white/90 dark:bg-white/5 border border-white/40 dark:border-white/20 px-3 sm:px-4 py-4 shadow-sm w-full min-w-0 max-w-full overflow-x-hidden overflow-y-visible">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-navy-400 dark:text-navy-300">
                   Client journey
                 </span>
                 <span className="h-1.5 w-16 rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 opacity-80" />
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' as const }}>
+              <div id="faq-journey-track" className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 w-full min-w-0 max-w-full" style={{ scrollbarWidth: 'none' as const }}>
                 {steps.map((step, idx) => (
                   <div
                     key={step.label}
                     className={[
-                      'min-w-[130px] sm:min-w-[150px] flex-shrink-0 rounded-2xl border px-3 py-2.5 text-left shadow-sm',
+                      'w-[min(78vw,240px)] min-w-[min(78vw,240px)] max-w-[240px] flex-shrink-0 rounded-2xl border px-3 py-2.5 text-left shadow-sm break-words',
                       'bg-white dark:bg-white/5',
                       idx === 0
                         ? 'border-navy-900/70 dark:border-white/70'
@@ -175,7 +175,7 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
                 <div
                   key={item.question}
                   className={[
-                    'relative overflow-hidden rounded-2xl border px-3 py-3 sm:px-4 sm:py-4 text-left transition-all duration-300 cursor-pointer group',
+                    'relative overflow-visible rounded-2xl border px-3 py-3 sm:px-4 sm:py-4 text-left transition-all duration-300 cursor-pointer group',
                     isDarkMode
                       ? 'border-white/12 bg-white/0 hover:bg-white/5'
                       : 'border-navy-100 bg-white/60 hover:bg-white',
@@ -189,7 +189,7 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
                     className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                     style={{
                       background: `radial-gradient(200px circle at var(--faq-x, 50%) var(--faq-y, 50%), ${
-                        isDarkMode ? 'rgba(96,165,250,0.18)' : 'rgba(15,23,42,0.08)'
+                        isDarkMode ? 'rgba(96,165,250,0.18)' : 'rgba(12,11,9,0.08)'
                       }, transparent 70%)`,
                     }}
                   />
@@ -223,7 +223,7 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
                       <div
                         className={[
                           'mt-2 text-xs md:text-sm leading-relaxed transition-[max-height,opacity] duration-300',
-                          open ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0',
+                          open ? 'max-h-[40rem] opacity-100 overflow-y-visible' : 'max-h-0 opacity-0 overflow-hidden',
                           isDarkMode ? 'text-navy-200' : 'text-navy-600',
                         ].join(' ')}
                       >

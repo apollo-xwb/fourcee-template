@@ -1,10 +1,11 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Sparkles } from "lucide-react";
 
-interface DisplayCardProps {
+export interface DisplayCardProps {
   className?: string;
   icon?: React.ReactNode;
   title?: string;
@@ -12,9 +13,10 @@ interface DisplayCardProps {
   date?: string;
   iconClassName?: string;
   titleClassName?: string;
+  iconWrapperClassName?: string;
 }
 
-function DisplayCard({
+export function DisplayCard({
   className,
   icon = <Sparkles className="size-4 text-blue-300" />,
   title = "Featured",
@@ -22,6 +24,7 @@ function DisplayCard({
   date = "Just now",
   iconClassName = "text-blue-500",
   titleClassName = "text-blue-500",
+  iconWrapperClassName = "bg-blue-800",
 }: DisplayCardProps) {
   return (
     <div
@@ -31,7 +34,7 @@ function DisplayCard({
       )}
     >
       <div>
-        <span className="relative inline-block rounded-full bg-blue-800 p-1">
+        <span className={cn("relative inline-block rounded-full p-1", iconWrapperClassName)}>
           {icon}
         </span>
         <p className={cn("text-sm sm:text-base md:text-lg font-medium", titleClassName)}>{title}</p>
@@ -44,9 +47,11 @@ function DisplayCard({
 
 interface DisplayCardsProps {
   cards?: DisplayCardProps[];
+  /** When true, each card fades/slides in with a stagger (used by splash). */
+  staggerEntrance?: boolean;
 }
 
-export default function DisplayCards({ cards }: DisplayCardsProps) {
+export default function DisplayCards({ cards, staggerEntrance = false }: DisplayCardsProps) {
   const defaultCards = [
     {
       className: "[grid-area:stack] hover:-translate-y-10 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration:700 hover:grayscale-0 before:left-0 before:top-0",
@@ -60,6 +65,38 @@ export default function DisplayCards({ cards }: DisplayCardsProps) {
   ];
 
   const displayCards = cards || defaultCards;
+
+  if (staggerEntrance) {
+    return (
+      <motion.div
+        className="grid [grid-template-areas:'stack'] place-items-center opacity-100"
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: {},
+          show: { transition: { staggerChildren: 0.2, delayChildren: 0.25 } },
+        }}
+      >
+        {displayCards.map((cardProps, index) => (
+          <motion.div
+            key={index}
+            className="[grid-area:stack]"
+            variants={{
+              hidden: { opacity: 0, y: 24, scale: 0.94 },
+              show: {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                transition: { type: "spring", stiffness: 140, damping: 18 },
+              },
+            }}
+          >
+            <DisplayCard {...cardProps} />
+          </motion.div>
+        ))}
+      </motion.div>
+    );
+  }
 
   return (
     <div className="grid [grid-template-areas:'stack'] place-items-center opacity-100 animate-in fade-in-0 duration-700">

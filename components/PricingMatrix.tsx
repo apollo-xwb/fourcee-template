@@ -48,7 +48,7 @@ export const PricingMatrix: React.FC = () => {
             </table>
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-navy-500 dark:text-navy-400 mb-2">Add-ons (quote live)</p>
+            <div className="fx-ui-sans"><p className="text-[10px] font-bold uppercase tracking-widest text-navy-500 dark:text-navy-400 mb-2">Additional add-ons (quote live)</p>
             <ul className="space-y-1.5 text-sm text-navy-700 dark:text-navy-300">
               {PRICING_MATRIX.addOns.map((addon) => (
                 <li key={addon.name} className="flex justify-between gap-4">
@@ -56,7 +56,7 @@ export const PricingMatrix: React.FC = () => {
                   <span className="font-medium text-navy-900 dark:text-white shrink-0">{addon.price}</span>
                 </li>
               ))}
-            </ul>
+            </ul></div>
           </div>
           <p className="text-xs text-navy-600 dark:text-navy-400 italic">{PRICING_MATRIX.annualNote}</p>
         </div>

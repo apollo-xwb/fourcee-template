@@ -127,9 +127,9 @@ const FloatingAiAssistant: React.FC = () => {
         aria-label={isChatOpen ? 'Close chat' : 'Open chat'}
         style={{
           background:
-            'linear-gradient(135deg, rgba(16,42,67,0.95) 0%, rgba(20,82,112,0.95) 100%)',
+            'linear-gradient(135deg, rgba(12,11,9,0.95) 0%, rgba(20,82,112,0.95) 100%)',
           boxShadow:
-            '0 0 20px rgba(16, 42, 67, 0.6), 0 0 40px rgba(20, 82, 112, 0.4)',
+            '0 0 20px rgba(12, 11, 9, 0.6), 0 0 40px rgba(20, 82, 112, 0.4)',
           border: '2px solid rgba(255, 255, 255, 0.25)',
         }}
       >
@@ -289,7 +289,7 @@ const FloatingAiAssistant: React.FC = () => {
           }
           .floating-ai-button:hover {
             transform: scale(1.08) rotate(4deg);
-            box-shadow: 0 0 30px rgba(16,42,67,0.8), 0 0 50px rgba(20,82,112,0.6);
+            box-shadow: 0 0 30px rgba(12,11,9,0.8), 0 0 50px rgba(20,82,112,0.6);
           }
         `}
       </style>

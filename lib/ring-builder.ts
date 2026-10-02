@@ -1,18 +1,23 @@
 import type { AuditData, RingBuilderConfig, RingSwatch } from '../types/audit';
 
+/** Metal swatches — hues aligned to Vikas WebGi material palette (gold ~0xe2bf7f / 0xfea04d, rose 0xfa8787). */
 export const DEFAULT_RING_METALS: RingSwatch[] = [
-  { id: 'yellow-gold', label: 'Yellow gold', color: '#d4af37' },
-  { id: 'white-gold', label: 'White gold', color: '#e8eef4' },
-  { id: 'rose-gold', label: 'Rose gold', color: '#c9a08a' },
-  { id: 'platinum', label: 'Platinum', color: '#c2ccd6' },
+  { id: 'yellow-gold', label: 'Yellow gold', color: '#e2bf7f' },
+  { id: 'white-gold', label: 'White gold', color: '#f5f2ec' },
+  { id: 'rose-gold', label: 'Rose gold', color: '#fa8787' },
+  { id: 'platinum', label: 'Platinum', color: '#e8e4dc' },
 ];
 
+/**
+ * Gem swatches — lighter / cooler tints so MeshPhysicalMaterial transmission reads like
+ * WebGi DiamondPlugin color tints (not opaque cartoon plastic).
+ */
 export const DEFAULT_RING_GEMS: RingSwatch[] = [
-  { id: 'diamond', label: 'Diamond', color: '#f4fbff' },
-  { id: 'ruby', label: 'Ruby', color: '#c81e3a' },
-  { id: 'sapphire', label: 'Sapphire', color: '#2f5ea8' },
-  { id: 'emerald', label: 'Emerald', color: '#1f7a4d' },
-  { id: 'champagne', label: 'Champagne', color: '#e6c37a' },
+  { id: 'diamond', label: 'Diamond', color: '#f8fcff' },
+  { id: 'ruby', label: 'Ruby', color: '#f070a8' },
+  { id: 'sapphire', label: 'Sapphire', color: '#62cffe' },
+  { id: 'emerald', label: 'Emerald', color: '#5eca88' },
+  { id: 'champagne', label: 'Champagne', color: '#efe75b' },
 ];
 
 export const DEFAULT_RING_BUILDER: Required<RingBuilderConfig> = {

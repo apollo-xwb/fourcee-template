@@ -5,17 +5,18 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 export type DottedSurfaceProps = React.ComponentPropsWithoutRef<'div'> & {
-	/** true = white dots (dark mode), false = black dots (light mode) */
+	/** true = white dots (dark mode), false = smooth black dots (light / beige) */
 	isDarkMode?: boolean;
 };
 
-const SEPARATION = 150;
-const AMOUNTX = 40;
-const AMOUNTY = 60;
+const SEPARATION = 100;
+const AMOUNTX = 30;
+const AMOUNTY = 28;
 
 export function DottedSurface({ className, isDarkMode = false, ...props }: DottedSurfaceProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const rafIdRef = useRef<number>(0);
+	const visibleRef = useRef(true);
 
 	useEffect(() => {
 		const container = containerRef.current;
@@ -25,10 +26,11 @@ export function DottedSurface({ className, isDarkMode = false, ...props }: Dotte
 		const h = Math.max(container.clientHeight, 200);
 
 		const scene = new THREE.Scene();
-		scene.fog = new THREE.Fog(0xffffff, 2000, 10000);
+		scene.fog = new THREE.Fog(isDarkMode ? 0x050504 : 0xfaf5ea, 1800, 9200);
 
-		const camera = new THREE.PerspectiveCamera(60, w / h, 1, 10000);
-		camera.position.set(0, 355, 1220);
+		const camera = new THREE.PerspectiveCamera(55, w / h, 1, 10000);
+		camera.position.set(0, 260, 960);
+		camera.lookAt(0, 0, 0);
 
 		const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -52,7 +54,7 @@ export function DottedSurface({ className, isDarkMode = false, ...props }: Dotte
 				if (isDarkMode) {
 					colors.push(1, 1, 1);
 				} else {
-					colors.push(0.36, 0.38, 0.42);
+					colors.push(0.04, 0.035, 0.03);
 				}
 			}
 		}
@@ -62,11 +64,12 @@ export function DottedSurface({ className, isDarkMode = false, ...props }: Dotte
 		geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 
 		const material = new THREE.PointsMaterial({
-			size: isDarkMode ? 10 : 12,
+			size: isDarkMode ? 9 : 14,
 			vertexColors: true,
 			transparent: true,
-			opacity: isDarkMode ? 0.9 : 0.85,
+			opacity: isDarkMode ? 0.88 : 0.9,
 			sizeAttenuation: true,
+			depthWrite: false,
 		});
 
 		const points = new THREE.Points(geometry, material);
@@ -78,17 +81,19 @@ export function DottedSurface({ className, isDarkMode = false, ...props }: Dotte
 
 		const animate = () => {
 			rafIdRef.current = requestAnimationFrame(animate);
+			// Stay mounted + painted: skip sim when offscreen, still keep canvas
+			if (!visibleRef.current) return;
 			let i = 0;
 			for (let ix = 0; ix < AMOUNTX; ix++) {
 				for (let iy = 0; iy < AMOUNTY; iy++) {
 					posArray[i * 3 + 1] =
-						Math.sin((ix + count) * 0.3) * 50 + Math.sin((iy + count) * 0.5) * 50;
+						Math.sin((ix + count) * 0.22) * 42 + Math.sin((iy + count) * 0.35) * 42;
 					i++;
 				}
 			}
 			positionAttr.needsUpdate = true;
 			renderer.render(scene, camera);
-			count += 0.1;
+			count += 0.055;
 		};
 		animate();
 
@@ -102,7 +107,20 @@ export function DottedSurface({ className, isDarkMode = false, ...props }: Dotte
 		};
 		window.addEventListener('resize', onResize);
 
+		// Pause work when offscreen — NEVER dispose (dispose/recreate = flash on fast scroll)
+		const io = new IntersectionObserver(
+			([entry]) => {
+				visibleRef.current = entry.isIntersecting;
+				if (entry.isIntersecting) {
+					renderer.render(scene, camera);
+				}
+			},
+			{ rootMargin: '80px 0px', threshold: 0 }
+		);
+		io.observe(container);
+
 		return () => {
+			io.disconnect();
 			window.removeEventListener('resize', onResize);
 			cancelAnimationFrame(rafIdRef.current);
 			geometry.dispose();
