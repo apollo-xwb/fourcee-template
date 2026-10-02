@@ -172,7 +172,7 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
         const h = video.videoHeight || 720;
         setFrameSize({ w, h });
         overlayRef.current?.resize(w, h, 1);
-        setMessage('Loading hand tracking (about 8 MB, once)…');
+        setMessage('Loading hand tracking (about 19 MB on first use)…');
         const landmarker = await ensureLandmarker('VIDEO');
         setPhase('live');
         setMessage('Show the back of your hand, fingers up. The ring snaps to your ring finger.');
