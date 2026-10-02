@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { assetUrl } from '../lib/asset-url';
 import fcWhite from '../public/assets/fcwhite.png';
 import fcBlack from '../public/assets/fcblack.png';
 import placeholderGif from '../public/assets/placeholder.gif';
@@ -40,12 +41,12 @@ const HeaderMetaItem: React.FC<{ label: string; tone?: 'gold' | 'silver'; surfac
   if (tone === 'gold') {
     const cls = onNavy
       ? 'rounded-full border border-white/25 bg-white/15 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_4px_20px_rgba(0,0,0,0.15)]'
-      : 'rounded-full border border-amber-200/80 bg-gradient-to-r from-amber-50 to-white px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-950 shadow-[0_8px_20px_rgba(15,23,42,0.06)]';
+      : 'rounded-full border border-amber-200/80 bg-gradient-to-r from-amber-50 to-white px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-950 shadow-[0_8px_20px_rgba(12,11,9,0.06)]';
     return <span className={cls}>{label}</span>;
   }
   const cls = onNavy
     ? 'rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-100'
-    : 'rounded-full border border-navy-200 bg-white px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-navy-800 shadow-[0_8px_20px_rgba(15,23,42,0.06)]';
+    : 'rounded-full border border-navy-200 bg-white px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-navy-800 shadow-[0_8px_20px_rgba(12,11,9,0.06)]';
   return <span className={cls}>{label}</span>;
 };
 
@@ -57,7 +58,7 @@ const HeroMetricPill: React.FC<{ label: string; value: string; isDarkMode: boole
 );
 
 const KpiCard: React.FC<{ title: string; value: string; isDarkMode: boolean }> = ({ title, value, isDarkMode }) => (
-  <div className={`group rounded-3xl border p-6 transition hover:-translate-y-0.5 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950/80 to-black shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-amber-500/20' : 'border-navy-200 bg-white/85 shadow-[0_10px_28px_rgba(15,23,42,0.06)] hover:border-navy-300'}`}>
+  <div className={`group rounded-3xl border p-6 transition hover:-translate-y-0.5 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950/80 to-black shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-amber-500/20' : 'border-navy-200 bg-white/85 shadow-[0_10px_28px_rgba(12,11,9,0.06)] hover:border-navy-300'}`}>
     <p className={`text-[10px] uppercase tracking-[0.24em] ${isDarkMode ? 'text-slate-500' : 'text-navy-500'}`}>{title}</p>
     <p className={`mt-3 text-3xl font-semibold transition ${isDarkMode ? 'text-slate-100 group-hover:text-amber-100' : 'text-navy-900 group-hover:text-emerald-800'}`}>{value}</p>
   </div>
@@ -74,7 +75,7 @@ const ProgressMetric: React.FC<{ label: string; value: string; widthClass: strin
       <span className={`font-medium ${isDarkMode ? 'text-slate-300' : 'text-navy-700'}`}>{label}</span>
       <span className={`shrink-0 text-right text-base font-semibold tabular-nums ${isDarkMode ? 'text-slate-100' : 'text-navy-900'}`}>{value}</span>
     </div>
-    <div className={`h-3.5 rounded-full border p-0.5 ${isDarkMode ? 'border-white/10 bg-gradient-to-b from-zinc-900 to-black shadow-[inset_0_2px_6px_rgba(0,0,0,0.65)]' : 'border-navy-200 bg-slate-100'}`}>
+    <div className={`h-3.5 rounded-full border p-0.5 ${isDarkMode ? 'border-white/10 bg-gradient-to-b from-zinc-900 to-black shadow-[inset_0_2px_6px_rgba(0,0,0,0.65)]' : 'border-navy-200 bg-[#f3ebe0]'}`}>
       <div
         className={`h-full min-h-[10px] rounded-full ${
           isDarkMode
@@ -98,7 +99,7 @@ const gridBgStyle: React.CSSProperties = {
 
 const gridBgStyleLight: React.CSSProperties = {
   backgroundImage:
-    'linear-gradient(rgba(15,23,42,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.06) 1px, transparent 1px)',
+    'linear-gradient(rgba(12,11,9,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(12,11,9,0.06) 1px, transparent 1px)',
   backgroundSize: '28px 28px',
 };
 
@@ -119,16 +120,16 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
   const formatRange = formatAuditRange;
   const shellClass = isDarkMode
     ? 'border-white/10 bg-gradient-to-br from-navy-900/90 via-navy-950 to-navy-900/90 text-white'
-    : 'border-navy-200/80 bg-gradient-to-br from-white via-slate-50 to-slate-100 text-navy-900 shadow-[0_18px_55px_rgba(15,23,42,0.08)]';
+    : 'border-navy-200/80 bg-gradient-to-br from-[#faf5ea] via-[#f6efdf] to-[#f2e8d2] text-navy-900 shadow-[0_18px_55px_rgba(12,11,9,0.08)]';
   const panelClass = isDarkMode
     ? 'border-white/10 bg-white/[0.04] text-white'
-    : 'border-navy-200/80 bg-white/85 text-navy-900 shadow-[0_10px_35px_rgba(15,23,42,0.06)]';
+    : 'border-navy-200/80 bg-white/85 text-navy-900 shadow-[0_10px_35px_rgba(12,11,9,0.06)]';
 
   return (
     <div
       className={`relative min-h-screen pb-12 sm:pb-16 ${
         isDarkMode
-          ? 'text-white [background:radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(212,175,55,0.07),transparent_55%),linear-gradient(180deg,#051b2d_0%,#091f32_45%,#102a43_100%)]'
+          ? 'text-white [background:radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(212,175,55,0.07),transparent_55%),linear-gradient(180deg,#050504_0%,#0d0d0d_45%,#0c0b09_100%)]'
           : 'text-navy-900 [background:radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(188,146,72,0.16),transparent_58%),linear-gradient(180deg,#faf5ea_0%,#f6efdf_50%,#f2e8d2_100%)]'
       } font-sans`}
     >
@@ -213,8 +214,8 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                   leadership team.
                 </p>
                 <p className={`mt-2 max-w-lg text-[11px] leading-relaxed sm:text-xs ${isDarkMode ? 'text-slate-300' : 'text-navy-700'}`}>
-                  Before proceeding, you can test Fourcee instantly and have the agent call you using your actual business
-                  context.
+                  Phone test is optional. You can open the full report now, or try a demo call later — we only use your number
+                  to place that one callback, with your consent.
                 </p>
                 <div
                   className={`mt-4 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] sm:mt-5 sm:px-4 sm:py-2 sm:text-[10px] ${
@@ -226,7 +227,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                   <span
                     className={`h-2 w-2 animate-pulse rounded-full ${isDarkMode ? 'bg-emerald-300' : 'bg-emerald-600'}`}
                   />
-                  Secure access granted
+                  Prepared preview ready
                 </div>
                 <div className="mt-5 sm:mt-6">
                   <button
@@ -249,9 +250,13 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                     Proceed to report
                   </button>
                 </div>
-                <p className={`mt-3 text-[10px] uppercase tracking-[0.22em] ${isDarkMode ? 'text-slate-500' : 'text-navy-500'}`}>
-                  Or scroll for more
-                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowIntroSplash(false)}
+                  className={`mt-3 text-[10px] uppercase tracking-[0.22em] underline-offset-4 hover:underline ${isDarkMode ? 'text-slate-400' : 'text-navy-500'}`}
+                >
+                  Skip phone · view report
+                </button>
               </div>
             </div>
           </div>
@@ -262,8 +267,8 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
         <div
           className={`relative mx-auto w-full rounded-[1.8rem] border shadow-[0_18px_45px_rgba(0,0,0,0.15)] backdrop-blur-xl lg:w-[min(1120px,94vw)] ${
             isDarkMode
-              ? 'border-[rgba(200,181,143,0.28)] bg-[rgba(8,18,28,0.72)] text-[#e8eef4]'
-              : 'border-navy-700/70 bg-[#071a2e]/82 text-white'
+              ? 'border-[rgba(200,181,143,0.28)] bg-[rgba(8,18,28,0.72)] text-[#f3ebe0]'
+              : 'border-navy-700/70 bg-[#0a0a0a]/82 text-white'
           }`}
           style={{
             maskImage: 'linear-gradient(to bottom, black 0%, black 90%, transparent 100%)',
@@ -295,12 +300,12 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                     <p className={`truncate text-base font-semibold tracking-tight md:text-lg ${isDarkMode ? 'text-[#f4efe4]' : 'text-white'}`}>
                       {data.business.name}
                     </p>
-                    <p className={`truncate text-xs ${isDarkMode ? 'text-[#8aa0b5]' : 'text-slate-300'}`}>{data.business.location}</p>
+                    <p className={`truncate text-xs ${isDarkMode ? 'text-[#a8957a]' : 'text-slate-300'}`}>{data.business.location}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex flex-col items-start gap-2 text-left sm:items-end sm:text-right">
-                    <p className={`text-[10px] font-semibold uppercase tracking-[0.25em] ${isDarkMode ? 'text-[#8aa0b5]' : 'text-slate-400'}`}>Intelligence by</p>
+                    <p className={`text-[10px] font-semibold uppercase tracking-[0.25em] ${isDarkMode ? 'text-[#a8957a]' : 'text-slate-400'}`}>Intelligence by</p>
                     <img
                       src={fcWhite}
                       alt="Fourcee"
@@ -309,7 +314,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                   </div>
                   <span
                     className={`inline-flex h-8 w-8 items-center justify-center rounded-full border ${
-                      isDarkMode ? 'border-white/25 text-[#e8eef4]' : 'border-white/30 text-white'
+                      isDarkMode ? 'border-white/25 text-[#f3ebe0]' : 'border-white/30 text-white'
                     }`}
                     aria-hidden
                   >
@@ -359,7 +364,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
           className={`relative overflow-hidden rounded-[2rem] border p-6 md:p-10 ${
             isDarkMode
               ? 'border-white/10 text-white'
-              : 'border-navy-200/80 text-navy-900 shadow-[0_18px_55px_rgba(15,23,42,0.08)]'
+              : 'border-navy-200/80 text-navy-900 shadow-[0_18px_55px_rgba(12,11,9,0.08)]'
           }`}
         >
           <img
@@ -481,7 +486,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
 
         <section
           id="audit-lost-revenue"
-          className="relative mt-8 min-h-[72vh] overflow-hidden rounded-[2rem] border border-[rgba(200,181,143,0.22)] bg-[#051b2d] px-5 py-8 md:px-10 md:py-10"
+          className="relative mt-8 min-h-[72vh] overflow-hidden rounded-[2rem] border border-[rgba(200,181,143,0.22)] bg-[#050504] px-5 py-8 md:px-10 md:py-10"
         >
           <div className="fx-grid opacity-80" aria-hidden />
           <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
@@ -505,7 +510,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
               <p className="mt-3 text-base md:text-lg" style={{ color: 'var(--fourcee-accent-copper)' }}>
                 walks out every month unanswered.
               </p>
-              <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#8aa0b5]">
+              <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#a8957a]">
                 Mid-range leak for {data.business.name}: {formatCurrency(data.revenueModel.monthlyLossMidpoint)} / month.
                 Six-month cumulative: {formatCurrency(data.revenueModel.sixMonthCumulativeLeak)}.
                 {data.compliance.disclaimerShort ? ` ${data.compliance.disclaimerShort}` : ''}
@@ -538,7 +543,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
             </div>
             <div className="relative min-h-[320px] sm:min-h-[420px]">
               <img
-                src="/assets/plates/plate_missed_call_phone.png"
+                src={assetUrl('assets/plates/plate_missed_call_phone.png')}
                 alt=""
                 className="pointer-events-none mx-auto h-[min(58vh,520px)] w-auto max-w-full object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.45)]"
                 aria-hidden
@@ -547,7 +552,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                 <p className="fx-kicker">After-hours inquiry</p>
                 <p className="mt-3 text-sm text-[#f2d4d0]">Missed · Sunday 8:14 PM</p>
                 <p className="mt-1 text-xl text-[#f4efe4]">$12,000 anniversary band</p>
-                <p className="mt-2 text-sm leading-relaxed text-[#8aa0b5]">
+                <p className="mt-2 text-sm leading-relaxed text-[#a8957a]">
                   Caller did not wait. Next jeweler is already in the recents list.
                 </p>
               </div>
@@ -644,7 +649,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
           </div>
           <div className={`mt-4 overflow-hidden rounded-3xl border ${isDarkMode ? 'border-white/10' : 'border-navy-200'}`}>
             <table className="w-full">
-              <thead className={`text-left ${isDarkMode ? 'bg-white/[0.04]' : 'bg-slate-100'}`}>
+              <thead className={`text-left ${isDarkMode ? 'bg-white/[0.04]' : 'bg-[#f3ebe0]'}`}>
                 <tr className={`text-[10px] uppercase tracking-[0.24em] ${isDarkMode ? 'text-white/60' : 'text-navy-500'}`}>
                   <th className="px-5 py-4">Call Type</th>
                   <th className="px-5 py-4">Est. Missed / Week</th>
@@ -794,7 +799,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
             </ul>
             <SectionTrustFooter dataSourceLine={data.compliance.dataSourceLine} isDarkMode={isDarkMode} />
           </div>
-          <div className={`border-t md:border-l md:border-t-0 ${isDarkMode ? 'border-white/10 bg-navy-950/50' : 'border-navy-200 bg-slate-100/60'}`}>
+          <div className={`border-t md:border-l md:border-t-0 ${isDarkMode ? 'border-white/10 bg-navy-950/50' : 'border-navy-200 bg-[#f3ebe0]/60'}`}>
             <img src={data.recoveryPlan.supportingMediaUrl} alt="Live inventory intelligence" className="h-full min-h-[200px] w-full object-cover" />
           </div>
         </section>
@@ -816,7 +821,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
           className={`mt-10 rounded-[2rem] border p-8 text-center ${
             isDarkMode
               ? 'border-amber-500/20 bg-gradient-to-br from-navy-900 via-navy-950 to-navy-900 shadow-[inset_0_1px_0_rgba(212,175,55,0.12)]'
-              : 'border-navy-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 shadow-[0_14px_35px_rgba(15,23,42,0.08)]'
+              : 'border-navy-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 shadow-[0_14px_35px_rgba(12,11,9,0.08)]'
           }`}
         >
           <p className={`text-[10px] uppercase tracking-[0.3em] ${isDarkMode ? 'text-amber-200/80' : 'text-navy-600'}`}>Choose Your Next Step</p>
@@ -840,11 +845,14 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
       </div>
 
       {!showIntroSplash && (
-        <div className="fixed inset-x-0 bottom-20 z-30 flex justify-center px-4 md:hidden pointer-events-none">
+        <div
+          className="fixed inset-x-0 z-20 flex justify-center px-4 md:hidden pointer-events-none"
+          style={{ bottom: 'calc(var(--footer-nav-clearance, 6.5rem) + 0.25rem)' }}
+        >
           <button
             type="button"
             onClick={onGetLive}
-            className="pointer-events-auto fx-btn fx-btn-primary"
+            className="pointer-events-auto fx-btn fx-btn-primary shadow-lg"
           >
             Recover {formatCurrency(data.revenueModel.monthlyLossMidpoint)} / mo
           </button>

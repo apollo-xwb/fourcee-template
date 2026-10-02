@@ -160,7 +160,7 @@ function Star({
         x: springX,
         y: springY,
       }}
-      initial={{ opacity: 0 }}
+      initial={{ opacity: 1 }}
       animate={{ opacity: [0, 0.8, 0] }}
       transition={{
         duration: 2 + Math.random() * 3,
@@ -334,9 +334,9 @@ function PricingToggle() {
         spread: 80,
         origin: { x: originX, y: originY },
         colors: [
-          "#0a192f",
+          "#0a0a0a",
           "#ffffff",
-          "#64748b",
+          "#6b6358",
         ],
         ticks: 300,
         gravity: 1.2,
@@ -399,18 +399,11 @@ function PricingCard({ plan, index, onSelect, hideAmounts = false }: { plan: Pri
 
   return (
     <motion.div
-      initial={{ y: 50, opacity: 0 }}
-      whileInView={{
-        y: plan.isPopular && isDesktop ? -20 : 0,
-        opacity: 1,
-      }}
-      viewport={{ once: true }}
+      initial={{ y: plan.isPopular && isDesktop ? -20 : 0, opacity: 1 }}
+      animate={{ y: plan.isPopular && isDesktop ? -20 : 0, opacity: 1 }}
       transition={{
-        duration: 0.6,
-        type: "spring",
-        stiffness: 100,
-        damping: 20,
-        delay: index * 0.15,
+        duration: 0.35,
+        ease: [0.22, 1, 0.36, 1],
       }}
       className={cn(
         "snap-center shrink-0 w-[78vw] sm:w-[68vw] md:w-auto md:shrink rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 md:p-10 flex flex-col relative bg-white/80 dark:bg-navy-950/80 backdrop-blur-md transition-all hover:shadow-2xl",

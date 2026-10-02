@@ -11,6 +11,12 @@ interface CheckoutFlowProps {
 
 const LEGACY_PACKAGE_IDS: Record<string, string> = { premium: 'pro' };
 
+const WISE_PAYMENT_URL = (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_WISE_PAYMENT_URL || '';
+const CAL_BOOKING_URL =
+  (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_CAL_BOOKING_URL ||
+  'https://app.cal.com/fourcee/30min';
+
+
 export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, initialPackageId }) => {
   const normalizedInitial =
     initialPackageId && LEGACY_PACKAGE_IDS[initialPackageId]
@@ -71,31 +77,31 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
     switch (state.step) {
       case 1:
         return (
-          <div className="space-y-10 animate-in fade-in duration-500">
-            <div className="text-center max-w-3xl mx-auto">
-              <p className="fx-kicker">
+          <div className="space-y-5 animate-in fade-in duration-500">
+            <div className="text-center max-w-2xl mx-auto">
+              <p className="fx-kicker text-[#6b5a3e]">
                 Configure · {companyName}
               </p>
-              <h2 className="fx-display mt-3 text-3xl md:text-4xl text-navy-900 dark:text-[#f4efe4]">
+              <h2 className="fx-display mt-2 text-2xl sm:text-3xl text-navy-950">
                 Get live in 2 hours
               </h2>
-              <p className="mt-3 text-sm text-navy-600 dark:text-[#8aa0b5] leading-relaxed">
+              <p className="mt-2 text-[12px] sm:text-sm text-navy-800 leading-relaxed">
                 Setup takes less than 2 hours. Once active, you&apos;ll never lose another client to a missed call again.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-navy-700 dark:text-navy-300">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-navy-800">
                 Billing
               </span>
-              <div className="inline-flex rounded-full border border-silver-200 dark:border-white/15 p-1 bg-white/40 dark:bg-black/30 backdrop-blur-md">
+              <div className="inline-flex rounded-full border border-navy-200 p-0.5 bg-white/80 backdrop-blur-md">
                 <button
                   type="button"
                   onClick={() => setState((s) => ({ ...s, billingCycle: 'monthly' }))}
-                  className={`rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition ${
+                  className={`rounded-full px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-widest transition ${
                     state.billingCycle === 'monthly'
                       ? 'bg-gradient-to-r from-[#e8d5a8] to-[#c8b58f] text-[#1a140c]'
-                      : 'text-navy-600 dark:text-[#c2ccd6]'
+                      : 'text-navy-700'
                   }`}
                 >
                   Monthly
@@ -103,10 +109,10 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                 <button
                   type="button"
                   onClick={() => setState((s) => ({ ...s, billingCycle: 'annual' }))}
-                  className={`rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition ${
+                  className={`rounded-full px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-widest transition ${
                     state.billingCycle === 'annual'
                       ? 'bg-gradient-to-r from-[#e8d5a8] to-[#c8b58f] text-[#1a140c]'
-                      : 'text-navy-600 dark:text-[#c2ccd6]'
+                      : 'text-navy-700'
                   }`}
                 >
                   Annual
@@ -115,56 +121,42 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
             </div>
 
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-navy-700 dark:text-navy-300 mb-4">Voice Tier</p>
-              <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-navy-800 mb-2.5">Voice Tier</p>
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-3">
                 {[...PACKAGES]
                   .sort((a, b) => b.monthly - a.monthly)
                   .map(pkg => (
-                  <div 
+                  <div
                     key={pkg.id}
                     onClick={() => setState(s => ({ ...s, packageId: pkg.id }))}
-                    className={`p-6 rounded-2xl border-2 cursor-pointer transition-all backdrop-blur-md ${state.packageId === pkg.id ? 'border-[#c8b58f] bg-white/80 dark:bg-[rgba(8,18,28,0.72)] shadow-[0_0_0_1px_rgba(200,181,143,0.35)]' : 'border-silver-200 dark:border-white/10 bg-white/50 dark:bg-black/25 hover:border-[#c8b58f]/50'}`}
+                    className={`p-3 sm:p-3.5 rounded-xl border cursor-pointer transition-all ${state.packageId === pkg.id ? 'border-[#c8b58f] bg-white shadow-[0_0_0_1px_rgba(200,181,143,0.35)]' : 'border-navy-200/80 bg-white/70 hover:border-[#c8b58f]/50'}`}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-navy-700 dark:text-navy-300 mb-2">{pkg.name}</p>
-                    <p className="text-2xl sm:text-3xl font-bold serif text-navy-900 dark:text-white">
-                      {state.billingCycle === 'annual' ? `$${pkg.yearlyPrice.toLocaleString()}` : `$${pkg.monthly.toLocaleString()}`}
-                      <span className="text-lg font-sans font-semibold">{state.billingCycle === 'annual' ? '/yr' : '/mo'}</span>
-                    </p>
-                    <div className="mt-3 space-y-2 rounded-xl border border-silver-200/80 bg-silver-50/70 p-3 dark:border-navy-700 dark:bg-navy-900/40">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setState((s) => ({ ...s, billingCycle: 'monthly' }));
-                        }}
-                        className={`flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition ${
-                          state.billingCycle === 'monthly'
-                            ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
-                            : 'text-navy-700 dark:text-navy-300'
-                        }`}
-                      >
-                        <span>Monthly</span>
-                        <span>${pkg.monthly.toLocaleString()}/mo + ${pkg.price.toLocaleString()} setup</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setState((s) => ({ ...s, billingCycle: 'annual' }));
-                        }}
-                        className={`flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition ${
-                          state.billingCycle === 'annual'
-                            ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
-                            : 'text-navy-700 dark:text-navy-300'
-                        }`}
-                      >
-                        <span>Annual</span>
-                        <span>${pkg.yearlyPrice.toLocaleString()}/yr · no setup</span>
-                      </button>
+                    <div className="flex items-baseline justify-between gap-1">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-navy-800">{pkg.name}</p>
+                      {state.packageId === pkg.id ? (
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700">Selected</span>
+                      ) : null}
                     </div>
-                    <p className="text-[10px] text-navy-500 dark:text-navy-500 mt-2">{pkg.description}</p>
-                    <ul className="text-xs space-y-2 text-navy-800 dark:text-navy-400 mt-4">
-                      {pkg.features.map(f => <li key={f} className="flex items-start gap-2"><span className="text-navy-900 dark:text-white shrink-0">✓</span> {f}</li>)}
+                    <p className="mt-1 text-lg sm:text-xl font-bold font-sans text-navy-950 leading-none">
+                      {state.billingCycle === 'annual' ? `$${pkg.yearlyPrice.toLocaleString()}` : `$${pkg.monthly.toLocaleString()}`}
+                      <span className="text-xs font-sans font-semibold text-navy-700">{state.billingCycle === 'annual' ? '/yr' : '/mo'}</span>
+                    </p>
+                    <p className="mt-1 text-[10px] text-navy-700 leading-snug">
+                      {state.billingCycle === 'annual'
+                        ? 'Annual · setup waived'
+                        : `$${pkg.price.toLocaleString()} setup + first month`}
+                    </p>
+                    <p className="mt-1.5 text-[10px] text-navy-600 line-clamp-2">{pkg.description}</p>
+                    <ul className="mt-2 space-y-0.5 text-[10px] sm:text-[11px] text-navy-800">
+                      {pkg.features.slice(0, 3).map(f => (
+                        <li key={f} className="flex items-start gap-1.5">
+                          <span className="text-navy-950 shrink-0">✓</span>
+                          <span className="line-clamp-1">{f}</span>
+                        </li>
+                      ))}
+                      {pkg.features.length > 3 ? (
+                        <li className="text-navy-500">+{pkg.features.length - 3} more</li>
+                      ) : null}
                     </ul>
                   </div>
                 ))}
@@ -172,8 +164,11 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
             </div>
 
             {UPSELLS.length > 0 && (
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-navy-700 dark:text-navy-300 mb-4">Optional Capabilities</p>
+            <div className="fx-ui-sans">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-navy-700 dark:text-navy-300 mb-4">Additional add-ons</p>
+              <p className="mb-4 text-sm font-medium text-navy-600 dark:text-navy-400 leading-relaxed">
+                Optional extras beyond your voice tier. Priced separately — not included unless selected.
+              </p>
               <div className="space-y-4">
                 {[...UPSELLS]
                   .sort((a, b) => ((b as { monthlyPrice?: number }).monthlyPrice ?? 0) - ((a as { monthlyPrice?: number }).monthlyPrice ?? 0))
@@ -295,46 +290,62 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
         return (
           <div className="max-w-md mx-auto space-y-6 animate-in zoom-in duration-500">
             <div className="text-center">
-              <h2 className="text-3xl md:text-4xl font-bold serif text-navy-900 dark:text-white">Secure Payment</h2>
+              <h2 className="text-3xl md:text-4xl font-bold serif text-navy-900 dark:text-white">Invoice &amp; Wise handoff</h2>
               <p className="mt-3 text-sm text-navy-600 dark:text-navy-400 leading-relaxed">
-                {state.billingCycle === 'annual'
-                  ? 'Annual plan: pay today, then renew each year. One-time setup fee waived when you pay annually.'
-                  : 'One-time setup + first month + any add-ons due today. Setup is waived if you switch to annual billing on the previous step.'}
+                We do not collect card numbers in this browser. After you confirm details, we send a Wise invoice / payment link
+                and book your onboarding call. No fake PCI vault — real payment stays on Wise.
               </p>
             </div>
-            <div className="bg-white dark:bg-navy-900/40 p-8 sm:p-10 rounded-3xl shadow-xl border border-silver-100 dark:border-navy-800">
-              <div className="mb-8 pb-6 border-b border-navy-100 dark:border-navy-800">
-                <p className="text-[10px] font-bold uppercase text-navy-700 dark:text-navy-300 mb-1">Due Today</p>
+            <div className="bg-white dark:bg-navy-900/40 p-8 sm:p-10 rounded-3xl shadow-xl border border-silver-100 dark:border-navy-800 space-y-5">
+              <div className="pb-5 border-b border-navy-100 dark:border-navy-800">
+                <p className="text-[10px] font-bold uppercase text-navy-700 dark:text-navy-300 mb-1">Order summary · due today</p>
                 <p className="text-3xl sm:text-4xl font-bold serif text-navy-900 dark:text-white">${total.toLocaleString()}</p>
                 <p className="text-xs text-navy-700 dark:text-navy-400 mt-2">
-                  {state.billingCycle === 'annual' ? (
-                    <>Setup fee waived · yearly subscription</>
+                  {selectedPackage.name} · {state.billingCycle === 'annual' ? (
+                    <>Annual ${selectedPackage.yearlyPrice.toLocaleString()} (setup waived)</>
                   ) : (
                     <>
-                      Includes ${selectedPackage.price.toLocaleString()} setup + first month (${selectedPackage.monthly}) + add-ons.
-                      Then <span className="font-semibold">${monthlyTotal.toLocaleString()}/mo</span> ongoing.
+                      Setup ${selectedPackage.price.toLocaleString()} + first month ${selectedPackage.monthly.toLocaleString()}
+                      {upsellTotal + upsellMonthlyTotal > 0 ? ' + add-ons' : ''}
+                      · then <span className="font-semibold">${monthlyTotal.toLocaleString()}/mo</span>
                     </>
                   )}
                 </p>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-[10px] font-bold uppercase block mb-1.5 text-navy-700 dark:text-navy-300">Card number</label>
-                  <input className="w-full p-4 rounded-xl border border-silver-200 dark:border-navy-700 dark:bg-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-navy-900 dark:focus:ring-white" placeholder="4242 4242 4242 4242" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-bold uppercase block mb-1.5 text-navy-700 dark:text-navy-300">Expiry</label>
-                    <input className="w-full p-4 rounded-xl border border-silver-200 dark:border-navy-700 dark:bg-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-navy-900 dark:focus:ring-white" placeholder="MM/YY" />
+              <ol className="space-y-3 text-sm text-navy-700 dark:text-navy-300 list-decimal pl-5">
+                <li>We email a Wise invoice for the amount above (or open your payment link if configured).</li>
+                <li>Book a 30-minute strategy / onboarding call on Cal.com.</li>
+                <li>Deployment starts after payment confirmation — typically under 2 hours once assets are ready.</li>
+              </ol>
+              <div className="flex flex-col gap-3 pt-2">
+                {WISE_PAYMENT_URL ? (
+                  <a
+                    href={WISE_PAYMENT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fx-btn fx-btn-primary w-full text-center"
+                  >
+                    Pay with Wise · ${total.toLocaleString()}
+                  </a>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-navy-300 dark:border-navy-600 px-4 py-3 text-xs text-navy-600 dark:text-navy-400">
+                    Wise payment URL not configured yet. Set <code className="font-mono">VITE_WISE_PAYMENT_URL</code> when the
+                    live invoice link is ready — until then, request invoice below and we&apos;ll send it manually.
                   </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase block mb-1.5 text-navy-700 dark:text-navy-300">CVC</label>
-                    <input className="w-full p-4 rounded-xl border border-silver-200 dark:border-navy-700 dark:bg-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-navy-900 dark:focus:ring-white" placeholder="123" />
-                  </div>
-                </div>
+                )}
+                <a
+                  href={CAL_BOOKING_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="fx-btn fx-btn-ghost w-full text-center"
+                >
+                  Book strategy call (Cal.com)
+                </a>
               </div>
             </div>
-            <p className="text-[10px] text-center text-navy-600 dark:text-navy-500 uppercase tracking-widest">PCI-compliant. Powered by Fourcee Secure Vault.</p>
+            <p className="text-[10px] text-center text-navy-600 dark:text-navy-500 uppercase tracking-widest">
+              Invoice / Wise · no card fields on this page
+            </p>
           </div>
         );
       case 4:
@@ -343,7 +354,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
             <div className="w-24 h-24 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto text-5xl">✓</div>
             <h2 className="text-3xl sm:text-4xl font-bold serif text-navy-900 dark:text-white">Deployment Started</h2>
             <p className="text-lg sm:text-xl text-navy-700 dark:text-navy-300 max-w-lg mx-auto leading-relaxed">
-              Your tailored voice model is now in fabrication. Expect a reach-out within 2 hours to confirm your onboarding timeline and workshop slot.
+              Invoice requested. Expect a Wise payment link and onboarding reach-out shortly. You can also book a strategy call while you wait.
             </p>
             <p className="text-sm text-navy-500 dark:text-navy-400 max-w-md mx-auto">
               Check your inbox for deployment details and next steps.
@@ -409,7 +420,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
               className="fx-btn fx-btn-primary px-12 py-5 text-xs cursor-pointer shrink-0 select-none touch-manipulation"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              {state.step === 3 ? `Authorize $${total.toLocaleString()}` : 'Forward →'}
+              {state.step === 3 ? `Request invoice · $${total.toLocaleString()}` : 'Forward →'}
             </button>
           </div>
         )}

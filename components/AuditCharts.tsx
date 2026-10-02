@@ -13,9 +13,9 @@ function BarChartDefs() {
       </linearGradient>
       <linearGradient id="cv-silver" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#f8fafc" />
-        <stop offset="40%" stopColor="#94a3b8" />
+        <stop offset="40%" stopColor="#a8957a" />
         <stop offset="55%" stopColor="#e2e8f0" />
-        <stop offset="100%" stopColor="#64748b" />
+        <stop offset="100%" stopColor="#6b6358" />
       </linearGradient>
       <linearGradient id="cv-rose" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#fecaca" />
@@ -46,7 +46,7 @@ export function CallVolumeBarChart({ callModel, isDarkMode = true }: { callModel
     { label: 'Missed calls', value: avgMissed, grad: 'url(#cv-rose)', text: `${callModel.missedCallsPerWeekMin}–${callModel.missedCallsPerWeekMax} / wk` },
   ];
   return (
-    <div className={`rounded-[2rem] border p-6 md:p-8 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950 via-black to-zinc-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'border-navy-200 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'}`}>
+    <div className={`rounded-[2rem] border p-6 md:p-8 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950 via-black to-zinc-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'border-navy-200 bg-white/90 shadow-[0_10px_30px_rgba(12,11,9,0.06)]'}`}>
       <h3 className={`audit-heading-font text-lg ${isDarkMode ? 'text-slate-100' : 'text-navy-900'}`}>
         Call Volume &amp; Answer Rate
       </h3>
@@ -85,15 +85,15 @@ function LineChartDefs() {
   return (
     <defs>
       <linearGradient id="rv-line" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#94a3b8" />
+        <stop offset="0%" stopColor="#a8957a" />
         <stop offset="40%" stopColor="#e2e8f0" />
         <stop offset="70%" stopColor="#d4af37" />
         <stop offset="100%" stopColor="#f5e6c8" />
       </linearGradient>
       <linearGradient id="rv-leak-area" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" stopColor="rgba(212,175,55,0.45)" />
-        <stop offset="40%" stopColor="rgba(148,163,184,0.25)" />
-        <stop offset="100%" stopColor="rgba(15,23,42,0)" />
+        <stop offset="40%" stopColor="rgba(200,181,143,0.25)" />
+        <stop offset="100%" stopColor="rgba(12,11,9,0)" />
       </linearGradient>
       <linearGradient id="rv-node" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#fff8e7" />
@@ -122,7 +122,7 @@ export function RevenueLeakLineChart({ lineSeries, currencySymbol, cumulativeLea
   const toY = (v: number) => h - pad - ((v - minY) / (maxY - minY)) * (h - pad * 2);
   const d = points.map((v, i) => `${i === 0 ? 'M' : 'L'} ${toX(i)} ${toY(v)}`).join(' ');
   return (
-    <div className={`rounded-[2rem] border p-6 md:p-8 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950 via-black to-zinc-900' : 'border-navy-200 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'}`}>
+    <div className={`rounded-[2rem] border p-6 md:p-8 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950 via-black to-zinc-900' : 'border-navy-200 bg-white/90 shadow-[0_10px_30px_rgba(12,11,9,0.06)]'}`}>
       <h3 className={`audit-heading-font text-lg ${isDarkMode ? 'text-slate-100' : 'text-navy-900'}`}>Your Hidden Revenue Leak</h3>
       <p className={`mt-1 text-xs ${isDarkMode ? 'text-slate-400' : 'text-navy-600'}`}>Cumulative estimated missed revenue (6 months)</p>
       <div className="mt-6 overflow-x-auto">
@@ -178,7 +178,7 @@ export function MissedCallDonutChart({ missedCallTypeSplit, isDarkMode = true }:
     return { d, gradId: seg.gradId, label: seg.label, pct: seg.pct };
   });
   return (
-    <div className={`rounded-[2rem] border p-6 md:p-8 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950 via-black to-zinc-900' : 'border-navy-200 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'}`}>
+    <div className={`rounded-[2rem] border p-6 md:p-8 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950 via-black to-zinc-900' : 'border-navy-200 bg-white/90 shadow-[0_10px_30px_rgba(12,11,9,0.06)]'}`}>
       <h3 className={`audit-heading-font text-lg ${isDarkMode ? 'text-slate-100' : 'text-navy-900'}`}>Missed Calls by Type</h3>
       <p className={`mt-1 text-xs ${isDarkMode ? 'text-slate-400' : 'text-navy-600'}`}>Share of missed-call volume (estimated)</p>
       <div className="mt-6 flex flex-col items-center gap-6 md:flex-row md:items-start md:justify-center">
@@ -191,12 +191,12 @@ export function MissedCallDonutChart({ missedCallTypeSplit, isDarkMode = true }:
             </linearGradient>
             <linearGradient id="donut-silver" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#f1f5f9" />
-              <stop offset="50%" stopColor="#94a3b8" />
-              <stop offset="100%" stopColor="#334155" />
+              <stop offset="50%" stopColor="#a8957a" />
+              <stop offset="100%" stopColor="#3a342b" />
             </linearGradient>
             <linearGradient id="donut-steel" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#cbd5e1" />
-              <stop offset="100%" stopColor="#1e293b" />
+              <stop offset="100%" stopColor="#1f1c18" />
             </linearGradient>
           </defs>
           {paths.map((p, i) => (
@@ -263,7 +263,7 @@ export function GbpSnapshotMockup({
 }) {
   const themes = reviews.themes?.filter(Boolean) ?? [];
   return (
-    <div className={`rounded-[2rem] border p-6 md:p-8 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950 to-black' : 'border-navy-200 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'}`}>
+    <div className={`rounded-[2rem] border p-6 md:p-8 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950 to-black' : 'border-navy-200 bg-white/90 shadow-[0_10px_30px_rgba(12,11,9,0.06)]'}`}>
       <div className="flex items-center gap-2">
         <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
           <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.3-1.5 3.9-5.4 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.9 3.6 14.7 2.7 12 2.7A9.3 9.3 0 0 0 2.7 12c0 5.1 4.2 9.3 9.3 9.3 5.4 0 9-3.8 9-9.2 0-.6-.1-1.1-.1-1.9H12z" />
@@ -316,19 +316,19 @@ export function GbpSnapshotMockup({
 export function TrafficPieChart({ trafficSources, isDarkMode = true }: { trafficSources: Array<{ label: string; percent: number; colorKey: string }>; isDarkMode?: boolean }) {
   const palette = [
     {
-      fill: isDarkMode ? '#ffffff' : '#0f172a',
+      fill: isDarkMode ? '#ffffff' : '#0c0b09',
       legend: isDarkMode ? 'bg-white' : 'bg-navy-900',
-      stroke: isDarkMode ? '#0f172a' : '#ffffff',
+      stroke: isDarkMode ? '#0c0b09' : '#ffffff',
     },
     {
       fill: isDarkMode ? '#d4af37' : '#d4af37',
       legend: 'bg-[#d4af37]',
-      stroke: isDarkMode ? '#111827' : '#ffffff',
+      stroke: isDarkMode ? '#0c0b09' : '#ffffff',
     },
     {
       fill: isDarkMode ? '#38bdf8' : '#0369a1',
       legend: isDarkMode ? 'bg-sky-400' : 'bg-sky-700',
-      stroke: isDarkMode ? '#111827' : '#ffffff',
+      stroke: isDarkMode ? '#0c0b09' : '#ffffff',
     },
   ];
 
@@ -356,7 +356,7 @@ export function TrafficPieChart({ trafficSources, isDarkMode = true }: { traffic
     return { d, fill: seg.fill, legendClass: seg.legendClass, stroke: seg.stroke, label: seg.label, pct: seg.pct };
   });
   return (
-    <div className={`rounded-[2rem] border p-6 md:p-8 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950 via-black to-zinc-900' : 'border-navy-200 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'}`}>
+    <div className={`rounded-[2rem] border p-6 md:p-8 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950 via-black to-zinc-900' : 'border-navy-200 bg-white/90 shadow-[0_10px_30px_rgba(12,11,9,0.06)]'}`}>
       <h3 className={`audit-heading-font text-lg ${isDarkMode ? 'text-slate-100' : 'text-navy-900'}`}>Where your calls are coming from</h3>
       <p className={`mt-1 text-xs ${isDarkMode ? 'text-slate-400' : 'text-navy-600'}`}>Traffic source mix (illustrative)</p>
       <div className="mt-6 flex flex-col items-center gap-4 md:flex-row md:justify-center">

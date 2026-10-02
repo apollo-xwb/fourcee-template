@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
+/* Custom Sphere fonts optional — missing files must not 404-spam; Michroma/Inter already loaded. */
 @font-face {
   font-family: "SphereNextThin";
-  src: url("/assets/SphereNextThin-WyR54.ttf") format("truetype");
+  src: local("Michroma"), local("Inter");
   font-weight: 100 500;
   font-style: normal;
   font-display: swap;
@@ -10,7 +11,7 @@
 
 @font-face {
   font-family: "NextSphereBlack";
-  src: url("/assets/NextSphereBlack-eZLJg.ttf") format("truetype");
+  src: local("Michroma"), local("Inter");
   font-weight: 600 900;
   font-style: normal;
   font-display: swap;
@@ -23,16 +24,16 @@
 
 :root {
   --destructive-foreground: oklch(1 0 0);
-  --fourcee-accent-copper: #c8b58f;
-  --fourcee-accent-copper-hi: #e8d5a8;
-  --fourcee-accent-ice: #c2ccd6;
-  --fourcee-brand-primary: #102a43;
-  --fourcee-brand-secondary: #051b2d;
-  --fourcee-ink: #e8eef4;
-  --fourcee-mute: #8aa0b5;
-  --fourcee-paper: #f4efe4;
-  --fourcee-glass: rgba(8, 18, 28, 0.52);
-  --fourcee-line: rgba(200, 181, 143, 0.28);
+  --fourcee-accent-copper: #8a7349;
+  --fourcee-accent-copper-hi: #c8b58f;
+  --fourcee-accent-ice: #8a7349;
+  --fourcee-brand-primary: #0c0b09;
+  --fourcee-brand-secondary: #050504;
+  --fourcee-ink: #0c0b09;
+  --fourcee-mute: #3a342b;
+  --fourcee-paper: #faf5ea;
+  --fourcee-glass: rgba(255, 255, 255, 0.72);
+  --fourcee-line: rgba(12, 11, 9, 0.16);
 }
 
 .dark {
@@ -41,13 +42,14 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", "Times New Roman", ui-serif, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
-/* Global typography overhaul:
-   - Hero heading voice: Montserrat
-   - Hero supporting text voice: Inter */
+/* Global typography:
+   - Hero / key display: Michroma (+ Cormorant for .fx-display-serif)
+   - Body / supporting: Inter
+   - .serif clamps keep PLACEHOLDER titles from going huge */
 html,
 body,
 #root {
@@ -68,10 +70,27 @@ h6,
 [class~="serif"] {
   font-family: "SphereNextThin", "Michroma", "Inter", ui-sans-serif, system-ui, sans-serif;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.035em;
   font-weight: 300;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
+}
+
+/* Tame wide Michroma on .serif / PLACEHOLDER titles — NOT .fx-display hero titles */
+.serif:not(.fx-display),
+.font-serif:not(.fx-display),
+.audit-heading-font {
+  font-size: clamp(0.95rem, 2.8vw, 1.35rem);
+  line-height: 1.25;
+  letter-spacing: 0.03em;
+}
+h1.serif:not(.fx-display),
+h2.serif:not(.fx-display),
+.serif.text-2xl:not(.fx-display),
+.serif.text-3xl:not(.fx-display),
+.serif.text-4xl:not(.fx-display) {
+  font-size: clamp(1.05rem, 3.2vw, 1.55rem) !important;
+  letter-spacing: 0.03em !important;
 }
 
 /* Important supporting copy defaults to the hero subtext voice. */
@@ -95,23 +114,45 @@ a,
 
 @media (max-width: 640px) {
   h1 {
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
+    font-size: clamp(1.15rem, 5.2vw, 1.45rem);
+  }
+  h2 {
+    font-size: clamp(1.05rem, 4.6vw, 1.3rem);
+  }
+  h3 {
+    font-size: clamp(0.95rem, 4vw, 1.15rem);
+  }
+  .fx-display {
+    font-size: clamp(1.2rem, 5.4vw, 1.55rem) !important;
   }
 }
 
-/* SpaceX × Apple × Stark mission chrome — live surfaces */
+/* Key display type — Michroma restored for hero / mission titles (size via utilities, not .serif clamp) */
 .fx-display {
+  font-family: Michroma, "SphereNextThin", "Cormorant Garamond", ui-sans-serif, system-ui, sans-serif !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  line-height: 1.08 !important;
+  /* Escape the global .serif size clamp */
+  font-size: inherit !important;
+}
+.fx-display-serif {
   font-family: "Cormorant Garamond", "Times New Roman", serif !important;
   font-weight: 400 !important;
   letter-spacing: -0.02em !important;
   text-transform: none !important;
+  font-size: inherit !important;
+  line-height: 1.05 !important;
 }
 
 .fx-hud {
   font-family: Michroma, "SphereNextThin", Inter, ui-sans-serif, system-ui, sans-serif;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   font-weight: 400;
+  font-size: 0.7rem;
 }
 
 .fx-kicker {
@@ -120,6 +161,19 @@ a,
   letter-spacing: 0.32em;
   text-transform: uppercase;
   color: var(--fourcee-accent-copper);
+}
+/* Dark textured panels (hero / ring) keep warm copper kickers via utility overrides */
+.fourcee-ribbed-wash .fx-kicker,
+.fourcee-surface-bg .fx-kicker {
+  color: #c8b58f;
+}
+.fourcee-hero-beige .fx-kicker {
+  color: #8a7349;
+}
+.fourcee-hero-beige .fx-chip {
+  border-color: rgba(200, 181, 143, 0.45);
+  color: #3f3628;
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .fx-chip {
@@ -146,8 +200,8 @@ html:not(.dark) .fx-chip {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #8ec8e6;
-  box-shadow: 0 0 10px #8ec8e6;
+  background: #c8b58f;
+  box-shadow: 0 0 10px #c8b58f;
 }
 
 .fx-btn {
@@ -179,8 +233,8 @@ html:not(.dark) .fx-chip {
 }
 
 html:not(.dark) .fx-btn-ghost {
-  border-color: rgba(16, 42, 67, 0.22);
-  color: #102a43;
+  border-color: rgba(12, 11, 9, 0.22);
+  color: #0c0b09;
   background: rgba(255, 255, 255, 0.55);
 }
 
@@ -193,7 +247,7 @@ html:not(.dark) .fx-btn-ghost {
 }
 
 html:not(.dark) .fx-tile {
-  border-color: rgba(16, 42, 67, 0.1);
+  border-color: rgba(12, 11, 9, 0.1);
   background: rgba(255, 255, 255, 0.72);
 }
 
@@ -210,6 +264,150 @@ html:not(.dark) .fx-tile {
 
 html:not(.dark) .fx-grid {
   background-image:
-    linear-gradient(rgba(16, 42, 67, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(16, 42, 67, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(12, 11, 9, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(12, 11, 9, 0.06) 1px, transparent 1px);
 }
+
+
+/* In-app UI sans — override misplaced wide Michroma on add-ons / forms */
+.fx-ui-sans,
+.fx-ui-sans h1,
+.fx-ui-sans h2,
+.fx-ui-sans h3,
+.fx-ui-sans h4,
+.fx-ui-sans h5,
+.fx-ui-sans h6,
+.fx-ui-sans .serif,
+.fx-ui-sans [class*="display"],
+.fx-ui-sans [class*="heading"] {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-weight: 600;
+  -webkit-font-smoothing: antialiased;
+}
+.fx-ui-sans .fx-kicker,
+.fx-ui-sans p.text-\[10px\],
+.fx-ui-sans [class*="uppercase"][class*="tracking"] {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+  font-weight: 700;
+}
+
+/* Liquid glass — frosted panels, soft gold borders (black + beige + gold) */
+.liquid-glass {
+  background: rgba(250, 245, 234, 0.55);
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  border: 1px solid rgba(200, 181, 143, 0.38);
+  box-shadow:
+    0 8px 32px rgba(12, 11, 9, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.liquid-glass-dark {
+  background: rgba(12, 11, 9, 0.52);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid rgba(200, 181, 143, 0.32);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.liquid-glass-dock {
+  background: rgba(250, 245, 234, 0.72);
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  border: 1px solid rgba(200, 181, 143, 0.4);
+  box-shadow:
+    0 10px 40px rgba(12, 11, 9, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+
+/* Logo contrast — always-visible on light AND dark sections */
+.fx-logo-negative {
+  color: #faf5ea !important;
+  -webkit-text-fill-color: #faf5ea !important;
+  mix-blend-mode: normal !important;
+  background: rgba(12, 11, 9, 0.92) !important;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 181, 143, 0.55) !important;
+  letter-spacing: 0.14em;
+  box-shadow:
+    0 0 0 1px rgba(250, 245, 234, 0.35),
+    0 0 0 2px rgba(12, 11, 9, 0.75),
+    0 8px 28px rgba(0, 0, 0, 0.45);
+  text-shadow:
+    0 0 1px rgba(12, 11, 9, 1),
+    0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* model-viewer is a custom element whose focusable element lives in its shadow root (the host matches :focus but never
+   :focus-visible), and it draws no focus indicator of its own. ArViewSheet sets html[data-input-modality="keyboard"] while the
+   user is on the keyboard, so the ring shows for Tab/arrow users and not on mouse/touch orbiting.
+   Inset, because the AR sheet wraps it in an overflow-hidden rounded box that would clip an outer outline. */
+html[data-input-modality="keyboard"] model-viewer:focus,
+model-viewer:focus-visible {
+  outline: 2px solid #f4efe4;
+  outline-offset: -4px;
+}
+model-viewer > button:focus-visible {
+  outline: 2px solid #f4efe4 !important;
+  outline-offset: 2px;
+}
+
+/* Mobile hero: transparent -> solid page beige (#faf5ea). Stops chosen so the slats are still visible in the top ~45%. */
+.fourcee-hero-fade {
+  /* The legal text sits at ~70-85% of the hero depending on the phone's height (Pixel 915 px: 70-75%), so the fade must be
+     effectively solid before 70%. */
+  background: linear-gradient(
+    180deg,
+    rgba(250, 245, 234, 0) 0%,
+    rgba(250, 245, 234, 0) 38%,
+    rgba(250, 245, 234, 0.6) 52%,
+    rgba(250, 245, 234, 0.96) 64%,
+    #faf5ea 69%,
+    #faf5ea 100%
+  );
+}
+
+/* Splash: transform/opacity only, one easing (ease-out-expo-ish) for every entrance, a gentle ease-in-out loop for the float.
+   will-change only on the single floating wrapper. */
+@keyframes fx-splash-card-in {
+  from { opacity: 0; transform: translate3d(0, 24px, 0) scale(0.94); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes fx-splash-in {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes fx-splash-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -6px, 0); }
+}
+@keyframes fx-splash-fade { from { opacity: 0; } to { opacity: 1; } }
+.fx-splash-card-in {
+  animation: fx-splash-card-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(250ms + var(--i, 0) * 180ms);
+}
+.fx-splash-in {
+  animation: fx-splash-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+.fx-splash-float {
+  animation: fx-splash-float 3.2s cubic-bezier(0.45, 0, 0.55, 1) 1.4s infinite both;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* static: a short opacity fade only, no movement, no loop */
+  .fx-splash-card-in, .fx-splash-in { animation: fx-splash-fade 200ms linear both; animation-delay: 0ms; }
+  .fx-splash-float { animation: none; will-change: auto; }
+}
+
+/* Ring canvases: WebGi sets touch-action:none on its canvas, which turned the docked ring into a scroll trap on phones (a vertical swipe
+   starting on the ring could not scroll the page). pan-y: vertical swipes scroll the page, horizontal drags still orbit the ring. */
+canvas[id^="webgi-canvas"], #ring-studio canvas, #ring-studio-hero canvas { touch-action: pan-y !important; }

@@ -1,12 +1,12 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Fourcee: AI Receptionist for Jewelers – Book More, Stress Less</title>
     <meta name="description" content="Tailored AI voice agent for jewelers: 24/7 bookings, estimates, order updates, CRM integration. Boost ROI with our premium solution." />
-    <meta name="theme-color" content="#102a43" />
+    <meta name="theme-color" content="#faf5ea" />
     <meta property="og:title" content="Fourcee: AI Receptionist for Jewelers – Book More, Stress Less" />
     <meta property="og:description" content="Tailored AI voice agent for jewelers: 24/7 bookings, estimates, order updates, CRM integration. Boost ROI with our premium solution." />
     <meta property="og:type" content="website" />
@@ -19,25 +19,25 @@
           extend: {
             colors: {
               navy: {
-                50: '#f0f4f8',
-                100: '#d9e2ec',
-                200: '#bcccdc',
-                300: '#9fb3c8',
-                400: '#829ab1',
-                500: '#627d98',
-                600: '#486581',
-                700: '#334e68',
-                800: '#243b53',
-                900: '#102a43',
-                950: '#051b2d',
+                50: '#faf7f0',
+                100: '#f3ebe0',
+                200: '#e5d9c8',
+                300: '#cfc0a8',
+                400: '#a8957a',
+                500: '#7a6b55',
+                600: '#564c3d',
+                700: '#3a342b',
+                800: '#1f1c18',
+                900: '#0c0b09',
+                950: '#050504',
               },
               silver: {
-                50: '#f5f7fa',
-                100: '#e4e7eb',
-                200: '#cbd2d9',
-                300: '#9aa5b1',
-                400: '#7b8794',
-                500: '#616e7c',
+                50: '#faf8f4',
+                100: '#f0ebe3',
+                200: '#ddd4c6',
+                300: '#b8ae9e',
+                400: '#8f8678',
+                500: '#6b6358',
               }
             }
           }
@@ -46,30 +46,39 @@
     </script>
     <style>
       body {
-        background-color: #ffffff;
-        color: #102a43;
+        background-color: #faf5ea;
+        color: #0c0b09;
         scroll-behavior: smooth;
         -webkit-font-smoothing: antialiased;
         overflow-x: hidden;
         transition: background-color 0.3s ease, color 0.3s ease;
       }
       .dark body {
-        background-color: #051b2d;
-        color: #f0f4f8;
+        background-color: #050504;
+        color: #faf7f0;
       }
       .glass-card {
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(16, 42, 67, 0.1);
+        background: rgba(250, 245, 234, 0.62);
+        backdrop-filter: blur(18px) saturate(1.25);
+        -webkit-backdrop-filter: blur(18px) saturate(1.25);
+        border: 1px solid rgba(200, 181, 143, 0.38);
+        box-shadow: 0 8px 32px rgba(12, 11, 9, 0.08), inset 0 1px 0 rgba(255,255,255,0.45);
       }
       .dark .glass-card {
-        background: rgba(16, 42, 67, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(12, 11, 9, 0.52);
+        border: 1px solid rgba(200, 181, 143, 0.28);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
       }
       :root {
-        --nav-dock-bottom: 1.25rem;
-        --nav-dock-height: 3.75rem;
-        --footer-nav-clearance: calc(var(--nav-dock-bottom) + var(--nav-dock-height) + 1.75rem);
+        --nav-dock-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+        --nav-dock-height: 3.5rem;
+        --footer-nav-clearance: calc(var(--nav-dock-bottom) + var(--nav-dock-height) + 2.75rem);
+      }
+      @media (min-width: 640px) {
+        :root {
+          --nav-dock-bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+          --nav-dock-height: 3.75rem;
+        }
       }
       .nav-floating {
         position: fixed;
@@ -77,13 +86,21 @@
         left: 50%;
         transform: translateX(-50%);
         z-index: 1000;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      /* Reserve space so page CTAs are never covered by the dock */
+      #root, main, .fourcee-main-clearance {
+        padding-bottom: 0;
+      }
+      .dock-safe-pad {
+        padding-bottom: var(--footer-nav-clearance);
       }
       /* Keep terms / disclaimer above the fixed bottom dock */
       .footer-terms-clearance {
         padding-bottom: var(--footer-nav-clearance);
       }
       .shimmer-text {
-        background: linear-gradient(to right, #102a43 20%, #9aa5b1 40%, #9aa5b1 60%, #102a43 80%);
+        background: linear-gradient(to right, #0c0b09 20%, #b8ae9e 40%, #b8ae9e 60%, #0c0b09 80%);
         background-size: 200% auto;
         background-clip: text;
         -webkit-background-clip: text;
@@ -91,7 +108,7 @@
         animation: shine 4s linear infinite;
       }
       .dark .shimmer-text {
-        background: linear-gradient(to right, #f0f4f8 20%, #9aa5b1 40%, #9aa5b1 60%, #f0f4f8 80%);
+        background: linear-gradient(to right, #faf7f0 20%, #b8ae9e 40%, #b8ae9e 60%, #faf7f0 80%);
         background-size: 200% auto;
         background-clip: text;
         -webkit-background-clip: text;
@@ -107,18 +124,25 @@
       }
       input[type=range]::-webkit-slider-runnable-track {
         width: 100%;
-        height: 6px;
-        background: #E5E7EB;
+        height: 8px;
+        background: #1a1714 !important;
+        border-radius: 10px;
+        opacity: 1;
+      }
+      input[type=range]::-moz-range-track {
+        width: 100%;
+        height: 8px;
+        background: #1a1714 !important;
         border-radius: 10px;
       }
       .dark input[type=range]::-webkit-slider-runnable-track {
-        background: #334e68;
+        background: #3a342b;
       }
       input[type=range]::-webkit-slider-thumb {
         height: 24px;
         width: 24px;
         border-radius: 50%;
-        background: #102a43;
+        background: #0c0b09;
         cursor: pointer;
         -webkit-appearance: none;
         margin-top: -9px;
@@ -126,19 +150,98 @@
         border: 2px solid white;
       }
       .dark input[type=range]::-webkit-slider-thumb {
-        background: #f0f4f8;
-        border: 2px solid #102a43;
+        background: #faf7f0;
+        border: 2px solid #0c0b09;
       }
-      /* App surface backgrounds: mobile vs large */
+      /* Side menu / panels: coherent black + beige — NO big plate image (was beige/grey split) */
       .fourcee-surface-bg {
-        background-image: url('/assets/mobile-background.jpg');
+        background-color: #faf5ea;
+        background-image:
+          linear-gradient(165deg, #faf5ea 0%, #f3ebe0 48%, #e8dcc8 100%);
         background-size: cover;
-        background-position: center top;
         background-repeat: no-repeat;
       }
+      .dark .fourcee-surface-bg {
+        background-color: #0c0b09;
+        background-image:
+          linear-gradient(165deg, #0c0b09 0%, #1a1712 55%, #050504 100%);
+      }
+      /* Dark ribbed wash — problem / cinematic sections */
+      .fourcee-ribbed-wash {
+        background-color: #050504;
+        background-image:
+          linear-gradient(180deg, rgba(5, 5, 4, 0.55) 0%, rgba(5, 5, 4, 0.72) 50%, rgba(5, 5, 4, 0.88) 100%),
+          url('assets/mobile-background.jpg');
+        background-size: cover, cover;
+        background-position: center, center;
+        background-repeat: no-repeat, no-repeat;
+      }
       @media (min-width: 768px) {
-        .fourcee-surface-bg {
-          background-image: url('/assets/large-background.jpg');
+        .fourcee-ribbed-wash {
+          background-image:
+            linear-gradient(180deg, rgba(5, 5, 4, 0.50) 0%, rgba(5, 5, 4, 0.68) 45%, rgba(5, 5, 4, 0.86) 100%),
+            url('assets/large-background.jpg');
+        }
+      }
+      /* Hero: light translucent beige — texture must read on mobile (prev 0.88–0.94 was opaque) */
+      .fourcee-hero-beige {
+        background-color: #faf5ea;
+        background-image:
+          linear-gradient(180deg, rgba(250, 245, 234, 0.38) 0%, rgba(250, 245, 234, 0.22) 42%, rgba(246, 239, 223, 0.32) 100%),
+          linear-gradient(105deg, rgba(250, 245, 234, 0.12), rgba(250, 245, 234, 0.04)),
+          url('assets/mobile-background.jpg');
+        background-size: cover, cover, cover;
+        background-position: center, center, center;
+        background-repeat: no-repeat, no-repeat, no-repeat;
+      }
+      @media (max-width: 767px) {
+        .fourcee-hero-beige {
+          background-image:
+            linear-gradient(180deg, rgba(250, 245, 234, 0.28) 0%, rgba(250, 245, 234, 0.14) 40%, rgba(246, 239, 223, 0.22) 100%),
+            linear-gradient(105deg, rgba(250, 245, 234, 0.08), transparent 70%),
+            url('assets/mobile-background.jpg');
+        }
+        .fourcee-hero-beige .fourcee-hero-beige-veil {
+          opacity: 0.35 !important;
+        }
+        .fourcee-grain-lite {
+          opacity: 0.12 !important;
+        }
+      }
+      @media (min-width: 768px) {
+        .fourcee-hero-beige {
+          background-image:
+            linear-gradient(180deg, rgba(250, 245, 234, 0.55) 0%, rgba(250, 245, 234, 0.4) 45%, rgba(246, 239, 223, 0.48) 100%),
+            linear-gradient(105deg, rgba(250, 245, 234, 0.22), rgba(250, 245, 234, 0.1)),
+            url('assets/large-background.jpg');
+        }
+      }
+      /* Logo: always-visible dual ink — dark pill + white glyphs + ink stroke for light AND dark */
+      .fx-logo-negative {
+        color: #faf5ea !important;
+        -webkit-text-fill-color: #faf5ea !important;
+        mix-blend-mode: normal !important;
+        background: rgba(12, 11, 9, 0.92) !important;
+        padding: 0.5rem 1rem;
+        border-radius: 999px;
+        border: 1px solid rgba(200, 181, 143, 0.55) !important;
+        backdrop-filter: blur(16px) saturate(1.2);
+        -webkit-backdrop-filter: blur(16px) saturate(1.2);
+        box-shadow:
+          0 0 0 1px rgba(250, 245, 234, 0.35),
+          0 0 0 2px rgba(12, 11, 9, 0.75),
+          0 8px 28px rgba(0, 0, 0, 0.45);
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-shadow:
+          0 0 1px rgba(12, 11, 9, 1),
+          0 1px 2px rgba(0, 0, 0, 0.9),
+          0 0 12px rgba(200, 181, 143, 0.25);
+      }
+      /* Crush EtherealShadow grain on mobile so cards stay readable */
+      @media (max-width: 768px) {
+        .fourcee-grain-lite {
+          opacity: 0.12 !important;
         }
       }
     </style>

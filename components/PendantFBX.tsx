@@ -8,17 +8,15 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader';
+import { assetUrl } from '../lib/asset-url';
 
 // Folders in public/assets/3D that contain scene.gltf (or scene.glb). Add new ones as you upload.
 const ASSET_FOLDERS = [
-  'sphere',
-  'abstract gold ring',
   'gold chatoic sphere',
 ];
 
 function toAssetUrl(folder: string, file = 'scene.gltf'): string {
-  const path = `/assets/3D/${encodeURIComponent(folder)}/${file}`;
-  return path;
+  return assetUrl(`assets/3D/${encodeURIComponent(folder)}/${file}`);
 }
 
 interface PendantFBXProps {

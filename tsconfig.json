@@ -25,5 +25,6 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "exclude": ["node_modules", "dist", "dist-e2e", "e2e-results", "test-results"]
 }
