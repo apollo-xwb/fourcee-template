@@ -36,8 +36,8 @@ export function landmarkToPx(l: Landmark, width: number, height: number): Vec3 {
 }
 
 /**
- * @param handedness label MediaPipe reported ("Left" | "Right") for the UNMIRRORED frame we fed it.
- *   Needed only to decide which side of the hand is the back (see comment in the body).
+ * @param handedness label MediaPipe reported ("Left" | "Right") for the UNMIRRORED frame we fed it. With tasks-vision >= 0.10.5 the
+ *   label is the real hand ('Right' = right hand). Needed only to decide which side of the hand is the back (see comment in the body).
  */
 export function computeRingPose(lm: Landmark[], width: number, height: number, handedness: string | undefined): RingPose | null {
   if (!lm || lm.length < 21) return null;
@@ -55,10 +55,17 @@ export function computeRingPose(lm: Landmark[], width: number, height: number, h
 
   // Palm plane normal. For a REAL right hand, n = (indexMCP - wrist) x (pinkyMCP - wrist) points out of the palm
   // (verified by hand: right hand, palm to camera, index image-right, pinky image-left -> n.z > 0); for a real left hand it
-  // points out of the back. MediaPipe's handedness label assumes a MIRRORED (selfie) image; browser camera frames and
-  // uploaded photos are NOT mirrored, so the label is swapped: label 'Left' == real right hand.
+  // points out of the back.
+  //
+  // HANDEDNESS LABEL CONVENTION (this was the "ring upside down" bug): the legacy MediaPipe Hands docs say the label assumes a
+  // MIRRORED selfie image and must be swapped for normal frames. @mediapipe/tasks-vision >= 0.10.5 ("Swap left and right hand labels")
+  // already does that: the label now describes the hand as it LOOKS in the frame we feed it. Our frames are never mirrored (the stream
+  // is raw; the front camera is only mirrored by CSS for display), so label 'Right' == a real right hand. The old code treated 'Left'
+  // as the real right hand, which put the stone on the PALM side of every finger (hidden behind the occluder / ring looked upside down).
+  // Measured on the bundled victory.jpg (palm to camera, index image-right, curled fingertips nearer the camera than the knuckles =>
+  // real right hand): the model returns 'Right' (score 0.995). See tests/pose.test.ts + PR evidence.
   let n = norm(cross(sub(P(5), P(0)), sub(P(17), P(0))));
-  const realRight = handedness === 'Left';
+  const realRight = handedness === 'Right';
   n = mul(n, realRight ? -1 : 1); // -> always out of the BACK of the hand
   // make perpendicular to the finger axis
   let dorsal = sub(n, mul(axis, dot(n, axis)));
@@ -74,7 +81,7 @@ export function computeRingPose(lm: Landmark[], width: number, height: number, h
   };
 }
 
-/** Exponential smoothing so the ring does not jitter. alpha 0 = frozen, 1 = raw. */
+/** Legacy single-step exponential smoothing (kept for photo/unit use). The live camera path uses PoseFilter (lib/pose-filter.ts). alpha 0 = frozen, 1 = raw. */
 export function smoothPose(prev: RingPose | null, next: RingPose, alpha = 0.45): RingPose {
   if (!prev) return next;
   const lerp = (a: Vec3, b: Vec3): Vec3 => [a[0] + (b[0] - a[0]) * alpha, a[1] + (b[1] - a[1]) * alpha, a[2] + (b[2] - a[2]) * alpha];

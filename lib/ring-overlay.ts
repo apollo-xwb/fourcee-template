@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { RingPose } from './hand-pose';
 import { norm } from './hand-pose';
+import { poseToQuat, type FilteredPose } from './pose-filter';
 
 /**
  * Transparent three.js layer that draws the EXISTING ring (AR export of ring_webgi.glb, millimetre-true) on top of a
@@ -90,12 +91,20 @@ export class RingOverlay {
       this.holder.visible = false;
       return;
     }
-    const z = new THREE.Vector3(...pose.axis);
-    const y = new THREE.Vector3(...pose.dorsal);
-    const x = new THREE.Vector3().crossVectors(y, z).normalize();
-    y.crossVectors(z, x).normalize();
-    const m = new THREE.Matrix4().makeBasis(x, y, z);
-    this.holder.quaternion.setFromRotationMatrix(m);
+    const q = poseToQuat(pose);
+    this.holder.quaternion.set(q[0], q[1], q[2], q[3]);
+    this.holder.position.set(...pose.position);
+    this.holder.scale.setScalar(pose.pxPerMm);
+    this.holder.visible = true;
+  }
+
+  /** Live path: pose already filtered into a quaternion (holder +Z = band axis, +Y = dorsal / stone). */
+  setFilteredPose(pose: FilteredPose | null) {
+    if (!pose) {
+      this.holder.visible = false;
+      return;
+    }
+    this.holder.quaternion.set(pose.quat[0], pose.quat[1], pose.quat[2], pose.quat[3]);
     this.holder.position.set(...pose.position);
     this.holder.scale.setScalar(pose.pxPerMm);
     this.holder.visible = true;
