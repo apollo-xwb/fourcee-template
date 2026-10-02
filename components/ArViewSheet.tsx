@@ -94,7 +94,7 @@ export const ArViewSheet: React.FC<Props> = ({ metal, gem, onClose, onTryOn }) =
             <p className="fx-kicker">Augmented reality</p>
             <h3 id="ar-sheet-title" className="fx-display mt-1 text-3xl leading-none text-white">See it in your space</h3>
             <p className="mt-2 text-sm text-neutral-300">
-              {metal.label} · {gem.label}. True size, about 22&nbsp;mm across.
+              {metal.label}, true size (about 22&nbsp;mm across). AR shows your chosen metal only; the stone appears clear. The {gem.label.toLowerCase()} colour you picked is shown in the 3D studio and the hand try-on.
             </p>
           </div>
           <button ref={closeRef} type="button" onClick={onClose} aria-label="Close" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/25 text-lg text-white hover:bg-white/10">
@@ -110,7 +110,7 @@ export const ArViewSheet: React.FC<Props> = ({ metal, gem, onClose, onTryOn }) =
               ref={viewerRef}
               src={glb}
               ios-src={usdz}
-              alt={`${metal.label} ring with ${gem.label} stone, 3D model`}
+              alt={`${metal.label} ring with a clear stone, 3D model`}
               poster={thumb}
               ar
               ar-modes="webxr scene-viewer quick-look"
