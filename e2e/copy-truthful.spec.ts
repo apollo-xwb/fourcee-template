@@ -51,6 +51,10 @@ test('invoice step + confirmation say what is true', async ({ page }, info) => {
   await asSouthAfrica(page);
   await openApp(page, '#/checkout');
   await page.getByRole('button', { name: /Forward/ }).click();
+  // P0.1 (lead capture) made the details step validated: Forward only works once the required fields are filled
+  await page.locator('#lead-store').fill('Test & Co Jewellers');
+  await page.locator('#lead-name').fill('Zoe Tester');
+  await page.locator('#lead-email').fill('zoe@testco.example');
   await page.getByRole('button', { name: /Forward/ }).click();
   await page.waitForTimeout(500);
   await shot(page, '03-checkout-invoice', info);
