@@ -12,3 +12,15 @@ location = /api/lead {
     proxy_read_timeout 20s;
 }
 location = /api/health { proxy_pass http://127.0.0.1:8788; allow 127.0.0.1; deny all; }
+
+# Demo-call guard (same upstream). Tighter than the lead form: it can trigger a paid phone call.
+limit_req_zone $binary_remote_addr zone=fourcee_demo:10m rate=6r/m;   # http { } context
+location = /api/demo-call {
+    limit_req zone=fourcee_demo burst=3 nodelay;
+    client_max_body_size 4k;
+    proxy_pass http://127.0.0.1:8788;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_read_timeout 20s;
+}
