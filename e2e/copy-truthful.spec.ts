@@ -13,11 +13,11 @@ const shot = (page: Page, name: string, info: { project: { name: string } }, ful
 // Make the audit a South African store (ZAR) without touching the shipped content.json
 async function asSouthAfrica(page: Page) {
   await page.route('**/content.json*', async (route) => {
-    const res = await route.fetch(); const j = await res.json();
+    const res = await route.fetch(); const j = JSON.parse((await res.text()).replace(/^\uFEFF/, '')); // tolerate a UTF-8 BOM (Windows-written content.json)
     j.auditMeta = { ...(j.auditMeta || {}), currencyCode: 'ZAR', currencySymbol: 'R', locale: 'en-ZA' };
     j.business = { ...(j.business || {}), name: 'Test & Co Jewellers' };
     j.liveDemo = { ...(j.liveDemo || {}), phoneCountryDefault: '+27' };
-    await route.fulfill({ response: res, json: j });
+    await route.fulfill({ response: res, contentType: 'application/json', body: JSON.stringify(j) });
   });
 }
 const visibleText = (page: Page) => page.evaluate(() => document.body.innerText);
