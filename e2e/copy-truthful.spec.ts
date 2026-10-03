@@ -11,12 +11,12 @@ fs.mkdirSync(EVID, { recursive: true });
 const shot = (page: Page, name: string, info: { project: { name: string } }, full = false) => page.screenshot({ path: path.join(EVID, `${tag}-${info.project.name}-${name}.png`), fullPage: full });
 
 // Make the audit a South African store (ZAR) without touching the shipped content.json
-async function asSouthAfrica(page: Page) {
+async function asSouthAfrica(page: Page, currency = 'ZAR') {
   await page.route('**/content.json*', async (route) => {
     const res = await route.fetch(); const j = JSON.parse((await res.text()).replace(/^\uFEFF/, '')); // tolerate a UTF-8 BOM (Windows-written content.json)
-    j.auditMeta = { ...(j.auditMeta || {}), currencyCode: 'ZAR', currencySymbol: 'R', locale: 'en-ZA' };
+    j.auditMeta = { ...(j.auditMeta || {}), currencyCode: currency, currencySymbol: currency === 'ZAR' ? 'R' : '$', locale: currency === 'ZAR' ? 'en-ZA' : 'en-US' };
     j.business = { ...(j.business || {}), name: 'Test & Co Jewellers' };
-    j.liveDemo = { ...(j.liveDemo || {}), phoneCountryDefault: '+27' };
+    j.liveDemo = { ...(j.liveDemo || {}), phoneCountryDefault: currency === 'ZAR' ? '+27' : '+1' };
     await route.fulfill({ response: res, contentType: 'application/json', body: JSON.stringify(j) });
   });
 }
@@ -41,6 +41,7 @@ test('checkout step 1 (ZAR store): honest headline, real-vs-not list, quote-in-Z
 
 test('non-SA store keeps USD with no ZAR notes', async ({ page }) => {
   test.skip(BEFORE, 'after-only');
+  await asSouthAfrica(page, 'USD'); // the shipped Test & Co content is itself a ZAR store, so force USD
   await openApp(page, '#/checkout');
   await page.waitForTimeout(800);
   await expect(page.getByTestId('zar-note')).toHaveCount(0);
