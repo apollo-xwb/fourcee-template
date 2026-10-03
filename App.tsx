@@ -29,10 +29,14 @@ import {
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { CheckoutFlow } from './components/CheckoutFlow';
 import { CRMView } from './components/CRMView';
-import { AdminDashboard } from './components/AdminDashboard';
+// Internal admin preview (mock clients / MRR, no auth). OFF in production builds: it is only compiled in when VITE_ENABLE_ADMIN=1, so the
+// default bundle contains neither the route, the hidden button nor the mock data.
+const ADMIN_ENABLED = import.meta.env.VITE_ENABLE_ADMIN === '1';
+const AdminDashboard = ADMIN_ENABLED
+  ? React.lazy(() => import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard })))
+  : null;
 import { SplashScreen } from './components/SplashScreen';
 import { schedulePreloadRing } from './lib/preload-ring';
-import { PhoneTester } from './components/PhoneTester';
 import { FaqMonochrome } from './components/ui/faq-monochrome.tsx';
 import { ArticleCard } from './components/ui/blog-post-card';
 import { FloatingAiAssistant } from './components/ui/glowing-ai-chat-assistant';
@@ -163,7 +167,6 @@ const App: React.FC = () => {
   // or on the first touch/scroll, so the studio scene is warm long before the user reaches it.
   useEffect(() => (isReady ? schedulePreloadRing() : undefined), [isReady]);
   const [isDarkMode] = useState(false); // light theme only — dark mode retired
-  const [showTester, setShowTester] = useState(false);
   const [expandedIntegration, setExpandedIntegration] = useState<number | null>(null);
   const [preSelectedPackageId, setPreSelectedPackageId] = useState<string | null>(null);
   const [auditData, setAuditData] = useState<AuditData | null>(null);
@@ -311,7 +314,7 @@ const App: React.FC = () => {
       }
       setCurrentView(AppView.BLOG);
     } else if (head === 'terms') setCurrentView(AppView.TERMS);
-    else if (head === 'admin') setCurrentView(AppView.ADMIN);
+    else if (head === 'admin' && ADMIN_ENABLED) setCurrentView(AppView.ADMIN);
     else setCurrentView(AppView.LANDING);
   }, []);
 
@@ -427,8 +430,6 @@ const App: React.FC = () => {
     ringBuilder,
     expandedIntegration,
     setExpandedIntegration,
-    showTester,
-    setShowTester,
     heroRingDesktop,
   });
   landingLiveRef.current = {
@@ -439,14 +440,12 @@ const App: React.FC = () => {
     ringBuilder,
     expandedIntegration,
     setExpandedIntegration,
-    showTester,
-    setShowTester,
     heroRingDesktop,
   };
   const [, landingBump] = useState(0);
   useEffect(() => {
     landingBump((n) => n + 1);
-  }, [isDarkMode, businessName, auditData, ringBuilder, expandedIntegration, showTester, heroRingDesktop]);
+  }, [isDarkMode, businessName, auditData, ringBuilder, expandedIntegration, heroRingDesktop]);
 
 
   // Scroll-linked horizontal carousels (mobile): vertical scroll drives scrollLeft
@@ -476,8 +475,6 @@ const App: React.FC = () => {
       ringBuilder,
       expandedIntegration,
       setExpandedIntegration,
-      showTester,
-      setShowTester,
       heroRingDesktop,
     } = landingLiveRef.current;
     const [showDemoCallModal, setShowDemoCallModal] = useState(false);
@@ -1218,7 +1215,6 @@ const App: React.FC = () => {
       {/* Final snap point just above footer so bottom doesn't bounce */}
       <div className="h-0" />
 
-      {showTester && <PhoneTester onClose={() => setShowTester(false)} />}
     </div>
   ); }; }, []); // stable component type — live data via landingLiveRef + landingBump
 
@@ -1613,17 +1609,21 @@ const App: React.FC = () => {
             ringBuilder={ringBuilder ?? undefined}
           />
         )}
-        {currentView === AppView.ADMIN && <AdminDashboard isDarkMode={isDarkMode} />}
+        {ADMIN_ENABLED && AdminDashboard && currentView === AppView.ADMIN && (
+          <React.Suspense fallback={null}><AdminDashboard isDarkMode={isDarkMode} /></React.Suspense>
+        )}
         {currentView === AppView.TERMS && <TermsPage />}
       </main>
 
-      <button
-        type="button"
-        onClick={() => navigate(AppView.ADMIN)}
-        className="fixed bottom-4 left-4 z-[120] h-3 w-3 rounded-full bg-navy-900/20 dark:bg-white/20 hover:bg-navy-900/50 dark:hover:bg-white/50 transition-colors"
-        aria-label="Hidden admin access"
-        title="Admin access"
-      />
+      {ADMIN_ENABLED && (
+        <button
+          type="button"
+          onClick={() => navigate(AppView.ADMIN)}
+          className="fixed bottom-4 left-4 z-[120] h-3 w-3 rounded-full bg-navy-900/20 dark:bg-white/20 hover:bg-navy-900/50 dark:hover:bg-white/50 transition-colors"
+          aria-label="Hidden admin access"
+          title="Admin access (internal preview)"
+        />
+      )}
 
       {/* Global footer — dotted ball field fills the band above Terms (no empty gap) */}
       <footer className="relative w-full min-h-[120px] h-[min(18vh,160px)] flex-shrink-0 overflow-visible z-20 -mt-4">

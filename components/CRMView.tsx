@@ -108,14 +108,14 @@ export const CRMView: React.FC<CRMViewProps> = ({
     } catch {}
     return 'calls';
   });
-  const [revenueSaved, setRevenueSaved] = useState(125500);
-  const [appointmentsBooked, setAppointmentsBooked] = useState(48);
-  const [logEntries, setLogEntries] = useState<LeadLog[]>([]);
+  const [revenueSaved] = useState(125500);
+  const [appointmentsBooked] = useState(48);
+  const [logEntries] = useState<LeadLog[]>([]);
   const [liveSeconds, setLiveSeconds] = useState(98);
   const [waveHeights, setWaveHeights] = useState<number[]>([12, 20, 15, 25, 14, 22, 10, 24, 16, 19, 12, 21]);
   const [selectedKey, setSelectedKey] = useState<string>('call-1');
   const [opsClock, setOpsClock] = useState(() => new Date());
-  const [channelLoad, setChannelLoad] = useState({ voice: 2, sms: 1, web: 0 });
+  const [channelLoad] = useState({ voice: 2, sms: 1, web: 0 });
   const [onboardStep, setOnboardStep] = useState(1);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [plainEnglish, setPlainEnglish] = useState('');
@@ -174,51 +174,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
     };
   }, [selectedLog, selectedCall, calls]);
 
-  useEffect(() => {
-    const pushLead = () => {
-      const now = new Date();
-      const customerName = simulatedNames[Math.floor(Math.random() * simulatedNames.length)];
-      const intent = simulatedIntents[Math.floor(Math.random() * simulatedIntents.length)];
-      const id = `${now.getTime()}-${Math.random()}`;
-      setLogEntries((prev) =>
-        [
-          {
-            id,
-            time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-            customerName,
-            intent,
-            status: 'booked',
-            transcript: buildHistoryTranscript(customerName, intent, businessName),
-          },
-          ...prev,
-        ].slice(0, 12)
-      );
-    };
-    pushLead();
-    const startDelayMs = 10000 + Math.floor(Math.random() * 5001);
-    let nextTimeout: ReturnType<typeof setTimeout>;
-    let timeoutCancelled = false;
-    const schedule = (delayMs: number) => {
-      nextTimeout = setTimeout(() => {
-        if (timeoutCancelled) return;
-        pushLead();
-        schedule(10000 + Math.floor(Math.random() * 5001));
-      }, delayMs);
-    };
-    schedule(startDelayMs);
-    return () => {
-      timeoutCancelled = true;
-      clearTimeout(nextTimeout);
-    };
-  }, [simulatedIntents, simulatedNames, businessName]);
-
-  useEffect(() => {
-    const metricInterval = setInterval(() => {
-      setRevenueSaved((prev) => prev + Math.floor(Math.random() * 1900) + 300);
-      setAppointmentsBooked((prev) => prev + (Math.random() > 0.45 ? 1 : 0));
-    }, 5000);
-    return () => clearInterval(metricInterval);
-  }, []);
+  // Sample data is STATIC on purpose: no timers inventing leads, revenue or bookings (a prospect must never mistake the walkthrough for live results).
 
   useEffect(() => {
     const liveTicker = setInterval(() => setLiveSeconds((prev) => prev + 1), 1000);
@@ -235,17 +191,6 @@ export const CRMView: React.FC<CRMViewProps> = ({
   useEffect(() => {
     const clock = setInterval(() => setOpsClock(new Date()), 1000);
     return () => clearInterval(clock);
-  }, []);
-
-  useEffect(() => {
-    const channels = setInterval(() => {
-      setChannelLoad({
-        voice: 1 + Math.floor(Math.random() * 3),
-        sms: Math.floor(Math.random() * 3),
-        web: Math.floor(Math.random() * 2),
-      });
-    }, 4200);
-    return () => clearInterval(channels);
   }, []);
 
   const liveDuration = `${String(Math.floor(liveSeconds / 60)).padStart(2, '0')}:${String(liveSeconds % 60).padStart(2, '0')}`;
@@ -286,12 +231,13 @@ export const CRMView: React.FC<CRMViewProps> = ({
               : 'border-amber-500/40 bg-amber-50 text-amber-950'
           }`}
           role="status"
+          data-testid="ops-sample-banner"
         >
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em]">
-            DEMO DATA — not connected to your CRM
+            SAMPLE DATA — not real calls, not connected to your CRM
           </p>
           <p className={`text-[11px] ${isDarkMode ? 'text-amber-100/80' : 'text-amber-900/80'}`}>
-            Sample calls, KPIs, and transcripts for buyer walkthrough only.
+            Illustrative walkthrough only. Nothing here is a real call, result or customer. Figures do not change or update.
           </p>
         </div>
         <div className="flex flex-wrap items-end justify-between gap-3">
@@ -345,17 +291,17 @@ export const CRMView: React.FC<CRMViewProps> = ({
               <span className="fx-chip">SOP · answer → qualify → act → log</span>
             </div>
             <div className="grid gap-3 sm:grid-cols-4">
-              <Kpi label="Recovered" value={formatMoney(revenueSaved)} isDarkMode={isDarkMode} />
-              <Kpi label="Booked today" value={appointmentsBooked.toString()} isDarkMode={isDarkMode} />
-              <Kpi label="Avg handle" value="1.2m" isDarkMode={isDarkMode} />
-              <Kpi label="Follow-ups owed" value="3" isDarkMode={isDarkMode} />
+              <Kpi label="Recovered (sample)" value={formatMoney(revenueSaved)} isDarkMode={isDarkMode} />
+              <Kpi label="Booked today (sample)" value={appointmentsBooked.toString()} isDarkMode={isDarkMode} />
+              <Kpi label="Avg handle (sample)" value="1.2m" isDarkMode={isDarkMode} />
+              <Kpi label="Follow-ups owed (sample)" value="3" isDarkMode={isDarkMode} />
             </div>
 
             <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr_0.9fr]">
               <section className={panelClass}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${ink}`}>Call log</h3>
-                  <p className={`text-[10px] uppercase tracking-[0.18em] ${muted}`}>{liveCalls.length} live</p>
+                  <h3 className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${ink}`}>Call log · sample</h3>
+                  <p className={`text-[10px] uppercase tracking-[0.18em] ${muted}`}>{liveCalls.length} sample open</p>
                 </div>
                 <div className="space-y-2">
                   {liveCalls.map((call) => (
@@ -397,13 +343,13 @@ export const CRMView: React.FC<CRMViewProps> = ({
               <aside className={panelClass}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h3 className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${ink}`}>Transcript</h3>
+                    <h3 className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${ink}`}>Transcript · sample</h3>
                     <p className={`mt-1 text-[11px] ${muted}`}>
                       {displayConversation.customerName} · {displayConversation.intent}
                     </p>
                   </div>
                   <span className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${statusTone(displayConversation.status, isDarkMode)}`}>
-                    {displayConversation.isLive ? `LIVE ${liveDuration}` : displayConversation.status}
+                    {displayConversation.isLive ? `SAMPLE · in progress ${liveDuration}` : displayConversation.status}
                   </span>
                 </div>
                 <div className={`mt-3 rounded-xl border px-3 py-2 ${isDarkMode ? 'border-white/10 bg-black/50' : 'border-slate-200 bg-white'}`}>
@@ -434,7 +380,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
               </aside>
 
               <section className={panelClass}>
-                <h3 className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${ink}`}>Actions · status</h3>
+                <h3 className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${ink}`}>Actions · status · sample</h3>
                 <p className={`mt-2 text-[11px] uppercase tracking-[0.16em] ${statusTone(displayConversation.status, isDarkMode)}`}>
                   {displayConversation.status}
                 </p>
@@ -588,7 +534,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
               </div>
             </section>
             <section className={panelClass}>
-              <p className="fx-kicker">We heard</p>
+              <p className="fx-kicker">We heard · preview only, nothing is saved or sent</p>
               <div className="mt-3 space-y-2">
                 {heard.map((card) => (
                   <div key={card.title} className={`rounded-2xl border px-3 py-2.5 ${isDarkMode ? 'border-white/10 bg-black/30' : 'border-slate-200 bg-slate-50'}`}>
@@ -632,7 +578,7 @@ export const CRMView: React.FC<CRMViewProps> = ({
                 </div>
                 <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
                   <section className={panelClass}>
-                    <p className="fx-kicker">Engineering checklist</p>
+                    <p className="fx-kicker">Engineering checklist · sample, not your account</p>
                     <ul className="mt-3 space-y-2">
                       {HANDOVER_ITEMS.map((item) => (
                         <li key={item.id} className={`text-[13px] ${ink}`}>

@@ -58,5 +58,6 @@ yarn-error.log*
 .vercel
 
 dist-e2e
+dist-e2e-admin
 e2e-results
 test-results
