@@ -1,6 +1,6 @@
 /**
  * Hardcoded knowledge base for Melissa (Fourcee demo chatbot).
- * Used when Gemini API key is not set or the API fails.
+ * Used when the chat proxy (OpenRouter) is off, rate limited or fails; also the grounding facts for the model (server side).
  */
 import kbJson from '../../server/chat-kb.json';
 
@@ -51,9 +51,6 @@ export function getFallbackResponse(userMessage: string): string {
   return best.answer;
 }
 
-/**
- * Convert markdown-style **bold** to a simple format we can render (e.g. <strong>).
- */
 export function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }

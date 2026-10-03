@@ -1,44 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Paperclip, Link, Mic, Send, Info, Bot, X } from 'lucide-react';
 import { getFallbackResponse, formatChatText } from './chat-knowledge-base';
+import { chatProxyEnabled, streamChat, ChatUnavailable } from '../../lib/chat-client';
 
 type MessageRole = 'user' | 'assistant';
 interface ChatMessage {
   id: string;
   role: MessageRole;
   content: string;
-}
-
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-
-async function fetchGeminiReply(messages: { role: MessageRole; content: string }[]): Promise<string | null> {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key || typeof key !== 'string' || !key.trim()) return null;
-
-  const contents = messages.map((m) => ({
-    role: m.role === 'user' ? 'user' : 'model',
-    parts: [{ text: m.content }],
-  }));
-
-  try {
-    const res = await fetch(`${GEMINI_URL}?key=${encodeURIComponent(key)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          maxOutputTokens: 1024,
-          temperature: 0.7,
-        },
-      }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    return typeof text === 'string' ? text.trim() : null;
-  } catch {
-    return null;
-  }
 }
 
 const FloatingAiAssistant: React.FC = () => {
@@ -48,6 +17,8 @@ const FloatingAiAssistant: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const chatRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -76,20 +47,27 @@ const FloatingAiAssistant: React.FC = () => {
 
     const conversationSoFar = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }));
 
-    let replyText: string;
-    const geminiReply = await fetchGeminiReply(conversationSoFar);
-    if (geminiReply) {
-      replyText = geminiReply;
-    } else {
-      replyText = getFallbackResponse(text);
-    }
+    const assistantId = `assistant-${Date.now()}`;
+    const setAssistant = (content: string) =>
+      setMessages((prev) => (prev.some((m) => m.id === assistantId) ? prev.map((m) => (m.id === assistantId ? { ...m, content } : m)) : [...prev, { id: assistantId, role: 'assistant', content }]));
 
-    const assistantMsg: ChatMessage = {
-      id: `assistant-${Date.now()}`,
-      role: 'assistant',
-      content: replyText,
-    };
-    setMessages((prev) => [...prev, assistantMsg]);
+    // Server-side OpenRouter proxy (key never in the browser). Anything that goes wrong before the first token -> built-in answers.
+    let streamed = false;
+    try {
+      if (await chatProxyEnabled()) {
+        abortRef.current?.abort();
+        const ac = (abortRef.current = new AbortController());
+        const r = await streamChat({ messages: conversationSoFar, signal: ac.signal, onDelta: (t) => { streamed = true; setIsLoading(false); setAssistant(t); } });
+        if (r.interrupted) setAssistant(r.text + ' …');
+      } else {
+        throw new ChatUnavailable('disabled');
+      }
+    } catch (err) {
+      if (!streamed) {
+        const busy = err instanceof ChatUnavailable && err.reason === 'rate_limited';
+        setAssistant((busy ? "I'm getting a lot of questions right now - here's a quick answer meanwhile.\n\n" : '') + getFallbackResponse(text));
+      }
+    }
     setIsLoading(false);
   };
 
@@ -165,6 +143,7 @@ const FloatingAiAssistant: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsChatOpen(false)}
+                aria-label="Close chat"
                 className="p-1.5 rounded-full hover:bg-zinc-700/50 transition-colors"
               >
                 <X className="w-4 h-4 text-zinc-400" />
@@ -221,7 +200,8 @@ const FloatingAiAssistant: React.FC = () => {
                 onKeyDown={handleKeyDown}
                 disabled={isLoading}
                 rows={3}
-                className="w-full px-4 md:px-6 py-3 bg-transparent border-none outline-none resize-none text-sm md:text-base leading-relaxed min-h-[80px] text-zinc-100 placeholder-zinc-500 disabled:opacity-60"
+                className="w-full px-4 md:px-6 py-3 bg-transparent border-none outline-none resize-none text-base leading-relaxed min-h-[80px] text-zinc-100 placeholder-zinc-500 disabled:opacity-60"
+                aria-label="Message Melissa"
                 placeholder="Ask Melissa how Fourcee would handle your callers, integrations, or after‑hours coverage…"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               />
@@ -251,6 +231,7 @@ const FloatingAiAssistant: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSend}
+                  aria-label="Send message"
                   disabled={!message.trim() || isLoading}
                   className="relative flex items-center justify-center rounded-xl bg-gradient-to-r from-red-600 to-red-500 px-3 py-2 text-white shadow-lg hover:from-red-500 hover:to-red-400 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
                 >

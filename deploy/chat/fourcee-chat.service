@@ -1,0 +1,24 @@
+# /etc/systemd/system/fourcee-chat.service   (NOT installed by deploy.sh - see deploy/chat/README.md)
+[Unit]
+Description=Fourcee Melissa chat proxy (OpenRouter)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/node /opt/fourcee-template/server/chat-proxy.mjs
+# OPENROUTER_API_KEY and friends live ONLY in this root-owned 0600 file (names documented in .env.example). Never in the repo or the web root.
+EnvironmentFile=/etc/fourcee-chat.env
+Environment=HOST=127.0.0.1 PORT=8787 CHAT_TRUST_PROXY=1
+Restart=on-failure
+RestartSec=3
+DynamicUser=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

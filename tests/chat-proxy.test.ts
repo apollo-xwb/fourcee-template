@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
-// @ts-expect-error plain ESM module without types
 import { createChatProxy, loadConfig, validateMessages, RateLimiter, buildSystemPrompt, DEFAULT_MODELS } from '../server/chat-proxy.mjs';
 
 const KEY = 'sk-or-test-SECRET-123456789';
@@ -38,7 +37,7 @@ beforeEach(() => { behaviours = {}; seen = []; });
 
 async function start(over: Record<string, unknown> = {}) {
   const logs: any[] = [];
-  const { server, cfg } = createChatProxy({ apiKey: KEY, baseUrl: mockUrl, models: ['m/a', 'm/b', 'm/c'], firstByteMs: 400, totalMs: 3000, ratePerMin: 5, ratePerDay: 50, log: (o: any) => logs.push(o), ...over });
+  const { server, cfg } = createChatProxy(<any>{ apiKey: KEY, baseUrl: mockUrl, models: ['m/a', 'm/b', 'm/c'], firstByteMs: 400, totalMs: 3000, ratePerMin: 5, ratePerDay: 50, log: (o: any) => logs.push(o), ...over });
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   return { base, logs, cfg, close: () => new Promise<void>((r) => { server.closeAllConnections?.(); server.close(() => r()); }) };
