@@ -422,3 +422,13 @@ model-viewer > button:focus-visible {
 /* Ring canvases: WebGi sets touch-action:none on its canvas, which turned the docked ring into a scroll trap on phones (a vertical swipe
    starting on the ring could not scroll the page). pan-y: vertical swipes scroll the page, horizontal drags still orbit the ring. */
 canvas[id^="webgi-canvas"], #ring-studio canvas, #ring-studio-hero canvas { touch-action: pan-y !important; }
+
+/* iOS Safari zooms the page when a focused field has a computed font-size < 16px. Keep every text-entry control >= 16px on phones/tablets
+   (touch or narrow viewport). Never "fix" this by disabling pinch-zoom (maximum-scale / user-scalable=no): that breaks accessibility. */
+@media (max-width: 767px), (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="button"]):not([type="submit"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}

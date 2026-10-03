@@ -1,0 +1,14 @@
+# Include inside the existing `server { ... }` block for fourcee.lutho.app (TLS already configured there).
+limit_req_zone $binary_remote_addr zone=fourcee_lead:10m rate=30r/m;   # goes in the http { } context
+
+location = /api/lead {
+    limit_req zone=fourcee_lead burst=10 nodelay;
+    client_max_body_size 32k;
+    proxy_pass http://127.0.0.1:8788;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;          # app uses it when LEAD_TRUST_PROXY=1
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 20s;
+}
+location = /api/health { proxy_pass http://127.0.0.1:8788; allow 127.0.0.1; deny all; }
