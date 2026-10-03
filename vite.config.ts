@@ -41,12 +41,13 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        proxy: { '/api/chat': { target: process.env.CHAT_PROXY_URL || 'http://127.0.0.1:8787', changeOrigin: false } },
       },
+      // `vite preview` has no nginx in front: same /api/chat routing so the whole chain can be smoke-tested locally.
+      preview: { proxy: { '/api/chat': { target: process.env.CHAT_PROXY_URL || 'http://127.0.0.1:8787', changeOrigin: false } } },
       plugins: [react(), tailwindcss(), arMimePlugin()],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-      },
+      // No provider keys are ever inlined into the browser bundle (the old GEMINI_API_KEY define was removed): chat goes through
+      // server/chat-proxy.mjs (OpenRouter), which holds OPENROUTER_API_KEY server-side.
       optimizeDeps: {
         include: ['webgi'],
         esbuildOptions: { target: 'esnext' },
