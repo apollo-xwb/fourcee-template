@@ -6,6 +6,8 @@ import fcShad from '../public/assets/fcshad.png';
 import { isPlaceholderBusinessName, loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from '../lib/audit-content';
 import { PayOnline, PayReturnBanner } from './ui/pay-online';
 import { flushQueue, newIdempotencyKey, submitLead, validateLeadFields, type LeadErrors } from '../lib/lead-client';
+import { isSouthAfricanStore, zarNote, zarRateFromEnv } from '../lib/pricing-display';
+import { byStatus } from '../lib/capabilities';
 interface CheckoutFlowProps {
   isDarkMode?: boolean;
   initialPackageId?: string | null;
@@ -14,6 +16,7 @@ interface CheckoutFlowProps {
 const LEGACY_PACKAGE_IDS: Record<string, string> = { premium: 'pro' };
 
 const WISE_PAYMENT_URL = (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_WISE_PAYMENT_URL || '';
+const ZAR_RATE = zarRateFromEnv((import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_ZAR_PER_USD);
 const CAL_BOOKING_URL =
   (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_CAL_BOOKING_URL ||
   'https://app.cal.com/fourcee/30min';
@@ -53,12 +56,15 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
     window.addEventListener('online', run);
     return () => window.removeEventListener('online', run);
   }, []);
+  const [isZar, setIsZar] = useState(false); // South African store -> prices are quoted in ZAR
+  const zarCtx = { isZar, rate: ZAR_RATE };
 
   useEffect(() => {
     let mounted = true;
     loadAuditContent()
       .then((data) => {
         if (!mounted) return;
+        setIsZar(isSouthAfricanStore({ currencyCode: data?.auditMeta?.currencyCode, phoneCountryDefault: data?.liveDemo?.phoneCountryDefault }));
         const incomingName = data?.business?.name?.trim();
         if (!incomingName) return;
         setCompanyName((current) =>
@@ -138,11 +144,27 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                 Configure · {companyName}
               </p>
               <h2 className="fx-display mt-2 text-2xl sm:text-3xl text-navy-950">
-                Get live in 2 hours
+                Free audit, then done-for-you setup
               </h2>
               <p className="mt-2 text-[12px] sm:text-sm text-navy-800 leading-relaxed">
-                Setup takes less than 2 hours. Once active, you&apos;ll never lose another client to a missed call again.
+                Pick a plan and we set your receptionist up with you: store hours, FAQs, your phone line and a test call.
+                Most stores are live within days of confirming details and payment.
               </p>
+              <details data-testid="real-vs-not" className="mt-3 text-left rounded-xl border border-navy-200/80 bg-white/70 px-4 py-3">
+                <summary className="cursor-pointer text-[11px] font-bold uppercase tracking-widest text-navy-800">What is live today, and what is not</summary>
+                <div className="mt-3 grid gap-4 sm:grid-cols-3 text-[12px] leading-snug text-navy-800">
+                  {([['live', 'Live today'], ['setup', 'Done for you in setup'], ['soon', 'Not available yet']] as const).map(([k, title]) => (
+                    <div key={k}>
+                      <p className="font-bold text-navy-950">{title}</p>
+                      <ul className="mt-1.5 space-y-1.5">
+                        {byStatus(k).map((c) => (
+                          <li key={c.id}>{c.label}{c.note ? <span className="block text-navy-600">{c.note}</span> : null}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </details>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-2">
@@ -201,6 +223,11 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                         ? 'Annual · setup waived'
                         : `$${pkg.price.toLocaleString()} setup + first month`}
                     </p>
+                    {isZar && (
+                      <p data-testid="zar-note" className="mt-1 text-[10px] font-semibold text-[#6b5a3e] leading-snug">
+                        {zarNote(zarCtx, state.billingCycle === 'annual' ? pkg.yearlyPrice : pkg.monthly, state.billingCycle === 'annual' ? '/yr' : '/mo')}
+                      </p>
+                    )}
                     <p className="mt-1.5 text-[10px] text-navy-600 line-clamp-2">{pkg.description}</p>
                     <ul className="mt-2 space-y-0.5 text-[10px] sm:text-[11px] text-navy-800">
                       {pkg.features.slice(0, 3).map(f => (
@@ -380,16 +407,21 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
         return (
           <div className="max-w-md mx-auto space-y-6 animate-in zoom-in duration-500">
             <div className="text-center">
-              <h2 className="text-3xl md:text-4xl font-bold serif text-navy-900 dark:text-white">Invoice &amp; Wise handoff</h2>
+              <h2 className="text-3xl md:text-4xl font-bold serif text-navy-900 dark:text-white">Request your invoice</h2>
               <p className="mt-3 text-sm text-navy-600 dark:text-navy-400 leading-relaxed">
-                We do not collect card numbers in this browser. After you confirm details, we send a Wise invoice / payment link
-                and book your onboarding call. No fake PCI vault — real payment stays on Wise.
+                We do not collect card numbers in this browser. Confirm your details and we email you an invoice
+                and a link to book your onboarding call. Payment happens on the invoice, never on this page.
               </p>
             </div>
             <div className="bg-white dark:bg-navy-900/40 p-8 sm:p-10 rounded-3xl shadow-xl border border-silver-100 dark:border-navy-800 space-y-5">
               <div className="pb-5 border-b border-navy-100 dark:border-navy-800">
                 <p className="text-[10px] font-bold uppercase text-navy-700 dark:text-navy-300 mb-1">Order summary · due today</p>
                 <p className="text-3xl sm:text-4xl font-bold serif text-navy-900 dark:text-white">${total.toLocaleString()}</p>
+                {isZar && (
+                  <p data-testid="zar-total" className="mt-1 text-sm font-semibold text-[#6b5a3e]">
+                    {zarNote(zarCtx, total) || 'Quote in ZAR'} · you will receive the invoice in ZAR
+                  </p>
+                )}
                 <p className="text-xs text-navy-700 dark:text-navy-400 mt-2">
                   {selectedPackage.name} · {state.billingCycle === 'annual' ? (
                     <>Annual ${selectedPackage.yearlyPrice.toLocaleString()} (setup waived)</>
@@ -403,9 +435,9 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                 </p>
               </div>
               <ol className="space-y-3 text-sm text-navy-700 dark:text-navy-300 list-decimal pl-5">
-                <li>We email a Wise invoice for the amount above (or open your payment link if configured).</li>
-                <li>Book a 30-minute strategy / onboarding call on Cal.com.</li>
-                <li>Deployment starts after payment confirmation — typically under 2 hours once assets are ready.</li>
+                <li>We email you an invoice for the amount above{isZar ? ' (quoted in ZAR)' : ''}. Nothing is charged on this page.</li>
+                <li>Book a 30-minute onboarding call so we can collect your hours, FAQs and phone details.</li>
+                <li>We set everything up for you and run a test call with you. Most stores are live within days of payment and details.</li>
               </ol>
               {submitError && (
                 <div role="alert" data-testid="lead-error" className="rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-800 dark:text-red-200">
@@ -428,8 +460,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                   </a>
                 ) : (
                   <div className="rounded-xl border border-dashed border-navy-300 dark:border-navy-600 px-4 py-3 text-xs text-navy-600 dark:text-navy-400">
-                    Wise payment URL not configured yet. Set <code className="font-mono">VITE_WISE_PAYMENT_URL</code> when the
-                    live invoice link is ready — until then, request invoice below and we&apos;ll send it manually.
+                    Online payment is not switched on yet. Request your invoice below and we&apos;ll email it to you personally.
                   </div>
                 )}
                 <a
@@ -443,7 +474,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
               </div>
             </div>
             <p className="text-[10px] text-center text-navy-600 dark:text-navy-500 uppercase tracking-widest">
-              Invoice / Wise · no card fields on this page
+              Invoice by email · no card fields on this page
             </p>
           </div>
         );
@@ -451,12 +482,12 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
         return (
           <div className="text-center space-y-6 py-16 sm:py-20 animate-in bounce-in duration-700">
             <div className="w-24 h-24 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto text-5xl">✓</div>
-            <h2 className="text-3xl sm:text-4xl font-bold serif text-navy-900 dark:text-white">Deployment Started</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold serif text-navy-900 dark:text-white">Request received</h2>
             <p className="text-lg sm:text-xl text-navy-700 dark:text-navy-300 max-w-lg mx-auto leading-relaxed">
-              Invoice requested. Expect a Wise payment link and onboarding reach-out shortly. You can also book a strategy call while you wait.
+              Thank you. We will email your invoice{isZar ? ' (in ZAR)' : ''} and a link to book your setup call. You can also book the call now.
             </p>
             <p className="text-sm text-navy-500 dark:text-navy-400 max-w-md mx-auto">
-              Check your inbox for deployment details and next steps.
+              Nothing is live yet and no payment has been taken. Setup starts once you confirm your details and pay the invoice.
               {leadRef ? <span data-testid="lead-ref" className="block mt-2 font-mono text-xs">Reference: {leadRef.slice(0, 8)}</span> : null}
             </p>
             {leadRef ? <PayOnline leadId={leadRef} /> : null}
