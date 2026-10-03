@@ -33,5 +33,22 @@ export function loadConfig(env = process.env) {
     webhookTimeoutMs: int(env.LEAD_WEBHOOK_TIMEOUT_MS, 8000),
     notifyMaxAttempts: int(env.LEAD_NOTIFY_MAX_ATTEMPTS, 6),
     notifySweepMs: int(env.LEAD_NOTIFY_SWEEP_MS, 60000),
+    demo: {
+      enabled: env.DEMO_ENABLED !== '0', // kill switch: DEMO_ENABLED=0 -> every demo request answers 503 "paused", nothing is forwarded
+      webhookUrl: env.N8N_DEMO_WEBHOOK_URL || '', // server-side only. The browser never sees or calls this URL.
+      webhookSecret: env.N8N_DEMO_WEBHOOK_SECRET || '', // sent as X-Fourcee-Secret so n8n can reject anything not coming from this proxy
+      webhookTimeoutMs: int(env.N8N_DEMO_TIMEOUT_MS, 10000),
+      allowedCountries: list(env.DEMO_ALLOWED_COUNTRIES || '+1,+44,+27,+61,+91,+33,+49,+251,+971,+81'),
+      defaultCountry: env.DEMO_DEFAULT_COUNTRY || '+27',
+      perIpPerHour: int(env.DEMO_PER_IP_PER_HOUR, 3),
+      perIpPerDay: int(env.DEMO_PER_IP_PER_DAY, 6),
+      perNumberPerDay: int(env.DEMO_PER_NUMBER_PER_DAY, 2),
+      perNumberCooldownSec: int(env.DEMO_NUMBER_COOLDOWN_SEC, 600), // minimum gap between two calls to the same number
+      perDay: int(env.DEMO_MAX_PER_DAY, 40), // global daily cap = the spend cap (calls x your per-call cost)
+      blocklist: list(env.DEMO_BLOCKLIST), // do-not-call: E.164 numbers, comma separated
+      blocklistFile: env.DEMO_BLOCKLIST_FILE || '', // optional file, one E.164 per line, re-read on every request
+      turnstileSecret: env.TURNSTILE_SECRET || '', // set => a valid Cloudflare Turnstile token is REQUIRED
+      turnstileVerifyUrl: env.TURNSTILE_VERIFY_URL || 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+    },
   };
 }

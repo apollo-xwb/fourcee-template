@@ -10,6 +10,7 @@ import { createStore } from './lib/store.mjs';
 import { RateLimiter, MIN, HOUR, DAY } from './lib/ratelimit.mjs';
 import { validateLead, isHoneypotHit } from './lib/validate.mjs';
 import { notifyLead, notifyEnabled } from './lib/notify.mjs';
+import { createDemoCallRoute } from './routes/demo-call.mjs';
 import { clientIp, send, checkOrigin, corsHeaders, readJson } from './lib/http.mjs';
 
 export { loadConfig };
@@ -66,6 +67,7 @@ export async function createLeadApi(cfg = loadConfig(), deps = {}) {
 
   const ROUTES = {
     'POST /api/lead': handleLead,
+    'POST /api/demo-call': createDemoCallRoute(cfg, { log, fetchImpl: deps.fetchImpl, now: deps.now }),
     ...(deps.routes || {}),
   };
   ctx.routes = ROUTES;
@@ -104,7 +106,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   const cfg = loadConfig();
   const api = await createLeadApi(cfg);
   api.listen().then((a) => {
-    console.log(`lead-api listening on ${a.address}:${a.port}; origins=${cfg.allowedOrigins.join(',')}; store=${cfg.databaseUrl ? 'postgres' : 'json-file'}; smtp=${cfg.smtp.host ? 'on' : 'off'}; webhook=${cfg.webhookUrl ? 'on' : 'off'}`);
+    console.log(`lead-api listening on ${a.address}:${a.port}; origins=${cfg.allowedOrigins.join(',')}; store=${cfg.databaseUrl ? 'postgres' : 'json-file'}; demo=${cfg.demo.enabled && cfg.demo.webhookUrl ? 'on' : 'off'}; smtp=${cfg.smtp.host ? 'on' : 'off'}; webhook=${cfg.webhookUrl ? 'on' : 'off'}`);
     if (!notifyEnabled(cfg)) console.warn('WARNING: no notification channel configured (SMTP_HOST+LEAD_NOTIFY_TO or LEAD_WEBHOOK_URL). Leads are stored but nobody is told.');
   });
 }

@@ -3,6 +3,9 @@
 import * as React from 'react';
 import { Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { requestDemoCall, turnstileSiteKey } from '@/lib/demo-client';
+import { normalizePhone } from '@/lib/phone';
+import { Turnstile } from './turnstile';
 
 const COUNTRIES = [
   { code: '+1', name: 'US/CA', flag: '🇺🇸' },
@@ -51,29 +54,25 @@ export function MiniPhone({
     if (next) setSelectedCountry(next);
   }, [phoneCountryDefault]);
 
-  const handleCall = async () => {
-    if (!phone.trim()) return;
-    setStatus('calling');
-    
-    try {
-      const response = await fetch('https://app.fourcee.online/webhook/voice-demo-request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          phone_number: `${selectedCountry.code}${phone.replace(/\\D/g, '')}`,
-          lead_id: leadId,
-        }),
-      });
+  const [error, setError] = React.useState<string | null>(null);
+  const [trap, setTrap] = React.useState(''); // honeypot (hidden); bots fill it
+  const [token, setToken] = React.useState('');
+  const [resetKey, setResetKey] = React.useState(0);
+  const siteKey = turnstileSiteKey();
 
-      if (!response.ok) throw new Error('Failed to start call');
-      setStatus('success');
-    } catch (error) {
-      console.error(error);
-      setStatus('idle');
-      alert('Failed to initiate call. Please try again.');
-    }
+  const handleCall = async () => {
+    if (!phone.trim() || status === 'calling') return;
+    // Validated + normalised in the browser for instant feedback (0821234567 -> +27821234567); the server repeats the checks.
+    const check = normalizePhone(phone, { defaultCountry: selectedCountry.code });
+    if (check.ok === false) { setError(check.reason); return; }
+    setError(null);
+    setStatus('calling');
+    // Our own guarded endpoint (VITE_DEMO_ENDPOINT, default /api/demo-call). The n8n webhook is never called from the browser.
+    const result = await requestDemoCall({ phone, country: selectedCountry.code, leadId, website: trap, turnstileToken: token });
+    if (result.ok === true) { setStatus('success'); return; }
+    setStatus('idle');
+    setError((result as { message: string }).message);
+    if (siteKey) { setResetKey((k) => k + 1); } // a Turnstile token is single-use
   };
 
   React.useEffect(() => {
@@ -172,19 +171,30 @@ export function MiniPhone({
               inputMode="numeric"
               placeholder="Phone number"
               value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 15))}
+              onChange={(e) => { setPhone(e.target.value.replace(/[^\d+\s()-]/g, '').slice(0, 20)); if (error) setError(null); }}
               className={cn(
                 'flex-1 min-w-0 h-10 sm:h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl border text-xs sm:text-sm font-medium placeholder:opacity-60 focus:outline-none focus:ring-2 focus:ring-white/30',
                 inputBg,
                 textClass
               )}
               aria-label="Phone number"
+              aria-invalid={!!error}
+              autoComplete="tel-national"
+              enterKeyHint="go"
             />
           </div>
+          {/* Honeypot: invisible to people and assistive tech */}
+          <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }}>
+            <input type="text" name="website" tabIndex={-1} autoComplete="off" value={trap} onChange={(e) => setTrap(e.target.value)} />
+          </div>
+          <Turnstile siteKey={siteKey} onToken={setToken} resetKey={resetKey} theme={isDarkMode ? 'dark' : 'light'} />
+          {error && (
+            <p role="alert" data-testid="demo-error" className={cn('mb-3 text-xs font-semibold leading-snug', isDarkMode ? 'text-red-300' : 'text-red-700')}>{error}</p>
+          )}
 
           <button
             type="button"
-            disabled={!phone.trim() || status === 'calling'}
+            disabled={!phone.trim() || status === 'calling' || (!!siteKey && !token)}
             onClick={handleCall}
             className={cn(
               'w-full h-10 sm:h-11 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all disabled:opacity-50',
