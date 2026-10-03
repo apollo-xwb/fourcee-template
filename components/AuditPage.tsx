@@ -431,9 +431,9 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
               </div>
 
               <p className={`mt-4 max-w-2xl text-sm leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-navy-600'}`}>
-                Fourcee is the voice AI built for high-end jewelers: it answers, qualifies, and books serious callers
-                while syncing every call to your CRM. This page shows your current phone leakage and lets you test how
-                Fourcee responds before you go live.
+                Fourcee is the voice AI built for high-end jewelers: it answers and qualifies serious callers and
+                passes them to your team. This page shows your current phone leakage and lets you hear how
+                Fourcee responds before you commit.
               </p>
 
               <div className="mt-7 grid gap-3 sm:grid-cols-3">
@@ -444,7 +444,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <button type="button" onClick={onGetLive} className="fx-btn fx-btn-primary">
-                  Go live in 2 hours
+                  Get live within days
                 </button>
                 <button type="button" onClick={() => scrollToId('audit-lost-revenue')} className="fx-btn fx-btn-ghost">
                   See the proof
@@ -774,7 +774,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <div className={`rounded-xl border p-3 ${isDarkMode ? 'border-white/10 bg-white/[0.03]' : 'border-navy-200 bg-white/80'}`}>
                 <p className={`text-[10px] uppercase tracking-[0.2em] ${isDarkMode ? 'text-amber-300' : 'text-navy-600'}`}>Week 1</p>
-                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-200' : 'text-navy-800'}`}>Deploy 24/7 call answering and instant handoff rules.</p>
+                <p className={`mt-1 text-sm ${isDarkMode ? 'text-slate-200' : 'text-navy-800'}`}>We set up call answering and your handoff rules with you.</p>
               </div>
               <div className={`rounded-xl border p-3 ${isDarkMode ? 'border-white/10 bg-white/[0.03]' : 'border-navy-200 bg-white/80'}`}>
                 <p className={`text-[10px] uppercase tracking-[0.2em] ${isDarkMode ? 'text-amber-300' : 'text-navy-600'}`}>Week 2</p>
@@ -830,7 +830,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
           </h2>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <button type="button" onClick={onGetLive} className="fx-btn fx-btn-primary">
-              Get Live in Under 2 Hours
+              Get Live Within Days
             </button>
             <button type="button" onClick={onBookCall} className="fx-btn fx-btn-ghost">
               Book a 15-Minute Strategy Call

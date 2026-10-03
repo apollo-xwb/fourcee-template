@@ -111,7 +111,7 @@ const JOURNEY_STEPS = [
   },
   {
     label: "7. Analytics & CRM portal",
-    description: "Every call, conversion and transcript in one place. Syncs to your CRM for full visibility.",
+    description: "Call summaries and outcomes in one place. CRM connection is set up with you, store by store.",
   },
 ];
 
@@ -143,7 +143,7 @@ const FAQ_ITEMS = [
   {
     question: "How are calls recorded and where do the analytics live?",
     answer:
-      "Every call can be recorded, transcribed and summarised with timestamps. Summaries and stats live in your analytics portal and, where supported, sync directly to your CRM against each contact. You own the data.",
+      "Every call can be recorded, transcribed and summarised with timestamps. Summaries and stats are reviewed with you in your analytics portal and, where your CRM is supported, connected to it during setup. You own the data.",
     meta: "Data",
   },
   {
@@ -715,7 +715,7 @@ const App: React.FC = () => {
             aria-label="Close demo call popup"
           />
           <div className="relative w-full max-w-md rounded-3xl border border-white/20 bg-white/90 dark:bg-navy-950/90 p-6 shadow-2xl">
-            <p className="text-[10px] uppercase tracking-[0.26em] text-navy-600 dark:text-navy-300">Instant concierge demo</p>
+            <p className="text-[10px] uppercase tracking-[0.26em] text-navy-600 dark:text-navy-300">Demo callback</p>
             <h3 className="mt-2 text-xl serif text-navy-900 dark:text-white">Get your live callback now</h3>
             <p className="mt-2 text-sm text-navy-700 dark:text-navy-300">
               Enter your number with country code. After the demo call, we will unlock your custom audit view.
@@ -777,9 +777,9 @@ const App: React.FC = () => {
               </p>
               <div className="space-y-4">
                 {[
-                  "95%+ Resolution Rate on qualified calls",
+                  "Qualified callers passed to your team with a summary",
                   "24/7 coverage while your team sleeps",
-                  "Analytics portal and CRM view of every conversation",
+                  "Call summaries reviewed with you (portal preview is demo data today)",
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-center gap-3">
                     <div className="w-1.5 h-1.5 bg-navy-900 dark:bg-white rounded-full" />
@@ -1170,7 +1170,7 @@ const App: React.FC = () => {
             {[
               { title: "Voice Cloning", desc: "Your actual voice, scaled across 100 simultaneous calls." },
               { title: "Live Estimates", desc: "Instant pricing based on daily market spot rates." },
-              { title: "VIP Escalation", desc: "Automatically connects ultra-high net worth leads to your personal line." }
+              { title: "VIP Escalation", desc: "Escalation rules for your top clients, set up with you during onboarding." }
             ].map((f, i) => (
               <div
                 key={i}
