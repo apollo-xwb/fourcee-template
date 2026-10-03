@@ -169,6 +169,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDarkMode = fal
 
   return (
     <div className="pt-24 pb-16 px-4 sm:px-6 max-w-[1800px] mx-auto">
+      <p role="status" data-testid="admin-sample-banner" className="mb-4 rounded-xl border border-amber-500/40 bg-amber-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-950">
+        Internal preview · sample data only · no login · not for customers (enabled by VITE_ENABLE_ADMIN)
+      </p>
       <div className="flex flex-col gap-6 mb-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h1 className="text-3xl md:text-4xl font-bold serif text-navy-900 dark:text-white">Admin - Voice AI SaaS</h1>
