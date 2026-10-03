@@ -1,9 +1,10 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PACKAGES, UPSELLS } from '../constants.tsx';
 import { CheckoutState } from '../types';
 import fcShad from '../public/assets/fcshad.png';
 import { isPlaceholderBusinessName, loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from '../lib/audit-content';
+import { flushQueue, newIdempotencyKey, submitLead, validateLeadFields, type LeadErrors } from '../lib/lead-client';
 interface CheckoutFlowProps {
   isDarkMode?: boolean;
   initialPackageId?: string | null;
@@ -32,6 +33,25 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
     billingCycle: 'monthly',
   });
   const [companyName, setCompanyName] = useState(PLACEHOLDER_BUSINESS_NAME);
+  const [contactName, setContactName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [crm, setCrm] = useState('');
+  const [notes, setNotes] = useState('');
+  const [trap, setTrap] = useState(''); // honeypot: hidden from people, bots fill it
+  const [errors, setErrors] = useState<LeadErrors>({});
+  const [sending, setSending] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [leadRef, setLeadRef] = useState<string | null>(null);
+  const leadKey = useRef(newIdempotencyKey()); // same key on every retry => the server never stores a duplicate
+
+  // Deliver anything a previous visit could not send (localStorage fallback queue)
+  useEffect(() => {
+    const run = () => { flushQueue().catch(() => {}); };
+    run();
+    window.addEventListener('online', run);
+    return () => window.removeEventListener('online', run);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -63,7 +83,41 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
       : selectedPackage.price + selectedPackage.monthly + upsellMonthlyTotal + upsellTotal;
   const monthlyTotal = selectedPackage.monthly + upsellMonthlyTotal;
 
-  const nextStep = () => setState(s => ({ ...s, step: s.step + 1 }));
+  const leadFieldsNow = () => ({ name: contactName, email, phone, store: companyName, plan: state.packageId });
+  const validateDetails = () => {
+    const e = validateLeadFields(leadFieldsNow());
+    setErrors(e);
+    if (Object.keys(e).length) {
+      const first = (['store', 'name', 'email', 'phone'] as const).find((k) => e[k]);
+      if (first) document.getElementById(`lead-${first}`)?.focus();
+    }
+    return Object.keys(e).length === 0;
+  };
+
+  const sendLead = async () => {
+    if (sending) return;
+    if (!validateDetails()) { setState((s) => ({ ...s, step: 2 })); return; }
+    setSending(true);
+    setSubmitError(null);
+    const result = await submitLead({
+      name: contactName.trim(), email: email.trim(), phone: phone.trim(), store: companyName.trim(), plan: state.packageId,
+      billing_cycle: state.billingCycle, notes: notes.trim(), crm, total, currency: 'USD', website: trap,
+      idempotency_key: leadKey.current, page_url: window.location.href.split('#')[0],
+    });
+    setSending(false);
+    if (result.status === 'sent') { setLeadRef(result.id); setState((s) => ({ ...s, step: 4 })); }
+    else if (result.status === 'invalid') {
+      setErrors(result.fields as LeadErrors);
+      setSubmitError('Please fix the highlighted details and try again.');
+      setState((s) => ({ ...s, step: 2 }));
+    } else setSubmitError(result.error);
+  };
+
+  const nextStep = () => {
+    if (state.step === 2 && !validateDetails()) return;
+    if (state.step === 3) { void sendLead(); return; }
+    setState(s => ({ ...s, step: s.step + 1 }));
+  };
   const prevStep = () => setState(s => ({ ...s, step: Math.max(1, s.step - 1) }));
 
   const handleUpsellToggle = (id: string) => {
@@ -254,25 +308,48 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-white dark:bg-navy-900/40 p-6 sm:p-8 rounded-3xl border border-silver-100 dark:border-navy-800">
               <div className="sm:col-span-2">
-                <label className="text-[10px] font-bold uppercase block mb-2 text-navy-700 dark:text-navy-300">Company / Showroom Name</label>
+                <label htmlFor="lead-store" className="text-[10px] font-bold uppercase block mb-2 text-navy-700 dark:text-navy-300">Company / Showroom Name</label>
                 <input
-                  className="w-full p-4 rounded-xl border border-silver-200 dark:border-navy-700 dark:bg-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-navy-900 dark:focus:ring-white"
+                  id="lead-store" name="store" autoComplete="organization" required aria-required="true" aria-invalid={!!errors.store}
+                  className={`w-full p-4 rounded-xl border dark:bg-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-navy-900 dark:focus:ring-white ${errors.store ? 'border-red-500' : 'border-silver-200 dark:border-navy-700'}`}
                   placeholder="E.g. Royal Diamonds Ltd"
                   value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
+                  onChange={(e) => { setCompanyName(e.target.value); if (errors.store) setErrors((x) => ({ ...x, store: undefined })); }}
                 />
+                {errors.store && <p role="alert" className="mt-1.5 text-xs text-red-600">{errors.store}</p>}
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase block mb-2 text-navy-700 dark:text-navy-300">Primary Contact</label>
-                <input className="w-full p-4 rounded-xl border border-silver-200 dark:border-navy-700 dark:bg-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-navy-900 dark:focus:ring-white" placeholder="Full name" />
+                <label htmlFor="lead-name" className="text-[10px] font-bold uppercase block mb-2 text-navy-700 dark:text-navy-300">Primary Contact</label>
+                <input
+                  id="lead-name" name="name" autoComplete="name" required aria-required="true" aria-invalid={!!errors.name} aria-describedby={errors.name ? 'lead-name-err' : undefined}
+                  className={`w-full p-4 rounded-xl border dark:bg-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-navy-900 dark:focus:ring-white ${errors.name ? 'border-red-500' : 'border-silver-200 dark:border-navy-700'}`} placeholder="Full name"
+                  value={contactName} onChange={(e) => { setContactName(e.target.value); if (errors.name) setErrors((x) => ({ ...x, name: undefined })); }}
+                  onBlur={() => contactName && setErrors((x) => ({ ...x, name: validateLeadFields(leadFieldsNow()).name }))}
+                />
+                {errors.name && <p id="lead-name-err" role="alert" className="mt-1.5 text-xs text-red-600">{errors.name}</p>}
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase block mb-2 text-navy-700 dark:text-navy-300">Email</label>
-                <input type="email" className="w-full p-4 rounded-xl border border-silver-200 dark:border-navy-700 dark:bg-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-navy-900 dark:focus:ring-white" placeholder="you@showroom.com" />
+                <label htmlFor="lead-email" className="text-[10px] font-bold uppercase block mb-2 text-navy-700 dark:text-navy-300">Email</label>
+                <input
+                  id="lead-email" name="email" type="email" autoComplete="email" inputMode="email" required aria-required="true" aria-invalid={!!errors.email} aria-describedby={errors.email ? 'lead-email-err' : undefined}
+                  className={`w-full p-4 rounded-xl border dark:bg-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-navy-900 dark:focus:ring-white ${errors.email ? 'border-red-500' : 'border-silver-200 dark:border-navy-700'}`} placeholder="you@showroom.com"
+                  value={email} onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((x) => ({ ...x, email: undefined })); }}
+                  onBlur={() => email && setErrors((x) => ({ ...x, email: validateLeadFields(leadFieldsNow()).email }))}
+                />
+                {errors.email && <p id="lead-email-err" role="alert" className="mt-1.5 text-xs text-red-600">{errors.email}</p>}
               </div>
-              <div className="sm:col-span-2">
-                <label className="text-[10px] font-bold uppercase block mb-2 text-navy-700 dark:text-navy-300">Primary CRM</label>
-                <select className="w-full p-4 rounded-xl border border-silver-200 dark:border-navy-700 dark:bg-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-navy-900 dark:focus:ring-white">
+              <div>
+                <label htmlFor="lead-phone" className="text-[10px] font-bold uppercase block mb-2 text-navy-700 dark:text-navy-300">Phone <span className="normal-case font-medium text-navy-500">(optional)</span></label>
+                <input
+                  id="lead-phone" name="phone" type="tel" autoComplete="tel" inputMode="tel" aria-invalid={!!errors.phone} aria-describedby={errors.phone ? 'lead-phone-err' : undefined}
+                  className={`w-full p-4 rounded-xl border dark:bg-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-navy-900 dark:focus:ring-white ${errors.phone ? 'border-red-500' : 'border-silver-200 dark:border-navy-700'}`} placeholder="+27 82 123 4567"
+                  value={phone} onChange={(e) => { setPhone(e.target.value); if (errors.phone) setErrors((x) => ({ ...x, phone: undefined })); }}
+                />
+                {errors.phone && <p id="lead-phone-err" role="alert" className="mt-1.5 text-xs text-red-600">{errors.phone}</p>}
+              </div>
+              <div>
+                <label htmlFor="lead-crm" className="text-[10px] font-bold uppercase block mb-2 text-navy-700 dark:text-navy-300">Primary CRM <span className="normal-case font-medium text-navy-500">(optional)</span></label>
+                <select id="lead-crm" name="crm" value={crm} onChange={(e) => setCrm(e.target.value)} className="w-full p-4 rounded-xl border dark:bg-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-navy-900 dark:focus:ring-white border-silver-200 dark:border-navy-700">
                   <option value="">Select your CRM</option>
                   <option>HubSpot</option>
                   <option>Salesforce</option>
@@ -281,7 +358,19 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                   <option>GoHighLevel</option>
                   <option>None / Custom</option>
                 </select>
-                <p className="mt-1.5 text-xs text-navy-500 dark:text-navy-400">We&apos;ll sync call summaries and lead data here.</p>
+                <p className="mt-1.5 text-xs text-navy-500 dark:text-navy-400">Tells us what to connect during setup; nothing is synced automatically.</p>
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor="lead-notes" className="text-[10px] font-bold uppercase block mb-2 text-navy-700 dark:text-navy-300">Notes <span className="normal-case font-medium text-navy-500">(optional)</span></label>
+                <textarea
+                  id="lead-notes" name="notes" rows={3} maxLength={2000} value={notes} onChange={(e) => setNotes(e.target.value)}
+                  className="w-full p-4 rounded-xl border dark:bg-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-navy-900 dark:focus:ring-white border-silver-200 dark:border-navy-700" placeholder="Opening hours, best time to call, anything we should know"
+                />
+                {/* Honeypot: invisible to people and assistive tech; bots auto-fill it and the server drops the lead. */}
+                <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }}>
+                  <label htmlFor="lead-website">Website</label>
+                  <input id="lead-website" name="website" type="text" tabIndex={-1} autoComplete="off" value={trap} onChange={(e) => setTrap(e.target.value)} />
+                </div>
               </div>
             </div>
           </div>
@@ -317,6 +406,15 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                 <li>Book a 30-minute strategy / onboarding call on Cal.com.</li>
                 <li>Deployment starts after payment confirmation — typically under 2 hours once assets are ready.</li>
               </ol>
+              {submitError && (
+                <div role="alert" data-testid="lead-error" className="rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-800 dark:text-red-200">
+                  <p className="font-semibold">We could not send your request yet.</p>
+                  <p className="mt-1">{submitError} Your details are saved on this device and will be re-sent automatically, or you can retry now.</p>
+                  <button type="button" data-testid="lead-retry" onClick={() => void sendLead()} disabled={sending} className="mt-3 fx-btn fx-btn-primary w-full text-center disabled:opacity-60">
+                    {sending ? 'Sending…' : 'Retry now'}
+                  </button>
+                </div>
+              )}
               <div className="flex flex-col gap-3 pt-2">
                 {WISE_PAYMENT_URL ? (
                   <a
@@ -358,6 +456,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
             </p>
             <p className="text-sm text-navy-500 dark:text-navy-400 max-w-md mx-auto">
               Check your inbox for deployment details and next steps.
+              {leadRef ? <span data-testid="lead-ref" className="block mt-2 font-mono text-xs">Reference: {leadRef.slice(0, 8)}</span> : null}
             </p>
             <button 
               onClick={() => window.location.reload()}
@@ -417,10 +516,12 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                 e.stopPropagation();
                 nextStep();
               }}
-              className="fx-btn fx-btn-primary px-12 py-5 text-xs cursor-pointer shrink-0 select-none touch-manipulation"
+              disabled={sending}
+              data-testid="checkout-next"
+              className="fx-btn fx-btn-primary px-12 py-5 text-xs cursor-pointer shrink-0 select-none touch-manipulation disabled:opacity-60"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              {state.step === 3 ? `Request invoice · $${total.toLocaleString()}` : 'Forward →'}
+              {state.step === 3 ? (sending ? 'Sending…' : `Request invoice · $${total.toLocaleString()}`) : 'Forward →'}
             </button>
           </div>
         )}

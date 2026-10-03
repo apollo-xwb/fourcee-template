@@ -6,6 +6,7 @@ import { defineConfig } from '@playwright/test';
 const PORT = Number(process.env.E2E_PORT || 4199);
 const GL = (process.env.E2E_GL_ARGS || '--use-gl=swiftshader --enable-unsafe-swiftshader').split(' ').filter(Boolean); // e.g. '--use-angle=d3d11 --ignore-gpu-blocklist' on a machine with a GPU
 const ARGS = [...GL, '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'];
+const LEAD_PORT = Number(process.env.E2E_LEAD_PORT || 4198); // e2e/lead-capture.spec.ts starts server/lead-api here; the build is pointed at it
 const use = { launchOptions: { args: ARGS }, baseURL: `http://127.0.0.1:${PORT}` };
 
 export default defineConfig({
@@ -20,7 +21,7 @@ export default defineConfig({
     command: `npx vite build --outDir dist-e2e && npx vite preview --outDir dist-e2e --port ${PORT} --strictPort --host 127.0.0.1`,
     url: `http://127.0.0.1:${PORT}/`,
     reuseExistingServer: true,
-    env: { VITE_E2E_HOOKS: "1" },
+    env: { VITE_E2E_HOOKS: "1", VITE_LEAD_ENDPOINT: `http://127.0.0.1:${LEAD_PORT}/api/lead` },
     timeout: 240_000,
   },
   projects: [
