@@ -42,7 +42,7 @@ There is no "truthful-copy PR" in `apollo-xwb/fourcee-template` (open PRs at the
 | Flag (build-time env, `?cta=` can pick `hear` for tests) | CTA text | True today? |
 |---|---|---|
 | default / `VITE_CRO_CTA=book` | "Book my free audit walkthrough" (opens the Cal booking page, `VITE_BOOKING_URL`, default `app.cal.com/fourcee/30min`) | Yes: founder-assisted walkthrough exists |
-| `VITE_CRO_CTA=hear` | "Hear your AI receptionist in 60 seconds" (inline phone field, then one demo call via the existing n8n webhook) | Only after TK confirms the demo call works end to end, the webhook is hardened (onboarding audit P0.3: origin allow-list, rate limits, spend cap) and the SA leading-0 bug is gone (fixed client-side here: `082...` becomes `+2782...`). I did not place a real call. |
+| `VITE_CRO_CTA=hear` | "Hear your AI receptionist in 60 seconds" (inline phone field, then one demo call through the guarded `/api/demo-call` (PR #12) - the browser never calls n8n) | Only after TK confirms the demo call works end to end, the guard from PR #12 is deployed with its secret and n8n Header Auth is on (leading-0 normalisation is done by the guard). I did not place a real call. |
 | `VITE_CRO_CTA=golive` | "Go live in 5 minutes" | **No.** Cannot render unless `VITE_VOICE_ONBOARDING=1` **and** `VITE_ONBOARDING_URL` are set; otherwise falls back to `book`. Unit-tested. Flip only when the voice onboarding platform is live. |
 
 Default is `book` because it is the only CTA that is true without any further verification. Switching to `hear` is one env change.
