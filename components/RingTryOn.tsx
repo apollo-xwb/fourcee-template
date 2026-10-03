@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { RingSwatch } from '../types/audit';
 import { arGlbVersionedUrl, pickArMetal } from '../lib/ar-assets';
 import { getProgress, prefetchTryOn, subscribeProgress, type TryOnProgress } from '../lib/tryon-preload';
-import { computeRingPose, smoothPose, type RingPose } from '../lib/hand-pose';
+import { computeRingPose, type RingPose } from '../lib/hand-pose';
+import { HandSideVote, PoseFilter, poseToQuat, type FilteredPose } from '../lib/pose-filter';
 import { RingOverlay } from '../lib/ring-overlay';
 import { useModalA11y } from '../lib/use-modal-a11y';
 
@@ -38,8 +39,9 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
   const landmarkerRef = useRef<HandLandmarkerT | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef(0);
-  const poseRef = useRef<RingPose | null>(null);
-  const missRef = useRef(0);
+  const poseRef = useRef<RingPose | FilteredPose | null>(null);
+  const filterRef = useRef(new PoseFilter());
+  const voteRef = useRef(new HandSideVote());
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const modeRef = useRef<'VIDEO' | 'IMAGE'>('VIDEO');
@@ -137,33 +139,56 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
     return landmarkerRef.current;
   }, []);
 
-  const applyResult = useCallback((result: { landmarks: { x: number; y: number; z: number }[][]; handedness: { categoryName: string }[][] }, w: number, h: number, smooth: boolean) => {
-    const lm = result.landmarks?.[0];
-    if (!lm) {
-      missRef.current += 1;
-      if (missRef.current > 8) {
-        poseRef.current = null;
-        overlayRef.current?.setPose(null);
-        setHandSeen(false);
+  const applyResult = useCallback(
+    (
+      result: { landmarks: { x: number; y: number; z: number }[][]; handedness: { categoryName: string; score?: number }[][] },
+      w: number,
+      h: number,
+      smooth: boolean,
+      tMs = performance.now()
+    ) => {
+      const lm = result.landmarks?.[0];
+      const cat = result.handedness?.[0]?.[0];
+      let raw: RingPose | null = null;
+      if (lm) {
+        // live: the label is voted over the last frames (a single flickering label flips the ring upside down); photo: the one label
+        const side = smooth ? voteRef.current.push(cat?.categoryName, cat?.score) : cat?.categoryName;
+        raw = computeRingPose(lm, w, h, side);
       }
-      return false;
-    }
-    missRef.current = 0;
-    const raw = computeRingPose(lm, w, h, result.handedness?.[0]?.[0]?.categoryName);
-    if (!raw) return false;
-    poseRef.current = smooth ? smoothPose(poseRef.current, raw) : raw;
-    // read-only e2e hook; compiled in ONLY when built with VITE_E2E_HOOKS=1 (never in a normal build)
-    if (import.meta.env.VITE_E2E_HOOKS === '1') {
-      (window as unknown as Record<string, unknown>).__ringTryOn = { landmarks: lm, pose: poseRef.current, w, h };
-    }
-    overlayRef.current?.setPose(poseRef.current);
-    setHandSeen(true);
-    return true;
-  }, []);
+      if (!smooth) {
+        // single photo: no temporal filtering
+        poseRef.current = raw;
+        if (import.meta.env.VITE_E2E_HOOKS === '1') {
+          (window as unknown as Record<string, unknown>).__ringTryOn = { landmarks: lm, pose: raw, raw, w, h, handedness: cat?.categoryName, score: cat?.score };
+        }
+        overlayRef.current?.setPose(raw);
+        setHandSeen(!!raw);
+        return !!raw;
+      }
+      // live video: One-Euro position/scale + quaternion slerp rotation + hold-last-pose on missed frames (lib/pose-filter.ts)
+      const fp = filterRef.current.update(raw, tMs);
+      poseRef.current = fp;
+      // read-only e2e hook; compiled in ONLY when built with VITE_E2E_HOOKS=1 (never in a normal build)
+      if (import.meta.env.VITE_E2E_HOOKS === '1') {
+        const win = window as unknown as Record<string, unknown>;
+        const rq = raw ? poseToQuat(raw) : null;
+        win.__ringTryOn = { landmarks: lm, pose: fp, raw, w, h, handedness: cat?.categoryName, score: cat?.score };
+        const trace = (win.__ringTrace ??= []) as unknown[];
+        if (trace.length < 5000)
+          trace.push({ t: tMs, label: cat?.categoryName, raw: raw ? { p: raw.position, q: rq, s: raw.pxPerMm } : null, f: fp ? { p: fp.position, q: fp.quat, s: fp.pxPerMm, held: fp.held } : null });
+      }
+      overlayRef.current?.setFilteredPose(fp);
+      setHandSeen(!!fp);
+      return !!raw;
+    },
+    []
+  );
 
   const startCamera = useCallback(
     async (nextFacing = facing) => {
       stopStream();
+      filterRef.current.reset();
+      voteRef.current.reset();
       setPhase('starting');
       setHandSeen(false);
       setMessage('Starting camera…');
@@ -206,7 +231,7 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
           if (video.readyState < 2 || video.currentTime === last) return;
           last = video.currentTime;
           const res = landmarker.detectForVideo(video, performance.now());
-          applyResult(res as never, video.videoWidth, video.videoHeight, true);
+          applyResult(res as never, video.videoWidth, video.videoHeight, true, performance.now());
           overlayRef.current?.render();
           frames += 1;
           const now = performance.now();

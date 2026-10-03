@@ -31,7 +31,7 @@ import { CheckoutFlow } from './components/CheckoutFlow';
 import { CRMView } from './components/CRMView';
 import { AdminDashboard } from './components/AdminDashboard';
 import { SplashScreen } from './components/SplashScreen';
-import { preloadRingAssets } from './lib/preload-ring';
+import { schedulePreloadRing } from './lib/preload-ring';
 import { PhoneTester } from './components/PhoneTester';
 import { FaqMonochrome } from './components/ui/faq-monochrome.tsx';
 import { ArticleCard } from './components/ui/blog-post-card';
@@ -159,7 +159,9 @@ const App: React.FC = () => {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [isReady, setIsReady] = useState(false);
 
-  useEffect(() => { void preloadRingAssets(); }, []);
+  // Ring assets: the splash only fetches the files (cheap). Once the splash is gone, parse the webgi runtime when the main thread is idle
+  // or on the first touch/scroll, so the studio scene is warm long before the user reaches it.
+  useEffect(() => (isReady ? schedulePreloadRing() : undefined), [isReady]);
   const [isDarkMode] = useState(false); // light theme only — dark mode retired
   const [showTester, setShowTester] = useState(false);
   const [expandedIntegration, setExpandedIntegration] = useState<number | null>(null);
@@ -169,7 +171,9 @@ const App: React.FC = () => {
   const [portalNotifCount, setPortalNotifCount] = useState<1 | 2>(1);
   const [showPortalGuide, setShowPortalGuide] = useState(false);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
-  const [heroRingDesktop, setHeroRingDesktop] = useState(false);
+  // Synchronous initial value: exactly ONE Ring Builder (WebGi context) is ever mounted - the desktop hero rail OR the phone/tablet
+  // section - never both (the hidden one used to stay mounted, wait 4 s for a zero-size host and then spin up a second, fallback WebGL context).
+  const [heroRingDesktop, setHeroRingDesktop] = useState(() => typeof window !== 'undefined' && (window.matchMedia?.('(min-width: 1024px)').matches ?? false));
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1024px)');
     const apply = () => setHeroRingDesktop(mq.matches);
@@ -638,7 +642,7 @@ const App: React.FC = () => {
       </section>
 
       {/* Mobile / tablet: keep cinematic scroll Ring Builder journey */}
-      {ringBuilder && (
+      {ringBuilder && !heroRingDesktop && (
         <section
           id="ring-studio"
           className="fourcee-ribbed-wash px-0 pt-8 pb-16 sm:px-6 md:pt-12 md:pb-24 lg:hidden"

@@ -4,6 +4,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { assetUrl } from '../lib/asset-url';
+import { ringPixelRatio } from '../lib/ring-scroll';
 
 const RING_URL = assetUrl('assets/3D/ring_webgi.glb');
 
@@ -62,10 +63,19 @@ interface WebGiRingCanvasProps {
   interactive?: boolean;
   scrollRoot?: React.RefObject<HTMLElement | null>;
   className?: string;
-  onProgress?: (progress: number) => void;
+  /** Raw 0-1 scroll progress through the section, written by the parent (RingBuilder owns the scroll listener, so the HUD never depends on this scene). */
+  progressRef?: React.MutableRefObject<number>;
+  /** Section is on (or near) screen. When false the render loop and the WebGi pipeline are paused. */
+  active?: boolean;
+  /** Fired once the first frame of the scene is ready to show (hide the poster). */
+  onReady?: () => void;
+  /** Fired when the GL context is lost (show the poster again) / restored. */
+  onContextState?: (state: 'lost' | 'restored') => void;
   dockAt?: number;
   onFatal?: () => void;
 }
+
+
 
 export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
   metalColor,
@@ -74,7 +84,10 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
   interactive,
   scrollRoot,
   className = '',
-  onProgress,
+  progressRef,
+  active = true,
+  onReady,
+  onContextState,
   dockAt = DOCK_AT,
   onFatal,
 }) => {
@@ -84,16 +97,24 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
   const metalRef = useRef(metalColor);
   const gemRef = useRef(gemColor);
   const interactiveRef = useRef(wantInteract);
-  const onProgressRef = useRef(onProgress);
+  const progressRefRef = useRef(progressRef);
+  const activeRef = useRef(active);
+  const wakeRef = useRef<(() => void) | null>(null);
+  const onReadyRef = useRef(onReady);
+  const onCtxRef = useRef(onContextState);
+  const lossCountRef = useRef(0);
+  const [epoch, setEpoch] = useState(0);
   const dockAtRef = useRef(dockAt);
   const onFatalRef = useRef(onFatal);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [docked, setDocked] = useState(mode !== 'scroll');
 
   metalRef.current = metalColor;
   gemRef.current = gemColor;
   interactiveRef.current = wantInteract;
-  onProgressRef.current = onProgress;
+  progressRefRef.current = progressRef;
+  onReadyRef.current = onReady;
+  onCtxRef.current = onContextState;
+  activeRef.current = active;
   dockAtRef.current = dockAt;
   onFatalRef.current = onFatal;
 
@@ -101,8 +122,10 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
     const host = hostRef.current;
     const canvas = canvasRef.current;
     if (!host || !canvas) return;
+    setLoadState('loading');
     let cancelled = false;
     let raf = 0;
+    const disposers: Array<() => void> = [];
     let viewer: any = null;
     let resizeObs: ResizeObserver | null = null;
 
@@ -126,14 +149,34 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
         }, 4000);
       });
 
+    // GL context loss (iOS Safari / Android evict contexts under memory pressure): keep the page alive, show the poster, and rebuild
+    // the viewer on restore. Without preventDefault() the context is never restored.
+    const onLost = (e: Event) => {
+      e.preventDefault();
+      cancelAnimationFrame(raf);
+      raf = 0;
+      lossCountRef.current += 1;
+      onCtxRef.current?.('lost');
+    };
+    const onRestored = () => {
+      onCtxRef.current?.('restored');
+      if (lossCountRef.current <= 3) setEpoch((n) => n + 1); // re-run this effect: fresh viewer on the restored context
+    };
+    canvas.addEventListener('webglcontextlost', onLost);
+    canvas.addEventListener('webglcontextrestored', onRestored);
+
     let ring: any = null;
     let gold: any = null;
     let silver: any = null;
     let diamonds: any[] = [];
     let ColorCtor: any = null;
 
+    let colorKey = '';
     const applyColors = () => {
       if (!ColorCtor) return;
+      const key = `${metalRef.current}|${gemRef.current}`;
+      if (key === colorKey) return; // colours only touch the (heavy) pipeline when they actually change
+      colorKey = key;
       try {
         const metal = metalRef.current;
         const gem = gemRef.current;
@@ -168,8 +211,6 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
           onFatalRef.current?.();
           return;
         }
-        canvas.width = host.clientWidth * Math.min(window.devicePixelRatio, 1.5);
-        canvas.height = host.clientHeight * Math.min(window.devicePixelRatio, 1.5);
         canvas.style.width = '100%';
         canvas.style.height = '100%';
         const webgi = await import('webgi');
@@ -199,7 +240,10 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
           useGBufferDepth: true,
           isAntialiased: true,
         });
-        viewer.renderer.displayCanvasScaling = Math.min(window.devicePixelRatio || 1, isMobile ? 2 : 2);
+        // One pixel-ratio cap for the whole pipeline (canvas + G-buffer + MSAA targets all scale with it): 1.5 on phones/tablets instead of 2
+        // cuts the estimated render-target memory by ~44% (see PR evidence).
+        const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? isMobile;
+        viewer.renderer.displayCanvasScaling = ringPixelRatio(window.devicePixelRatio, coarse || isMobile);
 
         await viewer.addPlugin(AssetManagerPlugin);
         await viewer.addPlugin(GBufferPlugin);
@@ -264,7 +308,7 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
         applyColors();
         setLoadState('ready');
 
-        let smoothed = 0;
+        let smoothed = mode === 'scroll' ? Math.min(1, Math.max(0, progressRefRef.current?.current ?? 0)) : 1; // start AT the current progress: no catch-up sweep from 0
         let wasDocked = mode !== 'scroll';
         let orbitY = 0;
         let dragging = false;
@@ -289,73 +333,105 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
         canvas.addEventListener('pointerup', onPointerUp);
         canvas.addEventListener('pointermove', onPointerMove);
         canvas.addEventListener('pointercancel', onPointerUp);
+        disposers.push(() => {
+          canvas.removeEventListener('pointerdown', onPointerDown);
+          canvas.removeEventListener('pointerup', onPointerUp);
+          canvas.removeEventListener('pointermove', onPointerMove);
+          canvas.removeEventListener('pointercancel', onPointerUp);
+        });
 
-        const tick = () => {
-          raf = requestAnimationFrame(tick);
-          if (!viewer || cancelled) return;
+        const step = () => {
           const cam = viewer.scene.activeCamera;
           if (!cam) return;
-
-          if (mode === 'scroll' && scrollRoot?.current) {
-            const el = scrollRoot.current;
-            // Prefer nearest overflow scroller (app uses a div, not window)
-            let scroller: HTMLElement | null = el.parentElement;
-            while (scroller) {
-              const oy = getComputedStyle(scroller).overflowY;
-              if (oy === 'auto' || oy === 'scroll' || oy === 'overlay') break;
-              scroller = scroller.parentElement;
-            }
-            const viewH = scroller?.clientHeight || window.innerHeight || 1;
-            const range = Math.max(1, el.offsetHeight - viewH);
-            const top = el.getBoundingClientRect().top - (scroller?.getBoundingClientRect().top ?? 0);
-            const raw = Math.min(1, Math.max(0, -top / range));
+          let posed = false;
+          if (mode === 'scroll') {
+            const raw = Math.min(1, Math.max(0, progressRefRef.current?.current ?? 1));
+            const prev = smoothed;
             smoothed += (raw - smoothed) * 0.22;
-            onProgressRef.current?.(smoothed);
-
+            if (Math.abs(raw - smoothed) < 0.0008) smoothed = raw;
             const dockT = dockAtRef.current;
             const pathT = Math.min(smoothed / dockT, 1);
             const isDock = smoothed >= dockT;
             if (isDock !== wasDocked) {
               wasDocked = isDock;
-              setDocked(isDock);
               if (cam.controls) cam.controls.enabled = false;
             }
-
             if (isDock) {
               const dock = SCROLL_KEYS[SCROLL_KEYS.length - 1];
-              cam.position.set(...dock.pos);
-              cam.target.set(...dock.target);
               if (interactiveRef.current) {
                 if (!dragging) orbitY += 0.0025;
-                if (ring?.rotation) {
-                  ring.rotation.set(dock.rot[0], dock.rot[1] + orbitY, dock.rot[2]);
-                }
-              } else if (ring?.rotation) {
-                ring.rotation.set(...dock.rot);
+                ring?.rotation?.set(dock.rot[0], dock.rot[1] + orbitY, dock.rot[2]);
+                posed = true; // spinning
+              } else if (prev !== smoothed || ring?.rotation?.y !== dock.rot[1]) {
+                ring?.rotation?.set(...dock.rot);
+                posed = true;
               }
-            } else {
+              if (prev !== smoothed || posed) {
+                cam.position.set(...dock.pos);
+                cam.target.set(...dock.target);
+                posed = true;
+              }
+            } else if (prev !== smoothed || !wasPosed) {
               const sample = sampleScroll(pathT);
               cam.position.set(...sample.pos);
               cam.target.set(...sample.target);
               if (ring?.rotation) ring.rotation.set(...sample.rot);
+              posed = true;
             }
-            cam.positionUpdated?.(false);
-            cam.targetUpdated?.(true);
           } else {
             const dock = SCROLL_KEYS[SCROLL_KEYS.length - 1];
             cam.position.set(...dock.pos);
             cam.target.set(...dock.target);
             if (!dragging) orbitY += 0.004;
-            if (ring?.rotation) {
-              ring.rotation.set(dock.rot[0], dock.rot[1] + orbitY, dock.rot[2]);
-            }
+            ring?.rotation?.set(dock.rot[0], dock.rot[1] + orbitY, dock.rot[2]);
+            if (cam.controls) cam.controls.enabled = false;
+            posed = true;
+          }
+          if (posed) {
+            wasPosed = true;
             cam.positionUpdated?.(false);
             cam.targetUpdated?.(true);
-            if (cam.controls) cam.controls.enabled = false;
+            viewer.setDirty?.();
           }
           applyColors();
         };
-        tick();
+        let wasPosed = false;
+
+        // Render loop that only runs while the section is on screen and the tab is visible. Offscreen = no JS, no WebGi frames (viewer
+        // renderEnabled=false), which is what removes the scroll jank on the rest of the page.
+        const canRun = () => !cancelled && viewer && activeRef.current && !document.hidden;
+        const loop = () => {
+          raf = 0;
+          if (!canRun()) {
+            if (viewer) viewer.renderEnabled = false;
+            return;
+          }
+          raf = requestAnimationFrame(loop);
+          step();
+        };
+        let readySent = false;
+        const sendReady = () => {
+          if (readySent) return;
+          readySent = true;
+          // two rAFs: the first pipeline frame has been drawn; only then drop the poster (no flash of an empty canvas)
+          requestAnimationFrame(() => requestAnimationFrame(() => !cancelled && onReadyRef.current?.()));
+        };
+        const wake = () => {
+          if (raf || !canRun()) return;
+          sendReady();
+          viewer.renderEnabled = true;
+          wasPosed = false;
+          viewer.setDirty?.();
+          raf = requestAnimationFrame(loop);
+        };
+        wakeRef.current = wake;
+        const onVis = () => (document.hidden ? undefined : wake());
+        document.addEventListener('visibilitychange', onVis);
+        disposers.push(() => document.removeEventListener('visibilitychange', onVis));
+        step();
+        wake();
+        if (!activeRef.current) viewer.renderEnabled = false; // scene is built but offscreen: stays paused until the section is near the viewport
+
 
         const onResize = () => {
           viewer?.resize?.();
@@ -366,14 +442,11 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
         });
         hostResizeObs.observe(host);
 
-        return () => {
+        disposers.push(() => {
           hostResizeObs.disconnect();
           window.removeEventListener('resize', onResize);
-          canvas.removeEventListener('pointerdown', onPointerDown);
-          canvas.removeEventListener('pointerup', onPointerUp);
-          canvas.removeEventListener('pointermove', onPointerMove);
-          canvas.removeEventListener('pointercancel', onPointerUp);
-        };
+        });
+        if (cancelled) disposers.splice(0).forEach((d) => d());
       } catch (err) {
         console.error('[WebGiRingCanvas] init failed', err);
         if (!cancelled) {
@@ -386,6 +459,10 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
+      wakeRef.current = null;
+      disposers.splice(0).forEach((d) => d());
+      canvas.removeEventListener('webglcontextlost', onLost);
+      canvas.removeEventListener('webglcontextrestored', onRestored);
       resizeObs?.disconnect();
       try {
         viewer?.dispose?.();
@@ -393,11 +470,12 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
         /* ignore */
       }
     };
-  }, [mode, scrollRoot]); // onFatal via ref — never reinit viewer
+  }, [mode, scrollRoot, epoch]); // onFatal / progress / active via refs — never reinit the viewer for those
 
+  // Section came back on screen: restart the loop (it stops itself offscreen). Colour changes are picked up by the next step().
   useEffect(() => {
-    /* color updates applied each frame via refs */
-  }, [metalColor, gemColor]);
+    if (active) wakeRef.current?.();
+  }, [active]);
 
   return (
     <div
@@ -407,8 +485,8 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
         width: '100%',
         height: '100%',
         touchAction: 'pan-y' /* vertical swipes over the ring must still scroll the page; horizontal drags orbit it */,
-        pointerEvents: docked && wantInteract ? 'auto' : 'none',
-        cursor: docked && wantInteract ? 'grab' : 'default',
+        pointerEvents: wantInteract ? 'auto' : 'none',
+        cursor: wantInteract ? 'grab' : 'default',
       }}
     >
       <canvas
@@ -416,7 +494,7 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
         id={`webgi-canvas-${mode}`}
         style={{ display: 'block', width: '100%', height: '100%' }}
         aria-label={
-          docked && wantInteract
+          wantInteract
             ? 'Interactive 3D ring with WebGi diamonds. Drag to rotate.'
             : 'Scroll-driven WebGi diamond ring. Scroll to dock into the studio.'
         }

@@ -5,6 +5,8 @@ import { warmTryOn } from '../lib/tryon-preload';
 import type { RingBuilderConfig, RingSwatch } from '../types/audit';
 import { CrystalRingCanvas } from './CrystalRingCanvas';
 import { WebGiRingCanvas } from './WebGiRingCanvas';
+import { findScroller, hudVisible, isDocked, ringProgress } from '../lib/ring-scroll';
+import posterUrl from '../public/assets/plates/plate_hero_ring.png';
 
 // AR + camera try-on are loaded on demand: model-viewer and MediaPipe never touch the first paint.
 const ArViewSheet = lazy(() => import('./ArViewSheet').then((m) => ({ default: m.ArViewSheet })));
@@ -20,11 +22,32 @@ interface RingBuilderProps {
 }
 
 
-function RingCanvas(props: React.ComponentProps<typeof CrystalRingCanvas>) {
+type RingCanvasProps = React.ComponentProps<typeof CrystalRingCanvas> & {
+  progressRef?: React.MutableRefObject<number>;
+  active?: boolean;
+  onReady?: () => void;
+  onContextState?: (state: 'lost' | 'restored') => void;
+};
+
+function RingCanvas({ progressRef, active, onReady, onContextState, ...props }: RingCanvasProps) {
   const [useWebGi, setUseWebGi] = useState(true);
   const onFatal = React.useCallback(() => setUseWebGi(false), []);
+  // the Crystal fallback has no async load: it is "ready" as soon as it mounts
+  useEffect(() => {
+    if (!useWebGi) onReady?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useWebGi]);
   if (!useWebGi) return <CrystalRingCanvas {...props} />;
-  return <WebGiRingCanvas {...props} onFatal={onFatal} />;
+  return (
+    <WebGiRingCanvas
+      {...props}
+      progressRef={progressRef}
+      active={active}
+      onReady={onReady}
+      onContextState={onContextState}
+      onFatal={onFatal}
+    />
+  );
 }
 
 /** Lower edge of the docked ring as a fraction of the sticky viewport height (measured, iPhone 14 + Pixel). */
@@ -57,10 +80,18 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
   const hudRef = useRef<HTMLDivElement | null>(null);
   const [metalId, setMetalId] = useState(config.defaultMetalId);
   const [gemId, setGemId] = useState(config.defaultGemId);
-  const [docked, setDocked] = useState(false);
+  // Scroll state is owned HERE (a passive scroll listener on the section's real scroller), not by the WebGi scene: the HUD and the
+  // poster must work even when the 3D scene is still loading, failed, or the user flung past the section before it was ready.
+  const [docked, setDocked] = useState(false); // camera docked / ring interactive
+  const [hudOn, setHudOn] = useState(false); // studio HUD shown (earlier than the camera dock, and immediately if the scene is not ready)
+  const [inView, setInView] = useState(false); // section near the viewport: scene renders; otherwise paused
+  const [sceneReady, setSceneReady] = useState(false);
+  const sceneReadyRef = useRef(false);
+  const hudOnRef = useRef(false);
   const [sheet, setSheet] = useState<'ar' | 'tryon' | null>(null);
   const dockedRef = useRef(false);
   const progressRef = useRef(0);
+  const readyTimerRef = useRef(0);
   const lastUiRef = useRef(0);
 
   // QR / share deep link: ?ring=metal,gem[&ar=1|tryon=1]
@@ -118,28 +149,72 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
   const phaseLabelRef = useRef<HTMLSpanElement | null>(null);
   const hintLabelRef = useRef<HTMLParagraphElement | null>(null);
 
-  const onJourneyProgress = (p: number) => {
-    progressRef.current = p;
-    const now = performance.now();
-    const nextDocked = p >= 0.78;
+  // One passive, rAF-throttled scroll listener on the real scroller. Works with or without the 3D scene.
+  const evaluate = React.useCallback((p: number) => {
+    const nextDocked = isDocked(p);
     if (nextDocked !== dockedRef.current) {
       dockedRef.current = nextDocked;
       setDocked(nextDocked);
     }
-    // Throttle label DOM writes (~8fps) — never setState per frame
-    if (now - lastUiRef.current < 120) return;
+    const nextHud = hudVisible(p, sceneReadyRef.current);
+    if (nextHud !== hudOnRef.current) {
+      hudOnRef.current = nextHud;
+      setHudOn(nextHud);
+    }
+    const now = performance.now();
+    if (now - lastUiRef.current < 120) return; // throttle label DOM writes (~8 fps), never setState per frame
     lastUiRef.current = now;
-    if (progressLabelRef.current) {
-      progressLabelRef.current.textContent = `${Math.round(p * 100)}%`;
-    }
-    if (phaseLabelRef.current) {
-      phaseLabelRef.current.textContent =
-        p < 0.35 ? '01 Arrive' : p < 0.75 ? '02 Orbit' : '03 Studio';
-    }
-    if (hintLabelRef.current) {
-      hintLabelRef.current.textContent = nextDocked ? 'Customize · drag to turn' : 'Scroll to dock ↓';
-    }
-  };
+    if (progressLabelRef.current) progressLabelRef.current.textContent = `${Math.round(p * 100)}%`;
+    if (phaseLabelRef.current) phaseLabelRef.current.textContent = p < 0.35 ? '01 Arrive' : p < 0.75 ? '02 Orbit' : '03 Studio';
+    if (hintLabelRef.current) hintLabelRef.current.textContent = nextDocked ? 'Customize · drag to turn' : 'Scroll to dock ↓';
+  }, []);
+
+  useEffect(() => {
+    if (compact || heroEmbed) return;
+    const el = scrollRoot.current;
+    if (!el) return;
+    const scroller = findScroller(el);
+    let raf = 0;
+    const compute = () => {
+      raf = 0;
+      const viewH = scroller?.clientHeight || window.innerHeight || 1;
+      const top = el.getBoundingClientRect().top - (scroller?.getBoundingClientRect().top ?? 0);
+      const p = ringProgress(top, el.offsetHeight, viewH);
+      progressRef.current = p;
+      evaluate(p);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(compute);
+    };
+    const target: HTMLElement | Window = scroller ?? window;
+    target.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    compute();
+    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { rootMargin: '300px 0px' });
+    io.observe(el);
+    return () => {
+      target.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      io.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [compact, heroEmbed, evaluate]);
+
+  const onSceneReady = React.useCallback(() => {
+    sceneReadyRef.current = true;
+    setSceneReady(true);
+    evaluate(progressRef.current);
+  }, [evaluate]);
+  const onSceneContext = React.useCallback(
+    (state: 'lost' | 'restored') => {
+      if (state === 'lost') {
+        sceneReadyRef.current = false;
+        setSceneReady(false);
+        evaluate(progressRef.current);
+      }
+    },
+    [evaluate]
+  );
 
   // intent signals (hover / focus / press) start loading the try-on while the finger is still on its way down
   const warm = () => warmTryOn(pickArMetal(metal));
@@ -256,7 +331,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
   // —— One continuous scene: short scroll → same ring docks → HUD customize ——
   return (
     <div className="relative" ref={rootRef}>
-      <div ref={scrollRoot} className="relative h-[185vh] sm:h-[200vh]">
+      <div ref={scrollRoot} className="relative h-[150vh] sm:h-[200vh]">
         <div
           ref={stickyRef}
           className="sticky top-0 z-[1] h-[100svh] min-h-[100svh] w-full overflow-hidden bg-[#0c0b09]"
@@ -266,16 +341,33 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
               ring sits entirely above it. transform only (compositor), animated once when the ring docks; no canvas resize, no camera jump. */}
           <div
             className="absolute inset-0 transition-transform duration-500 ease-out"
-            style={{ transformOrigin: '50% 42%', transform: docked ? `translate3d(0, calc(var(--ring-lift, 0px) * -1), 0) scale(var(--ring-scale, 1))` : 'translate3d(0,0,0) scale(1)', willChange: docked ? 'transform' : undefined }}
+            style={{ transformOrigin: '50% 42%', transform: hudOn ? `translate3d(0, calc(var(--ring-lift, 0px) * -1), 0) scale(var(--ring-scale, 1))` : 'translate3d(0,0,0) scale(1)', willChange: hudOn ? 'transform' : undefined }}
             data-testid="ring-lift"
           >
+            {/* Poster / loading placeholder: same box as the canvas (absolute, no layout change), visible from the first paint until the
+                first WebGi frame is drawn - and again if the GL context is lost. The HUD below does not wait for it. */}
+            <div
+              aria-hidden
+              data-testid="ring-poster"
+              data-ready={sceneReady ? '1' : '0'}
+              className={`pointer-events-none absolute inset-0 transition-opacity duration-500 ${sceneReady ? 'opacity-0' : 'opacity-100'}`}
+              style={{ background: 'radial-gradient(circle at 42% 44%, #1a1410 0%, #0c0b09 70%)' }}
+            >
+              <img src={posterUrl} alt="" decoding="async" className="h-full w-full object-cover opacity-70 mix-blend-lighten" />
+              {!sceneReady ? (
+                <p className="absolute left-4 top-4 font-mono text-[10px] uppercase tracking-[0.18em] text-[#c8b58f]">Preparing the studio…</p>
+              ) : null}
+            </div>
             <RingCanvas
               metalColor={metal.color}
               gemColor={gem.color}
               mode="scroll"
               interactive={docked}
               scrollRoot={scrollRoot}
-              onProgress={onJourneyProgress}
+              progressRef={progressRef}
+              active={inView && !sheet}
+              onReady={onSceneReady}
+              onContextState={onSceneContext}
               dockAt={0.78}
               className="absolute inset-0"
             />
@@ -283,14 +375,14 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_38%_48%,rgba(58,36,28,0.18),transparent_42%)]" />
           <div
             className={`pointer-events-none absolute inset-x-0 bottom-0 h-48 transition-opacity duration-500 ${
-              docked ? 'opacity-90' : 'opacity-70'
+              hudOn ? 'opacity-90' : 'opacity-70'
             } bg-gradient-to-t from-[#0c0b09] via-[#0c0b09]/70 to-transparent`}
           />
 
           {/* Entry chrome — fades as ring docks */}
           <div
             className={`relative z-10 flex h-full flex-col justify-between p-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:p-10 md:pb-10 transition-opacity duration-500 ${
-              docked ? 'opacity-0 pointer-events-none' : 'opacity-100'
+              hudOn ? 'opacity-0 pointer-events-none' : 'opacity-100'
             }`}
           >
             <div className="max-w-sm">
@@ -361,8 +453,9 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
           <div
             id="ring-studio-interact"
             className={`absolute inset-0 z-20 flex flex-col justify-end p-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-8 transition-all duration-500 ${
-              docked ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+              hudOn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
             }`}
+            data-hud-on={hudOn ? '1' : '0'}
           >
             <div
               ref={hudRef}
