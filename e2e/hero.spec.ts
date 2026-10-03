@@ -25,7 +25,8 @@ test('hero: legal text contrast >= 4.5:1 on rendered pixels (worst pixel and mea
   test.skip((page.viewportSize()!.width) >= 768, 'the fade is a phone-only treatment');
   await openApp(page);
   const legal = page.getByText(/Optional\. By requesting a call/).first();
-  await legal.scrollIntoViewIfNeeded();
+  // centre it: with the optional Turnstile widget (P0.2) the consent text starts under the floating nav, and scrollIntoViewIfNeeded does not move an element that is already inside the viewport
+  await legal.evaluate((el) => el.scrollIntoView({ block: 'center' }));
   await page.waitForTimeout(1500);
   const color = await legal.evaluate((el) => getComputedStyle(el).color);
   const [tr, tg, tb] = color.match(/\d+(\.\d+)?/g)!.map(Number);
