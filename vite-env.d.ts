@@ -67,3 +67,17 @@ declare module 'qrcode-generator' {
   }
   export default function qrcode(typeNumber: number, errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H'): QRCode;
 }
+
+interface ImportMetaEnv {
+  /** '0' turns the short prospect page off (root `/` renders the legacy long landing again). Default: on. */
+  readonly VITE_CRO_SHORT?: string;
+  /** Primary CTA on the short page: 'book' (default) | 'hear' | 'golive'. 'golive' needs VITE_VOICE_ONBOARDING=1 + VITE_ONBOARDING_URL. */
+  readonly VITE_CRO_CTA?: string;
+  /** '1' only once the voice-onboarding platform is live and "Go live in 5 minutes" is true. */
+  readonly VITE_VOICE_ONBOARDING?: string;
+  readonly VITE_ONBOARDING_URL?: string;
+  /** Booking page for the default CTA. */
+  readonly VITE_BOOKING_URL?: string;
+  /** Fourcee platform API event endpoint (POST, JSON as text/plain). Unset = events stay in memory only. */
+  readonly VITE_TRACK_URL?: string;
+}

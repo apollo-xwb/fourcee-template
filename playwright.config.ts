@@ -23,7 +23,9 @@ export default defineConfig({
       command: `npx vite build --outDir dist-e2e && npx vite preview --outDir dist-e2e --port ${PORT} --strictPort --host 127.0.0.1`,
       url: `http://127.0.0.1:${PORT}/`,
       reuseExistingServer: true,
-      env: { VITE_E2E_HOOKS: "1", VITE_LEAD_ENDPOINT: `http://127.0.0.1:${LEAD_PORT}/api/lead`, VITE_DEMO_ENDPOINT: `http://127.0.0.1:${LEAD_PORT}/api/demo-call`, VITE_PAYMENTS_ENABLED: '1', VITE_CHECKOUT_ENDPOINT: `http://127.0.0.1:${LEAD_PORT}/api/checkout`, VITE_TURNSTILE_SITE_KEY: '1x00000000000000000000AA' /* Cloudflare's public always-pass TEST key; the e2e stubs the script */ },
+      // VITE_CRO_SHORT=0: the legacy suites (splash, hero, ring, AR) test the long landing at "/"; short-audit.spec.ts opts in with ?v=short.
+      // VITE_TRACK_URL points at a path on the preview server so the spec can intercept the tracker's beacons (nothing leaves the box).
+      env: { VITE_E2E_HOOKS: "1", VITE_CRO_SHORT: "0", VITE_TRACK_URL: `http://127.0.0.1:${PORT}/__fc_events`, VITE_LEAD_ENDPOINT: `http://127.0.0.1:${LEAD_PORT}/api/lead`, VITE_DEMO_ENDPOINT: `http://127.0.0.1:${LEAD_PORT}/api/demo-call`, VITE_PAYMENTS_ENABLED: '1', VITE_CHECKOUT_ENDPOINT: `http://127.0.0.1:${LEAD_PORT}/api/checkout`, VITE_TURNSTILE_SITE_KEY: '1x00000000000000000000AA' /* Cloudflare's public always-pass TEST key; the e2e stubs the script */ },
       timeout: 240_000,
     },
     {

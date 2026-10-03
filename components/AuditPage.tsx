@@ -104,7 +104,10 @@ const gridBgStyleLight: React.CSSProperties = {
 };
 
 export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onBookCall, data }) => {
-  const [showIntroSplash, setShowIntroSplash] = useState(true);
+  // The short prospect page sets this flag on "See the full report" so a prospect who already chose to read the detail is not gated again.
+  const [showIntroSplash, setShowIntroSplash] = useState(() => {
+    try { return sessionStorage.getItem('fourcee-skip-audit-intro') !== '1'; } catch { return true; }
+  });
   const [showHeaderStats, setShowHeaderStats] = useState(false);
   const headerSurface = 'navy';
   const triggerBooking = () => {
