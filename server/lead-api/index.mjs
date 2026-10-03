@@ -11,6 +11,7 @@ import { RateLimiter, MIN, HOUR, DAY } from './lib/ratelimit.mjs';
 import { validateLead, isHoneypotHit } from './lib/validate.mjs';
 import { notifyLead, notifyEnabled } from './lib/notify.mjs';
 import { createDemoCallRoute } from './routes/demo-call.mjs';
+import { createCheckoutRoutes } from './routes/checkout.mjs';
 import { clientIp, send, checkOrigin, corsHeaders, readJson } from './lib/http.mjs';
 
 export { loadConfig };
@@ -68,6 +69,7 @@ export async function createLeadApi(cfg = loadConfig(), deps = {}) {
   const ROUTES = {
     'POST /api/lead': handleLead,
     'POST /api/demo-call': createDemoCallRoute(cfg, { log, fetchImpl: deps.fetchImpl, now: deps.now }),
+    ...createCheckoutRoutes(cfg, { log, fetchImpl: deps.fetchImpl, now: deps.now, notifyDeps: ctx.notifyDeps }).routes, // test-mode payments (off unless PAYMENTS_ENABLED=1)
     ...(deps.routes || {}),
   };
   ctx.routes = ROUTES;
@@ -76,10 +78,11 @@ export async function createLeadApi(cfg = loadConfig(), deps = {}) {
     try {
       const url = new URL(req.url, 'http://x');
       if (req.method === 'GET' && url.pathname === '/api/health') return send(res, 200, { ok: true, notify: notifyEnabled(cfg), leads: await store.count() });
+      const route = ROUTES[`${req.method} ${url.pathname}`];
+      if (route?.serverToServer) return await route(req, res, '', ctx); // provider webhooks: authenticated by signature, not by browser Origin
       const origin = checkOrigin(req, cfg);
       if (origin === null) return send(res, 403, { ok: false, error: 'Origin not allowed' });
       if (req.method === 'OPTIONS') { res.writeHead(204, corsHeaders(origin)); return res.end(); }
-      const route = ROUTES[`${req.method} ${url.pathname}`];
       if (!route) return send(res, 404, { ok: false, error: 'Not found' }, corsHeaders(origin));
       return await route(req, res, origin, ctx);
     } catch (e) {
@@ -106,7 +109,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   const cfg = loadConfig();
   const api = await createLeadApi(cfg);
   api.listen().then((a) => {
-    console.log(`lead-api listening on ${a.address}:${a.port}; origins=${cfg.allowedOrigins.join(',')}; store=${cfg.databaseUrl ? 'postgres' : 'json-file'}; demo=${cfg.demo.enabled && cfg.demo.webhookUrl ? 'on' : 'off'}; smtp=${cfg.smtp.host ? 'on' : 'off'}; webhook=${cfg.webhookUrl ? 'on' : 'off'}`);
+    console.log(`lead-api listening on ${a.address}:${a.port}; origins=${cfg.allowedOrigins.join(',')}; store=${cfg.databaseUrl ? 'postgres' : 'json-file'}; demo=${cfg.demo.enabled && cfg.demo.webhookUrl ? 'on' : 'off'}; payments=${cfg.pay.enabled ? 'on (TEST MODE)' : 'off'}; smtp=${cfg.smtp.host ? 'on' : 'off'}; webhook=${cfg.webhookUrl ? 'on' : 'off'}`);
     if (!notifyEnabled(cfg)) console.warn('WARNING: no notification channel configured (SMTP_HOST+LEAD_NOTIFY_TO or LEAD_WEBHOOK_URL). Leads are stored but nobody is told.');
   });
 }

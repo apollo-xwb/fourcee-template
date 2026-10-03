@@ -24,3 +24,24 @@ location = /api/demo-call {
     proxy_set_header X-Real-IP $remote_addr;
     proxy_read_timeout 20s;
 }
+
+# Payments (test mode). Browser calls: /api/checkout, /api/checkout/options, /api/checkout/status. Provider calls: /api/pay/webhook/*.
+limit_req_zone $binary_remote_addr zone=fourcee_pay:10m rate=12r/m;   # http { } context
+location ~ ^/api/checkout(/options|/status)?$ {
+    limit_req zone=fourcee_pay burst=6 nodelay;
+    client_max_body_size 4k;
+    proxy_pass http://127.0.0.1:8788;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_read_timeout 25s;
+}
+# Webhooks: no auth, no rate limit that could drop a provider retry, body passed through untouched (the signature covers the raw bytes).
+location ~ ^/api/pay/webhook/(stripe|paystack)$ {
+    client_max_body_size 256k;
+    proxy_pass http://127.0.0.1:8788;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_read_timeout 20s;
+}

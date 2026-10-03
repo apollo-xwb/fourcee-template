@@ -2,6 +2,7 @@
 const CTRL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
 const EMAIL = /^[^\s@<>()[\]\\,;:"]+@[^\s@<>()[\]\\,;:"]+\.[^\s@<>()[\]\\,;:"]{2,}$/;
 export const PLAN_IDS = ['starter', 'pro', 'enterprise', 'diamond'];
+export const UPSELL_IDS = ['white_glove_onboarding', 'extra_location_pack']; // keep in sync with lib/pricing.mjs (tested)
 
 const clean = (v, max) => (typeof v === 'string' ? v.replace(CTRL, '').trim().slice(0, max) : '');
 /** Single-line text: also collapses CR/LF/TAB so it can never break out into an email header. */
@@ -20,6 +21,7 @@ export function validateLead(body) {
   const billing = line(body.billing_cycle, 12).toLowerCase();
   const key = line(body.idempotency_key, 64);
   const pageUrl = line(body.page_url, 300);
+  const upsells = Array.isArray(body.upsells) ? [...new Set(body.upsells.filter((u) => typeof u === 'string' && UPSELL_IDS.includes(u)))] : [];
 
   if (name.length < 2) errors.name = 'Please enter your full name';
   if (!EMAIL.test(email) || email.includes('..')) errors.email = 'Please enter a valid email address';
@@ -39,7 +41,7 @@ export function validateLead(body) {
   if (Object.keys(errors).length) return { ok: false, errors };
   return {
     ok: true,
-    value: { name, email, phone, store, plan, notes, crm, billing_cycle: billing || 'monthly', total, currency: currency || null, idempotency_key: key || null, page_url: pageUrl },
+    value: { name, email, phone, store, plan, notes, crm, billing_cycle: billing || 'monthly', total, currency: currency || null, idempotency_key: key || null, page_url: pageUrl, upsells },
   };
 }
 

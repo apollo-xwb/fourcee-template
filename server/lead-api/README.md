@@ -20,6 +20,9 @@ The browser never calls the n8n webhook. It posts `{phone, country, lead_id, web
 Checks, in order: kill switch (`DEMO_ENABLED=0`) -> origin allow-list -> burst shield -> body + honeypot -> **SA/E.164 normalisation** (`0821234567` -> `+27821234567`, premium/freephone ranges and unlisted countries rejected) -> do-not-call list -> optional **Turnstile** (`TURNSTILE_SECRET`, fails closed) -> per-IP hour/day -> per-number cooldown + day -> global daily cap -> forward. Only a request that passes everything spends budget; a failed forward gives the daily budget back. Logs carry masked numbers only. Counters are in memory (reset on restart); the daily cap is per UTC day.
 n8n-side changes: see `docs/N8N_DEMO_WEBHOOK_NOTE.md`.
 
+## Payments (test mode only)
+Hosted Checkout (Stripe, Paystack/ZAR) created server-side, signed webhooks mark the lead paid. Off by default; live keys are refused. See [PAYMENTS.md](PAYMENTS.md).
+
 ## Store (repository interface)
 `lib/store.mjs` documents the interface (`add, get, findByIdempotencyKey, update, countSince, count, pendingNotifications, close`).
 * `DATABASE_URL` empty -> `JsonFileStore` (atomic file rewrite, fine for development and a small single-box install).

@@ -21,7 +21,7 @@ export default defineConfig({
     command: `npx vite build --outDir dist-e2e && npx vite preview --outDir dist-e2e --port ${PORT} --strictPort --host 127.0.0.1`,
     url: `http://127.0.0.1:${PORT}/`,
     reuseExistingServer: true,
-    env: { VITE_E2E_HOOKS: "1", VITE_LEAD_ENDPOINT: `http://127.0.0.1:${LEAD_PORT}/api/lead`, VITE_DEMO_ENDPOINT: `http://127.0.0.1:${LEAD_PORT}/api/demo-call`, VITE_TURNSTILE_SITE_KEY: '1x00000000000000000000AA' /* Cloudflare's public always-pass TEST key; the e2e stubs the script */ },
+    env: { VITE_E2E_HOOKS: "1", VITE_LEAD_ENDPOINT: `http://127.0.0.1:${LEAD_PORT}/api/lead`, VITE_DEMO_ENDPOINT: `http://127.0.0.1:${LEAD_PORT}/api/demo-call`, VITE_PAYMENTS_ENABLED: '1', VITE_CHECKOUT_ENDPOINT: `http://127.0.0.1:${LEAD_PORT}/api/checkout`, VITE_TURNSTILE_SITE_KEY: '1x00000000000000000000AA' /* Cloudflare's public always-pass TEST key; the e2e stubs the script */ },
     timeout: 240_000,
   },
   projects: [
