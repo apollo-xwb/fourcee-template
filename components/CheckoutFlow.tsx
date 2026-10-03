@@ -4,6 +4,7 @@ import { PACKAGES, UPSELLS } from '../constants.tsx';
 import { CheckoutState } from '../types';
 import fcShad from '../public/assets/fcshad.png';
 import { isPlaceholderBusinessName, loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from '../lib/audit-content';
+import { PayOnline, PayReturnBanner } from './ui/pay-online';
 import { flushQueue, newIdempotencyKey, submitLead, validateLeadFields, type LeadErrors } from '../lib/lead-client';
 interface CheckoutFlowProps {
   isDarkMode?: boolean;
@@ -101,7 +102,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
     setSubmitError(null);
     const result = await submitLead({
       name: contactName.trim(), email: email.trim(), phone: phone.trim(), store: companyName.trim(), plan: state.packageId,
-      billing_cycle: state.billingCycle, notes: notes.trim(), crm, total, currency: 'USD', website: trap,
+      billing_cycle: state.billingCycle, upsells: state.upsells, notes: notes.trim(), crm, total, currency: 'USD', website: trap,
       idempotency_key: leadKey.current, page_url: window.location.href.split('#')[0],
     });
     setSending(false);
@@ -458,6 +459,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
               Check your inbox for deployment details and next steps.
               {leadRef ? <span data-testid="lead-ref" className="block mt-2 font-mono text-xs">Reference: {leadRef.slice(0, 8)}</span> : null}
             </p>
+            {leadRef ? <PayOnline leadId={leadRef} /> : null}
             <button 
               onClick={() => window.location.reload()}
               className="px-10 py-4 bg-navy-900 dark:bg-white text-white dark:text-navy-950 rounded-full font-bold text-xs uppercase tracking-widest hover:shadow-2xl transition-all"
@@ -473,6 +475,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
 
   return (
     <div className="pt-24 pb-40 md:pb-36 px-6 bg-transparent transition-colors">
+      <PayReturnBanner />
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-center mb-10">
           <img

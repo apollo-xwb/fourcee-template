@@ -33,6 +33,17 @@ export function loadConfig(env = process.env) {
     webhookTimeoutMs: int(env.LEAD_WEBHOOK_TIMEOUT_MS, 8000),
     notifyMaxAttempts: int(env.LEAD_NOTIFY_MAX_ATTEMPTS, 6),
     notifySweepMs: int(env.LEAD_NOTIFY_SWEEP_MS, 60000),
+    // Payments: TEST MODE ONLY in this build (live keys are refused at start-up, see lib/payments/common.mjs). Off unless PAYMENTS_ENABLED=1.
+    pay: {
+      enabled: env.PAYMENTS_ENABLED === '1',
+      returnBase: env.PAY_RETURN_BASE_URL || '', // where the customer lands after paying, e.g. https://fourcee.lutho.app/ (default: first LEAD_ALLOWED_ORIGINS)
+      zarPerUsd: Number(env.PAY_ZAR_PER_USD) > 0 ? Number(env.PAY_ZAR_PER_USD) : 0, // rand per dollar; 0 => ZAR checkout refused
+      maxMinor: int(env.PAY_MAX_AMOUNT_MINOR, 100_000_000), // hard ceiling per charge, in cents (default 1,000,000.00)
+      perIpPerHour: int(env.PAY_PER_IP_PER_HOUR, 10),
+      maxAttemptsPerLead: int(env.PAY_MAX_ATTEMPTS_PER_LEAD, 10),
+      stripe: { secretKey: env.STRIPE_SECRET_KEY || '', webhookSecret: env.STRIPE_WEBHOOK_SECRET || '', apiBase: (env.STRIPE_API_BASE || 'https://api.stripe.com').replace(/\/$/, '') },
+      paystack: { secretKey: env.PAYSTACK_SECRET_KEY || '', apiBase: (env.PAYSTACK_API_BASE || 'https://api.paystack.co').replace(/\/$/, '') },
+    },
     demo: {
       enabled: env.DEMO_ENABLED !== '0', // kill switch: DEMO_ENABLED=0 -> every demo request answers 503 "paused", nothing is forwarded
       webhookUrl: env.N8N_DEMO_WEBHOOK_URL || '', // server-side only. The browser never sees or calls this URL.

@@ -10,6 +10,8 @@ export interface LeadFields {
   store: string;
   plan: string;
   billing_cycle: 'monthly' | 'annual';
+  /** add-on ids chosen at checkout (the server prices them; unknown ids are dropped) */
+  upsells?: string[];
   notes: string;
   crm: string;
   total: number | null;
