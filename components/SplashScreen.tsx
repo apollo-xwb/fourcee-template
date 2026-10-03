@@ -109,12 +109,16 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-lg px-4">
-        {/* Single prominent wordmark */}
+        {/* Single prominent wordmark. width/height + aspect-ratio reserve its box before the PNG decodes: without them the flex stack grew ~23 px when the image arrived and the whole centred group (all three cards) jumped ~11 px at ~0.5 s (measured as a 0.07 layout shift). */}
         <div className="fx-splash-in mb-6 md:mb-8" style={{ ['--d' as string]: '0ms' }}>
           <img
             src={fcShad}
             alt="fourcee concierge"
-            className="w-64 sm:w-72 md:w-[22rem] mx-auto object-contain drop-shadow-sm"
+            width={831}
+            height={271}
+            decoding="sync"
+            fetchPriority="high"
+            className="w-64 sm:w-72 md:w-[22rem] h-auto aspect-[831/271] mx-auto object-contain drop-shadow-sm"
           />
         </div>
 

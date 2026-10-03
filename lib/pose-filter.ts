@@ -16,12 +16,12 @@ export type Quat = [number, number, number, number]; // x y z w
 
 export const RING_DIAMETER_MM = 22;
 export const FILTER_DEFAULTS = {
-  posMinCutoff: 0.6, // Hz at rest
-  posBeta: 0.6, // cutoff growth per (ring diameter / s)
+  posMinCutoff: 0.5, // Hz at rest
+  posBeta: 0.4, // cutoff growth per (ring diameter / s)
   rotMinCutoff: 0.8, // Hz at rest
   rotBeta: 0.6, // cutoff growth per (rad / s)
   scaleMinCutoff: 0.6,
-  dCutoff: 1.5,
+  dCutoff: 2,
   posDeadbandMm: 0.5,
   rotDeadbandDeg: 0.8,
   scaleDeadbandPct: 1.5,
