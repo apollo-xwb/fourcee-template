@@ -13,10 +13,11 @@ import {
   onboardingUrl,
   readProof,
   resolveCtaVariant,
-  toE164,
   type CtaVariant,
 } from '../lib/cro';
 import { initTracking, nowMs, startPageMetrics, track } from '../lib/track';
+import { requestDemoCall, turnstileSiteKey } from '../lib/demo-client';
+import { Turnstile } from './ui/turnstile';
 
 /**
  * The short prospect page: one outcome line, the prospect's own audit number, ONE primary CTA, a sticky mobile CTA,
@@ -59,31 +60,28 @@ function Accordion({ id, title, children }: { id: string; title: string; childre
   );
 }
 
-/** "hear" variant: inline demo-call form. Same webhook the legacy MiniPhone uses; payload unchanged (phone_number, lead_id). */
+/** "hear" variant: inline demo-call form. Goes through the guarded same-origin /api/demo-call (lib/demo-client, P0.2); the browser never calls n8n. */
 function HearForm({ leadId, defaultCode }: { leadId?: string; defaultCode?: string }) {
   const [code, setCode] = useState(COUNTRIES.find((c) => c.code === defaultCode)?.code ?? '+27');
   const [phone, setPhone] = useState('');
   const [status, setStatus] = useState<'idle' | 'calling' | 'ok' | 'err'>('idle');
   const [msg, setMsg] = useState('');
   const started = useRef(false);
+  const [trap, setTrap] = useState(''); // honeypot (hidden); bots fill it
+  const [token, setToken] = useState('');
+  const [resetKey, setResetKey] = useState(0);
+  const siteKey = turnstileSiteKey();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     track('form_submit', { form: 'demo_call' });
-    const e164 = toE164(code, phone);
-    if (!e164) { setStatus('err'); setMsg('Enter your mobile number, e.g. 082 123 4567.'); track('form_error', { form: 'demo_call', reason: 'invalid_number' }); return; }
     setStatus('calling'); setMsg('');
-    try {
-      const r = await fetch('https://app.fourcee.online/webhook/voice-demo-request', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone_number: e164, lead_id: leadId }),
-      });
-      if (!r.ok) throw new Error(String(r.status));
-      setStatus('ok'); track('form_success', { form: 'demo_call' });
-    } catch {
-      setStatus('err'); setMsg('We could not start the call. Please try again, or book a walkthrough instead.');
-      track('form_error', { form: 'demo_call', reason: 'network' });
-    }
+    const r = await requestDemoCall({ phone, country: code, leadId, website: trap, turnstileToken: token });
+    if (r.ok === true) { setStatus('ok'); track('form_success', { form: 'demo_call' }); return; }
+    const fail = r as { code: string; message: string };
+    setStatus('err'); setMsg(fail.message);
+    track('form_error', { form: 'demo_call', reason: fail.code === 'bad_phone' ? 'invalid_number' : fail.code });
+    if (siteKey && fail.code !== 'bad_phone') { setToken(''); setResetKey((k) => k + 1); } // a Turnstile token is single-use (not consumed by client-side validation)
   };
 
   if (status === 'ok') return <p role="status" className="rounded-xl bg-white/80 p-4 text-[16px] font-medium">Calling you now. Pick up to hear your AI receptionist.</p>;
@@ -102,8 +100,12 @@ function HearForm({ leadId, defaultCode }: { leadId?: string; defaultCode?: stri
           className="h-12 min-w-0 flex-1 rounded-xl border border-[#0c0b09]/25 bg-white px-3" style={{ fontSize: 16 }}
         />
       </div>
+      <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }}>
+        <input type="text" name="website" tabIndex={-1} autoComplete="off" value={trap} onChange={(e) => setTrap(e.target.value)} />
+      </div>
+      <div className="mt-3"><Turnstile siteKey={siteKey} onToken={setToken} resetKey={resetKey} theme="light" /></div>
       {msg && <p role="alert" className="mt-2 text-[14px] text-[#9a1c1c]">{msg}</p>}
-      <button type="submit" disabled={status === 'calling'} className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#0c0b09] text-[16px] font-semibold text-[#faf5ea] disabled:opacity-60">
+      <button type="submit" disabled={status === 'calling' || (!!siteKey && !token)} className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#0c0b09] text-[16px] font-semibold text-[#faf5ea] disabled:opacity-60">
         <PhoneIcon />{status === 'calling' ? 'Calling…' : 'Call me now'}
       </button>
       <p className="mt-2 text-[12px] leading-snug text-[#5b5346]">One demo call to this number, for product demonstration. By requesting it you consent to that call.</p>

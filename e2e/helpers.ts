@@ -12,6 +12,8 @@ export function watchConsole(page: Page) {
 /** The splash blocks the page for ~3.5 s; wait for it to unmount, then dismiss the Portal tip so it can't overlap anything. */
 export async function openApp(page: Page, query = '') {
   await page.goto('/' + query);
+  // the app is a lazy chunk: #root stays empty until it loads, and waiting for a splash that is not mounted yet would return at once
+  await page.waitForFunction(() => (document.getElementById('root')?.childElementCount ?? 0) > 0, undefined, { timeout: 60_000 });
   await page.locator('[data-testid=splash]').waitFor({ state: 'detached', timeout: 60_000 });
   // DOM click, no auto-wait: the tip can auto-dismiss between the check and the click, and a deep-linked sheet may already cover it
   await page.getByRole('button', { name: 'Got it' }).evaluateAll((els) => els.forEach((el) => (el as HTMLElement).click()));

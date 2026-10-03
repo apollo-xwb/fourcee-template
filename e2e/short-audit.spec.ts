@@ -121,7 +121,11 @@ test('tracking: page_view, cta_view with time-to-CTA, scroll depth, cta_click; b
 
 test('hear variant (flag): tapping the input keeps scale 1, inputs are >= 16 px, number is normalised to E.164 and no real call is placed', async ({ page }, info) => {
   const calls: Array<Record<string, unknown>> = [];
-  await page.route('https://app.fourcee.online/webhook/voice-demo-request', async (route) => {
+  // P0.2: the browser only ever talks to our guard endpoint (VITE_DEMO_ENDPOINT); n8n is never called from the page. Turnstile (e2e build has the test site key) is stubbed.
+  await page.route('https://challenges.cloudflare.com/**', (route) => route.fulfill({ contentType: 'text/javascript', body: `window.turnstile={render:function(el,o){setTimeout(function(){o.callback('stub-token-0123456789')},60);return 'w1'},reset:function(){},remove:function(){}};` }));
+  const n8nCalls: string[] = [];
+  await page.route('https://app.fourcee.online/**', async (route) => { n8nCalls.push(route.request().url()); await route.abort(); });
+  await page.route('**/api/demo-call', async (route) => {
     calls.push(JSON.parse(route.request().postData() || '{}'));
     await route.fulfill({ status: 200, json: { ok: true } });
   });
@@ -146,12 +150,14 @@ test('hear variant (flag): tapping the input keeps scale 1, inputs are >= 16 px,
 
   await input.fill('12');
   await page.getByRole('button', { name: 'Call me now' }).click();
-  await expect(page.getByRole('alert')).toContainText('mobile number');
+  await expect(page.getByRole('alert')).toContainText(/number/i);
   expect(calls).toHaveLength(0);
   await input.fill('082 123 4567');
   await page.getByRole('button', { name: 'Call me now' }).click();
   await expect(page.getByRole('status')).toContainText('Calling you now');
-  expect(calls).toEqual([{ phone_number: '+27821234567', lead_id: 'lead-test-123' }]);
+  expect(calls).toHaveLength(1);
+  expect(calls[0]).toMatchObject({ phone: '082 123 4567', country: '+27', lead_id: 'lead-test-123', website: '' }); // the server normalises to +27821234567
+  expect(n8nCalls).toEqual([]);
   const ev = await page.evaluate(() => (window as unknown as { __fourceeEvents: Array<{ n: string }> }).__fourceeEvents.map((e) => e.n));
   expect(ev).toEqual(expect.arrayContaining(['form_start', 'form_submit', 'form_error', 'form_success']));
 });
