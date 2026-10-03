@@ -294,7 +294,7 @@ export default function ShortAudit() {
           <Accordion id="what-it-does" title="What the AI receptionist does for you">
             {data?.recoveryPlan?.body && <p>{data.recoveryPlan.body}</p>}
             <ul className="mt-2 list-disc pl-5">
-              {(data?.recoveryPlan?.capabilities?.length ? data.recoveryPlan.capabilities : ['Answers calls day and night', 'Books appointments', 'Answers common questions', 'Hands off to your team']).map((c) => <li key={c}>{c}</li>)}
+              {(data?.recoveryPlan?.capabilities?.length ? data.recoveryPlan.capabilities : ['Answers calls day and night', 'Books appointments', 'Answers common questions', 'Passes callers to your team when needed']).map((c) => <li key={c}>{c}</li>)}
             </ul>
           </Accordion>
           <Accordion id="setup" title="How setup works">
