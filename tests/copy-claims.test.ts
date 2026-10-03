@@ -5,7 +5,7 @@ import { indicativeZar, isSouthAfricanStore, zarNote, zarRateFromEnv } from '../
 
 const read = (f: string) => fs.readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 // customer-visible surfaces (the chat knowledge base and generated content.json are covered by their own PRs / the generator)
-const SURFACES = ['App.tsx', 'components/CheckoutFlow.tsx', 'components/AuditPage.tsx', 'components/CRMView.tsx', 'components/ui/mini-phone.tsx', 'components/ui/pricing.tsx', 'components/PricingMatrix.tsx', 'index.html'];
+const SURFACES = ['App.tsx', 'components/CheckoutFlow.tsx', 'components/AuditPage.tsx', 'components/CRMView.tsx', 'components/ShortAudit.tsx', 'components/ui/mini-phone.tsx', 'components/ui/pricing.tsx', 'components/PricingMatrix.tsx', 'index.html'];
 // Claims that are not true today (onboarding audit 2026-10-03). Add to this list rather than loosening it.
 const BANNED: [RegExp, string][] = [
   [/hands[- ]?off/i, 'hands-off'],
