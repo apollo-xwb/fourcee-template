@@ -61,3 +61,8 @@ dist-e2e
 dist-e2e-admin
 e2e-results
 test-results
+
+# Ops/VPS leftovers: old copies and previews built next to the sources (also scanned by Tailwind if not ignored)
+backups
+dist-ops-preview
+dist-*
