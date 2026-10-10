@@ -41,7 +41,7 @@ There is no "truthful-copy PR" in `apollo-xwb/fourcee-template` (open PRs at the
 
 | Flag (build-time env, `?cta=` can pick `hear` for tests) | CTA text | True today? |
 |---|---|---|
-| default / `VITE_CRO_CTA=book` | "Book my free audit walkthrough" (opens the Cal booking page, `VITE_BOOKING_URL`, default `app.cal.com/fourcee/30min`) | Yes: founder-assisted walkthrough exists |
+| default / `VITE_CRO_CTA=book` | "Book my free audit walkthrough" (opens `VITE_CAL_BOOKING_URL` or `VITE_BOOKING_URL` in a new tab). Hidden when neither is an http(s) URL. | Yes: founder-assisted walkthrough exists |
 | `VITE_CRO_CTA=hear` | "Hear your AI receptionist in 60 seconds" (inline phone field, then one demo call through the guarded `/api/demo-call` (PR #12) - the browser never calls n8n) | Only after TK confirms the demo call works end to end, the guard from PR #12 is deployed with its secret and n8n Header Auth is on (leading-0 normalisation is done by the guard). I did not place a real call. |
 | `VITE_CRO_CTA=golive` | "Go live in 5 minutes" | **No.** Cannot render unless `VITE_VOICE_ONBOARDING=1` **and** `VITE_ONBOARDING_URL` are set; otherwise falls back to `book`. Unit-tested. Flip only when the voice onboarding platform is live. |
 

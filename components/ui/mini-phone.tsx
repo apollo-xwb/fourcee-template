@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { requestDemoCall, turnstileSiteKey } from '@/lib/demo-client';
 import { normalizePhone } from '@/lib/phone';
 import { Turnstile } from './turnstile';
+import { useEscapeClose } from '@/lib/use-escape-close';
 
 const COUNTRIES = [
   { code: '+27', name: 'ZA', flag: '🇿🇦' },
@@ -47,6 +48,7 @@ export function MiniPhone({
   const [selectedCountry, setSelectedCountry] = React.useState(matchedDefault);
   const [phone, setPhone] = React.useState('');
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  useEscapeClose(dropdownOpen, () => setDropdownOpen(false), 1400);
   const [status, setStatus] = React.useState<'idle' | 'calling' | 'success'>('idle');
 
   React.useEffect(() => {

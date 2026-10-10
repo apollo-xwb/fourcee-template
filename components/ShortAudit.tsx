@@ -166,9 +166,11 @@ export default function ShortAudit() {
   const fmt = (n: number) => (data ? formatAuditCurrency(data, n) : String(n));
   const logo = data ? resolveBusinessLogo(data) : '';
   const href = variant === 'golive' ? onboardingUrl() : bookingUrl();
+  const showCta = variant === 'hear' || Boolean(href);
 
   // plain render function (not a component): keeps the DOM node stable across re-renders so focus / IntersectionObserver refs survive
   const cta = (pos: 'hero' | 'sticky' | 'final', ref?: React.Ref<HTMLDivElement>) => {
+    if (!showCta) return null;
     const cls = 'flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl px-5 text-center text-[17px] font-semibold shadow-[0_10px_30px_rgba(12,11,9,0.25)] active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8a6a2c]';
     const style = { background: INK, color: CREAM };
     return (
@@ -320,7 +322,7 @@ export default function ShortAudit() {
         <footer className="border-t border-[#0c0b09]/15 pb-6 pt-4 text-[12px] leading-relaxed text-[#5b5346]">
           <p>{data?.compliance?.disclaimerLong || 'Figures are estimates based on public data and industry benchmarks, not a guarantee of results.'}</p>
           <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-            <a className="underline" href="#/audit" onClick={() => { try { sessionStorage.setItem('fourcee-skip-audit-intro', '1'); } catch { /* ignore */ } track('nav', { to: 'full_report' }); }}>See the full report</a>
+            <a className="underline" href="#/audit" onClick={() => track('nav', { to: 'full_report' })}>See the full report</a>
             <a className="underline" href="#/home" onClick={() => track('nav', { to: 'full_overview' })}>Full overview</a>
             <a className="underline" href="#/terms" onClick={() => track('nav', { to: 'terms' })}>Terms</a>
           </p>
@@ -332,7 +334,8 @@ export default function ShortAudit() {
         className="fixed inset-x-0 bottom-0 z-40 border-t border-[#0c0b09]/15 bg-[#faf5ea]/95 px-4 pt-3 backdrop-blur md:hidden"
         style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))', transform: stickyOn ? 'translateY(0)' : 'translateY(110%)', visibility: stickyOn ? 'visible' : 'hidden', transition: 'transform .2s ease, visibility .2s' }}
         data-testid="sticky-cta"
-        aria-hidden={!stickyOn}
+        aria-hidden={!stickyOn || !showCta}
+        hidden={!showCta}
       >
         {cta('sticky')}
       </div>

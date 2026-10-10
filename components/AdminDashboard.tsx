@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useEscapeClose } from '../lib/use-escape-close';
 import { Search, Plus, Pencil, Trash2, ChevronUp, ChevronDown, X, FileDown, History, StickyNote } from 'lucide-react';
 import { PricingMatrix } from './PricingMatrix';
 
@@ -98,6 +99,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDarkMode = fal
   const [adding, setAdding] = useState(false);
   const [historyClientId, setHistoryClientId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  useEscapeClose(!!editingId, () => setEditingId(null), 1600);
+  useEscapeClose(adding, () => setAdding(false), 1600);
+  useEscapeClose(!!historyClientId, () => setHistoryClientId(null), 1600);
+  useEscapeClose(!!deleteConfirmId, () => setDeleteConfirmId(null), 1600);
 
   const filtered = useMemo(() => {
     let list = clients.filter((c) => {

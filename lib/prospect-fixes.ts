@@ -44,6 +44,11 @@ export function roiMonthsPhrase(months: number): string {
   return `ROI in ${label} months`;
 }
 
+/** The audit report opens only after the lead API accepts the form. Queued and invalid stay on the gate. */
+export function leadSubmitUnlocksReport(status: string): boolean {
+  return status === 'sent';
+}
+
 export function isPlaceholderReportId(id: string | undefined | null): boolean {
   const t = (id || '').trim();
   if (!t) return true;
@@ -72,7 +77,7 @@ export function formatUsdAddon(amount: number): string {
   return `+$${amount.toLocaleString('en-US')}`;
 }
 
-/** http(s) booking link from env. Empty hides the Book / Cal CTA. No hardcoded dead event. */
+/** http(s) booking link from env. Empty hides Book on the short page, the dock, and checkout. No hardcoded event. */
 export function resolveCalUrl(env: { VITE_CAL_BOOKING_URL?: string; VITE_BOOKING_URL?: string } | undefined | null): string {
   const raw = (env?.VITE_CAL_BOOKING_URL || env?.VITE_BOOKING_URL || '').trim();
   return /^https?:\/\//i.test(raw) ? raw : '';

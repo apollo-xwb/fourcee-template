@@ -1,4 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react';
+import { useEscapeClose } from './use-escape-close';
 
 /**
  * Modal dialog behaviour for the AR sheet and the ring try-on (WAI-ARIA dialog pattern):
@@ -31,6 +32,7 @@ type Saved = { el: Element; inert: boolean; ariaHidden: string | null };
 export function useModalA11y(dialogRef: RefObject<HTMLElement | null>, onClose: () => void, initialFocusRef?: RefObject<HTMLElement | null>) {
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose; // always call the latest handler without rebuilding the trap on every parent render
+  useEscapeClose(true, () => onCloseRef.current(), 1500);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -57,11 +59,6 @@ export function useModalA11y(dialogRef: RefObject<HTMLElement | null>, onClose: 
 
     // 3) Escape + Tab trap (capture so model-viewer / inputs cannot swallow it)
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented) {
-        e.preventDefault();
-        onCloseRef.current();
-        return;
-      }
       if (e.key !== 'Tab') return;
       const items = getTabbable(dialog);
       if (items.length === 0) {

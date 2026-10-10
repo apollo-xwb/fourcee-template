@@ -7,6 +7,7 @@ import {
   formatUsdAddon,
   isPlaceholderReportId,
   paybackMonths,
+  leadSubmitUnlocksReport,
   resolveCalUrl,
   snapDeal,
   visitAuditDate,
@@ -57,6 +58,14 @@ describe('demo duration and money', () => {
   });
   it('formats add-on prices with a thousands separator', () => {
     expect(formatUsdAddon(1500)).toBe('+$1,500');
+  });
+});
+
+describe('audit lead gate', () => {
+  it('unlocks only after the server accepts the lead', () => {
+    expect(leadSubmitUnlocksReport('sent')).toBe(true);
+    expect(leadSubmitUnlocksReport('queued')).toBe(false);
+    expect(leadSubmitUnlocksReport('invalid')).toBe(false);
   });
 });
 

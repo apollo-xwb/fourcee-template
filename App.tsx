@@ -27,7 +27,6 @@ import {
 } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { CheckoutFlow } from './components/CheckoutFlow';
-import { CRMView } from './components/CRMView';
 // Internal admin preview (mock clients / MRR, no auth). OFF in production builds: it is only compiled in when VITE_ENABLE_ADMIN=1, so the
 // default bundle contains neither the route, the hidden button nor the mock data.
 const ADMIN_ENABLED = import.meta.env.VITE_ENABLE_ADMIN === '1';
@@ -45,6 +44,8 @@ import { LazyRingBuilderSection } from './components/LazyRingBuilderSection';
 import type { AuditData } from './types/audit';
 import { loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from './lib/audit-content';
 import { configuredCalUrl, demoDurationLine, SIDE_DEAL_DEFAULT, snapDeal } from './lib/prospect-fixes';
+import { planHashRoute } from './lib/hash-route';
+import { useEscapeClose } from './lib/use-escape-close';
 import { resolveRingBuilder } from './lib/ring-builder';
 import { assetUrl } from './lib/asset-url';
 import { renderSimpleMarkdown } from './lib/markdown';
@@ -234,14 +235,7 @@ const App: React.FC = () => {
     link.href = logoUrl;
   }, []);
 
-  useEffect(() => {
-    if (!isSideMenuOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsSideMenuOpen(false);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [isSideMenuOpen]);
+  useEscapeClose(isSideMenuOpen, () => setIsSideMenuOpen(false), 1200);
 
   const navigate = useCallback((view: AppView, post?: BlogPost, packageId?: string) => {
     setCurrentView(view);
@@ -255,7 +249,7 @@ const App: React.FC = () => {
     const nextHash = (() => {
       switch (view) {
         case AppView.LEAD_MAGNET: return '#/audit';
-        case AppView.DASHBOARD: return '#/ops';
+        case AppView.DASHBOARD: return '#/';
         case AppView.CHECKOUT: return '#/checkout';
         case AppView.BLOG: return '#/insights';
         case AppView.BLOG_POST: return post?.slug ? `#/insights/${post.slug}` : '#/insights';
@@ -269,6 +263,10 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Checkout and the audit report are full-screen views. Escape returns home, under any real dialog (menu, chat, AR).
+  useEscapeClose(currentView === AppView.CHECKOUT, () => navigate(AppView.LANDING), 80);
+  useEscapeClose(currentView === AppView.LEAD_MAGNET, () => navigate(AppView.LANDING), 80);
+
   const scrollLandingSection = (head: string) => {
     const wide = window.matchMedia('(min-width: 1024px)').matches;
     const id = head === 'roi' ? 'roi-calculator'
@@ -281,31 +279,23 @@ const App: React.FC = () => {
   };
 
   const applyHashRoute = useCallback(() => {
-    const raw = (window.location.hash || '#/').replace(/^#/, '') || '/';
-    const path = raw.startsWith('/') ? raw : `/${raw}`;
-    const parts = path.split('/').filter(Boolean);
-    const head = (parts[0] || '').toLowerCase();
-    if (head === 'audit' || head === 'lead-magnet') setCurrentView(AppView.LEAD_MAGNET);
-    else if (head === 'ops' || head === 'dashboard' || head === 'crm') setCurrentView(AppView.DASHBOARD);
-    else if (head === 'checkout' || head === 'pricing') setCurrentView(AppView.CHECKOUT);
-    else if (head === 'insights' || head === 'blog') {
-      if (parts[1]) {
-        const post = BLOG_POSTS.find((bp) => bp.slug === parts[1] || bp.id === parts[1]);
-        if (post) {
-          setSelectedPost(post);
-          setCurrentView(AppView.BLOG_POST);
-          return;
-        }
+    const plan = planHashRoute(window.location.hash, ADMIN_ENABLED);
+    if (plan.replaceHome && window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search || '/');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    }
+    if (plan.view === AppView.BLOG_POST && plan.postSlug) {
+      const post = BLOG_POSTS.find((bp) => bp.slug === plan.postSlug || bp.id === plan.postSlug);
+      if (post) {
+        setSelectedPost(post);
+        setCurrentView(AppView.BLOG_POST);
+        return;
       }
       setCurrentView(AppView.BLOG);
-    }     else if (head === 'terms') setCurrentView(AppView.TERMS);
-    else if (head === 'admin' && ADMIN_ENABLED) setCurrentView(AppView.ADMIN);
-    else {
-      setCurrentView(AppView.LANDING);
-      if (head === 'roi' || head === 'demo' || head === 'ring' || head === 'faq') {
-        window.setTimeout(() => scrollLandingSection(head), 60);
-      }
+      return;
     }
+    setCurrentView(plan.view);
+    if (plan.section) window.setTimeout(() => scrollLandingSection(plan.section), 60);
   }, []);
 
   useEffect(() => {
@@ -394,6 +384,7 @@ const App: React.FC = () => {
       heroRingDesktop,
     } = landingLiveRef.current;
     const [showDemoCallModal, setShowDemoCallModal] = useState(false);
+    useEscapeClose(showDemoCallModal, () => setShowDemoCallModal(false), 160);
     const problemRef = useRef<HTMLElement>(null);
     const demoRef = useRef<HTMLElement>(null);
     const { scrollYProgress: problemScroll } = useScroll({
@@ -447,9 +438,6 @@ const App: React.FC = () => {
       if (!root) return;
       const onScroll = () => {
         if (window.matchMedia('(min-width: 768px)').matches) return;
-        const boutiqueSec = root.querySelector('#boutique-h-track')?.closest('section') as HTMLElement | null;
-        const boutiqueTrack = root.querySelector('#boutique-h-track') as HTMLElement | null;
-        scrollLinkedHorizontal(boutiqueSec, boutiqueTrack);
         const integSec = root.querySelector('#integrations-h-track')?.closest('section') as HTMLElement | null;
         const integTrack = root.querySelector('#integrations-h-track') as HTMLElement | null;
         scrollLinkedHorizontal(integSec, integTrack);
@@ -623,7 +611,7 @@ const App: React.FC = () => {
         </div>
       </section>
       {showDemoCallModal && (
-        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Demo callback">
           <button
             type="button"
             className="absolute inset-0 bg-black/45 backdrop-blur-sm"
@@ -667,23 +655,22 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* ROI Messaging Section (without calculator, stacked on mobile) */}
-      <section className="flex flex-col justify-center px-4 sm:px-6 py-12 md:py-16 bg-transparent">
-        <div className="w-full max-w-6xl mx-auto grid gap-10 lg:gap-16 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] items-start">
-          <div className="space-y-6">
+      {/* ROI follow-up: a filled band, not a wide empty column under the calculator */}
+      <section className="px-4 pb-6 pt-0 sm:px-6 md:pb-10">
+        <div className="mx-auto grid w-full max-w-6xl items-stretch gap-4 rounded-[1.75rem] border border-[#d9c39a]/70 bg-white/50 p-5 sm:p-6 lg:grid-cols-2 lg:gap-8">
+          <div className="flex flex-col justify-center space-y-4">
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-navy-400 dark:text-navy-300">
               See if the numbers make sense
             </p>
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold serif text-navy-900 tracking-tight">
-              Is Fourcee actually worth it
-              <br className="hidden md:block" /> for your showroom?
+            <h2 className="text-lg font-bold serif tracking-tight text-navy-900 sm:text-xl md:text-2xl">
+              Is Fourcee actually worth it for your showroom?
             </h2>
-            <p className="text-sm sm:text-base text-navy-600 dark:text-navy-300 max-w-xl">
-              Use your real averages to understand the real value of answered calls, reclaimed staff time, and higher-intent leads.
+            <p className="max-w-xl text-sm text-navy-600 dark:text-navy-300 sm:text-base">
+              The calculator above uses your averages. The signals beside it are what those answered calls turn into once the line is covered.
             </p>
           </div>
-          <div className="flex flex-col gap-6">
-            <div className="glass-card p-8 rounded-[2.5rem] border border-navy-50 shadow-xl dark:border-navy-800">
+          <div className="flex flex-col gap-4">
+            <div className="glass-card rounded-[1.75rem] border border-navy-50 p-6 shadow-xl dark:border-navy-800 sm:p-8">
               <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 mb-4 flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -874,40 +861,20 @@ const App: React.FC = () => {
             </button>
           </div>
 
-          <div className="mb-16 md:mb-24 flex w-full justify-center">
-            <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl shadow-2xl sm:max-w-4xl sm:rounded-[3rem] md:max-w-5xl md:rounded-[4rem]">
-            <div
-              className="relative mx-auto w-full h-[32vh] min-h-[180px] max-h-[300px] sm:h-[36vh] sm:max-h-[340px] md:h-[400px] md:min-h-[300px] md:max-h-[440px]"
-              style={{
-                maskImage: 'radial-gradient(ellipse 65% 65% at 50% 50%, black 20%, transparent 100%)',
-                WebkitMaskImage: 'radial-gradient(ellipse 65% 65% at 50% 50%, black 20%, transparent 100%)',
-                maskSize: '100% 100%',
-              }}
-            >
-              <img 
+          <div className="mb-16 flex w-full justify-center md:mb-24">
+            <figure className="w-full max-w-5xl">
+              <img
                 src={workflowImage}
                 loading="lazy"
                 decoding="async"
-                className="mx-auto h-full w-full max-w-full object-contain brightness-75" 
-                alt="Connected digital ecosystem" 
+                alt="Connected digital ecosystem"
+                className="mx-auto h-auto max-h-[440px] w-full object-contain brightness-95 [mask-image:radial-gradient(ellipse_at_center,black_38%,transparent_72%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_38%,transparent_72%)]"
               />
-            </div>
-            <div
-              className="absolute inset-0 pointer-events-none z-[1]"
-              style={{
-                background: isDarkMode
-                  ? 'radial-gradient(ellipse 75% 75% at 50% 50%, transparent 35%, rgba(5,5,4,0.92) 100%)'
-                  : 'radial-gradient(ellipse 75% 75% at 50% 50%, transparent 35%, rgba(255,255,255,0.92) 100%)',
-              }}
-              aria-hidden
-            />
-            <div className="absolute inset-0 z-[2] flex items-end bg-gradient-to-t from-navy-950/80 via-transparent to-transparent p-4 sm:p-8 md:p-12 pointer-events-none">
-              <div className="max-w-xl">
-                <h3 className={`text-2xl sm:text-3xl md:text-4xl font-bold serif mb-2 md:mb-4 italic ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>The Synchronized Showroom</h3>
-                <p className={`font-light text-sm sm:text-base md:text-lg ${isDarkMode ? 'text-white/80' : 'text-slate-800'}`}>Fourcee acts as the intelligent bridge between your client interactions and your inventory, scheduling, and CRM systems.</p>
-              </div>
-            </div>
-            </div>
+              <figcaption className="mx-auto mt-2 max-w-xl px-4 text-center">
+                <h3 className={`mb-2 font-serif text-2xl font-bold italic sm:text-3xl ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>The Synchronized Showroom</h3>
+                <p className={`text-sm font-light sm:text-base ${isDarkMode ? 'text-white/80' : 'text-slate-800'}`}>Fourcee acts as the intelligent bridge between your client interactions and your inventory, scheduling, and CRM systems.</p>
+              </figcaption>
+            </figure>
           </div>
 
           <div id="integrations-h-track" className="md:grid md:grid-cols-2 lg:grid-cols-3 gap-8 flex w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain gap-4 sm:gap-6 pb-2 md:overflow-visible md:flex-none scrollbar-thin" data-scroll-link="1">
@@ -979,7 +946,7 @@ const App: React.FC = () => {
               >
                 <defs>
                   <filter id="nivoda-soft-feather">
-                    <feGaussianBlur stdDeviation="10" />
+                    <feGaussianBlur stdDeviation="18" />
                   </filter>
                   <mask id="nivoda-soft-mask">
                     <rect width="100" height="125" fill="black" />
@@ -1080,8 +1047,7 @@ const App: React.FC = () => {
         />
         <div className="max-w-4xl mx-auto text-center relative z-10 px-4 w-full min-w-0 overflow-x-hidden">
           <h2 className="text-lg sm:text-xl md:text-2xl font-bold serif text-navy-900 mb-4 tracking-tight">Boutique Intelligence</h2>
-          <p className="mb-4 text-[10px] uppercase tracking-[0.2em] text-navy-500">Swipe · cards sequence as you scroll</p>
-          <div id="boutique-h-track" className="-mx-4 px-4 flex w-full min-w-0 max-w-full gap-3 overflow-x-auto overscroll-x-contain pb-3 scrollbar-thin md:mx-0 md:px-0 md:grid md:grid-cols-3 md:overflow-visible md:gap-4" data-scroll-link="1">
+          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
             {[
               { title: "Voice Cloning", desc: "Your actual voice, scaled across 100 simultaneous calls." },
               { title: "Live Estimates", desc: "Instant pricing based on daily market spot rates." },
@@ -1089,7 +1055,7 @@ const App: React.FC = () => {
             ].map((f, i) => (
               <div
                 key={i}
-                className="liquid-glass shrink-0 w-[min(82vw,300px)] min-w-[min(82vw,300px)] max-w-sm rounded-2xl p-5 sm:p-6 text-left hover:shadow-xl transition-all group md:w-auto md:min-w-0 md:max-w-none md:shrink"
+                className="liquid-glass min-w-0 rounded-2xl p-5 text-left transition-all hover:shadow-xl group sm:p-6"
               >
                 <div className="w-9 h-9 bg-navy-900 rounded-xl mb-4 flex items-center justify-center text-white font-bold text-sm group-hover:scale-105 transition-transform border border-[#c8b58f]/40">
                   {i + 1}
@@ -1479,15 +1445,6 @@ const App: React.FC = () => {
           <CheckoutFlow
             isDarkMode={isDarkMode}
             initialPackageId={preSelectedPackageId}
-          />
-        )}
-        {currentView === AppView.DASHBOARD && (
-          <CRMView
-            isDarkMode={isDarkMode}
-            businessName={auditData?.business.name ?? PLACEHOLDER_BUSINESS_NAME}
-            reportId={auditData?.auditMeta.reportId}
-            location={auditData?.business.location}
-            ringBuilder={ringBuilder ?? undefined}
           />
         )}
         {ADMIN_ENABLED && AdminDashboard && currentView === AppView.ADMIN && (

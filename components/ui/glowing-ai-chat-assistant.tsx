@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useEscapeClose } from '../../lib/use-escape-close';
 import { Paperclip, Link, Mic, Send, Info, Bot, X } from 'lucide-react';
 import { getFallbackResponse, formatChatText } from './chat-knowledge-base';
 
@@ -43,6 +44,7 @@ async function fetchGeminiReply(messages: { role: MessageRole; content: string }
 
 const FloatingAiAssistant: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  useEscapeClose(isChatOpen, () => setIsChatOpen(false), 1100);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -144,6 +146,9 @@ const FloatingAiAssistant: React.FC = () => {
       {isChatOpen && (
         <div
           ref={chatRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Concierge chat"
           className="absolute bottom-20 right-0 w-[min(100vw-3rem,420px)] transition-all duration-300 origin-bottom-right flex flex-col max-h-[min(80vh,640px)]"
           style={{
             animation: 'popInChat 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',

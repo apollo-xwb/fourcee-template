@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { assetUrl } from '../lib/asset-url';
-import { AuditLeadGate, auditLeadUnlocked } from './AuditLeadGate';
+import { AuditLeadGate } from './AuditLeadGate';
 import { configuredCalUrl, demoDurationLine, isPlaceholderReportId, visitAuditDate } from '../lib/prospect-fixes';
 import fcWhite from '../public/assets/fcwhite.png';
 import fcBlack from '../public/assets/fcblack.png';
@@ -106,8 +106,8 @@ const gridBgStyleLight: React.CSSProperties = {
 };
 
 export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onBookCall, data }) => {
-  // The short prospect page sets this flag on "See the full report" so a prospect who already chose to read the detail is not gated again.
-  const [unlocked, setUnlocked] = useState(() => auditLeadUnlocked());
+  // Unlocked only in this view, and only after submitLead returns status "sent". A refresh shows the gate again.
+  const [unlocked, setUnlocked] = useState(false);
   const [showHeaderStats, setShowHeaderStats] = useState(false);
   const headerSurface = 'navy';
   const triggerBooking = () => {

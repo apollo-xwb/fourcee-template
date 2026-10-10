@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { AuditData } from '../types/audit';
 import { newIdempotencyKey, submitLead } from '../lib/lead-client';
+import { leadSubmitUnlocksReport } from '../lib/prospect-fixes';
 
 const COUNTRIES = [
   { code: '+27', label: 'ZA +27' },
@@ -10,16 +11,6 @@ const COUNTRIES = [
   { code: '+971', label: 'AE +971' },
   { code: '+91', label: 'IN +91' },
 ];
-
-const UNLOCK_KEY = 'fourcee-audit-lead-ok';
-
-export function auditLeadUnlocked(): boolean {
-  try { return sessionStorage.getItem(UNLOCK_KEY) === '1'; } catch { return false; }
-}
-
-export function markAuditLeadUnlocked(): void {
-  try { sessionStorage.setItem(UNLOCK_KEY, '1'); } catch { /* private mode */ }
-}
 
 interface AuditLeadGateProps {
   data: AuditData;
@@ -68,12 +59,12 @@ export const AuditLeadGate: React.FC<AuditLeadGateProps> = ({ data, isDarkMode, 
       page_url: typeof window !== 'undefined' ? window.location.href : '',
     });
     setSending(false);
-    if (result.status === 'invalid') {
-      const first = Object.values(result.fields)[0];
-      setError(first || 'Please check the form and try again.');
+    if (!leadSubmitUnlocksReport(result.status)) {
+      const first = result.status === 'invalid' ? Object.values(result.fields)[0] : '';
+      const queued = result.status === 'queued' ? result.error : '';
+      setError(first || queued || 'Please check the form and try again.');
       return;
     }
-    markAuditLeadUnlocked();
     onUnlocked();
   };
 
