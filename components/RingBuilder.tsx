@@ -246,7 +246,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
         onPointerDown={warm}
         onFocus={warm}
         onTouchStart={warm}
-        className="min-h-11 flex-1 rounded-full border border-[#c8b58f]/60 bg-white/5 px-3 py-2.5 sm:flex-none sm:px-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f4efe4] active:scale-95"
+        className="min-h-11 flex-1 rounded-full border border-[#c8b58f] bg-[#0c0b09] px-3 py-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#faf5ea] active:scale-95 sm:flex-none sm:px-4"
         data-testid="open-tryon"
       >
         Try on your hand

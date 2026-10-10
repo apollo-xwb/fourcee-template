@@ -44,6 +44,7 @@ import { briefFromAudit, loadAuditGateBrief, withoutReport, type AuditGateBrief 
 import { sealAudit } from './lib/audit-sealed';
 import { configuredCalUrl, demoDurationLine, SIDE_DEAL_DEFAULT, snapDeal } from './lib/prospect-fixes';
 import { planHashRoute } from './lib/hash-route';
+import { landingSectionElementId, pinScrollTarget } from './lib/scroll-section';
 import { useEscapeClose } from './lib/use-escape-close';
 import { resolveRingBuilder } from './lib/ring-builder';
 import { assetUrl } from './lib/asset-url';
@@ -311,13 +312,10 @@ const App: React.FC = () => {
 
   const scrollLandingSection = (head: string) => {
     const wide = window.matchMedia('(min-width: 1024px)').matches;
-    const id = head === 'roi' ? 'roi-calculator'
-      : head === 'demo' ? 'demo'
-      : head === 'faq' ? 'signal-faq'
-      : wide ? 'ring-studio-hero' : 'ring-studio';
+    const id = landingSectionElementId(head, wide);
     const container = scrollContainerRef.current;
-    const target = container?.querySelector<HTMLElement>(`#${id}`) || document.getElementById(id);
-    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (container && pinScrollTarget(container, id)) return;
+    document.getElementById(id)?.scrollIntoView({ behavior: 'auto', block: 'start' });
   };
 
   const applyHashRoute = useCallback(() => {
@@ -352,16 +350,10 @@ const App: React.FC = () => {
     const run = () => {
       if (cancelled) return;
       const wide = window.matchMedia('(min-width: 1024px)').matches;
-      const id = plan.section === 'roi' ? 'roi-calculator'
-        : plan.section === 'demo' ? 'demo'
-        : plan.section === 'faq' ? 'signal-faq'
-        : wide ? 'ring-studio-hero' : 'ring-studio';
+      const id = landingSectionElementId(plan.section!, wide);
       const container = scrollContainerRef.current;
-      const target = container?.querySelector<HTMLElement>(`#${id}`);
-      if (target) {
-        target.scrollIntoView({ behavior: 'auto', block: 'start' });
-        return;
-      }
+      // pinScrollTarget keeps correcting after the mobile ring poster swaps for the 112vh track.
+      if (container && pinScrollTarget(container, id)) return;
       if (tries++ < 40) timer = window.setTimeout(run, 50);
     };
     timer = window.setTimeout(run, 0);
@@ -445,10 +437,7 @@ const App: React.FC = () => {
     const scrollToSectionById = (id: string) => {
       const container = scrollContainerRef.current;
       if (!container) return;
-      const target = container.querySelector<HTMLElement>(`#${id}`);
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      pinScrollTarget(container, id);
     };
 
     const pushSection = (section: string) => {
@@ -610,7 +599,7 @@ const App: React.FC = () => {
       {/* Demo Video Section - now directly after hero; 9:16 portrait on mobile */}
       <section id="demo" className="flex flex-col justify-center py-16 md:py-24 px-4 sm:px-6 bg-transparent relative scroll-mt-24">
         <div className="max-w-6xl mx-auto flex flex-col items-center w-full min-w-0">
-          <h2 className="mb-6 overflow-visible px-4 text-center text-xl font-bold serif text-navy-900 sm:text-2xl md:mb-10 md:text-3xl">
+          <h2 id="demo-heading" className="mb-6 scroll-mt-24 overflow-visible px-4 text-center text-xl font-bold serif text-navy-900 sm:text-2xl md:mb-10 md:text-3xl">
             Experience the Demo
           </h2>
           <button
