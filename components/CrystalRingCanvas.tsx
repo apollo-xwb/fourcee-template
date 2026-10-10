@@ -24,7 +24,7 @@ const SCROLL_KEYS: { pos: Vec3; target: Vec3; rot: Vec3 }[] = [
   // Approach customize framing (Vikas config mid)
   { pos: [-0.17, -0.25, 6.2], target: [0, 0.15, 0], rot: [-Math.PI / 3, 0, -Math.PI / 2.4] },
   // Docked studio — camera pulled back so the ring fits under the HUD
-  { pos: [-0.17, 0.72, 8.6], target: [0, -0.55, 0], rot: [-Math.PI / 2.2, 0, -Math.PI / 2] },
+  { pos: [-0.17, 0.95, 10.6], target: [0, -0.72, 0], rot: [-Math.PI / 2.2, 0, -Math.PI / 2] },
 ];
 
 const DOCK_AT = 0.78;

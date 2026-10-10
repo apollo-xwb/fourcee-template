@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { PhoneCall } from 'lucide-react';
 import DisplayCards from './ui/display-cards';
 import fcShad from '../public/assets/fcshad.png';
-import { preloadRingNetwork } from '../lib/preload-ring';
 import { splashTrioLayout } from '../lib/splash-layout';
 
 const STATS = [
@@ -61,20 +60,19 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
   onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    // Only the cheap, off-main-thread part of the ring preload runs here (plain fetches of the GLB + Draco files into the HTTP cache).
-    // Parsing the 2 MB webgi runtime and creating a WebGL context used to land in the middle of the entrance (the 41.7 ms frame where all
-    // three cards jumped together on GPU); that CPU work now starts after the splash, see App.tsx.
-    preloadRingNetwork();
+    // The GLB and WebGi runtime stay unloaded until the splash is gone (App schedules them after isReady).
     let done: number | undefined;
     const timer = window.setTimeout(() => {
       setFade(true);
-      done = window.setTimeout(() => onCompleteRef.current(), 700);
-    }, 2800);
+      done = window.setTimeout(() => onCompleteRef.current(), 350);
+    }, 900);
     return () => {
       window.clearTimeout(timer);
       if (done) window.clearTimeout(done);
     };
   }, []);
+
+  const skip = () => onCompleteRef.current();
 
   return (
     <div
@@ -83,6 +81,14 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
       }`}
       data-testid="splash"
     >
+      <button
+        type="button"
+        onClick={skip}
+        className="absolute right-4 top-4 z-20 rounded-full border border-[#0c0b09]/20 bg-white/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#0c0b09]"
+        data-testid="splash-skip"
+      >
+        Skip
+      </button>
       {/* Soft beige grid */}
       <div
         className="absolute inset-0 z-0 pointer-events-none"
@@ -125,7 +131,7 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
         <div className="h-[2px] w-12 bg-[#0c0b09]/35 mx-auto mb-6" />
 
         {/* Floating missed-opportunity trio: CSS keyframes, transform/opacity only, one shared easing */}
-        <div className="relative w-full flex items-center justify-center h-[250px] sm:h-[280px] md:h-[320px] overflow-visible">
+        <div className="relative w-full flex items-center justify-center h-[300px] sm:h-[320px] md:h-[340px] overflow-visible mb-6">
           <div className="relative z-10 origin-center" style={{ scale: String(trio.scale), translate: `${trio.shiftPx}px 0` }} data-testid="splash-trio" data-scale={trio.scale}>
             <div className="fx-splash-float">
               <DisplayCards cards={SPLASH_OPPORTUNITY_CARDS} staggerEntrance />
@@ -134,7 +140,7 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
         </div>
 
         <p
-          className="fx-splash-in mt-4 max-w-xs text-center text-sm font-medium text-[#3a342b] uppercase tracking-widest leading-relaxed px-6"
+          className="fx-splash-in relative z-20 mt-2 max-w-xs rounded-xl bg-[#faf5ea] px-6 py-2 text-center text-sm font-medium text-[#3a342b] uppercase tracking-widest leading-relaxed"
           style={{ ['--d' as string]: '900ms' }}
         >
           {stat}

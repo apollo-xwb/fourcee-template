@@ -99,6 +99,17 @@ h2.serif:not(.fx-display),
 .serif.text-4xl:not(.fx-display) {
   font-size: clamp(1.05rem, 3.2vw, 1.55rem) !important;
   letter-spacing: 0.03em !important;
+  /* Room for the first glyph. overflow-x on a parent was clipping E / U (XPERIENCE, NIFIED). */
+  overflow: visible;
+  padding-inline: 0.45em;
+}
+
+#demo h2,
+#signal-faq h2,
+section h2.serif,
+section h3.serif {
+  overflow: visible;
+  padding-inline: 0.08em;
 }
 
 /* Important supporting copy defaults to the hero subtext voice. */

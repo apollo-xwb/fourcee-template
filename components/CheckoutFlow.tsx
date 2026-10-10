@@ -7,6 +7,7 @@ import { isPlaceholderBusinessName, loadAuditContent, PLACEHOLDER_BUSINESS_NAME 
 import { PayOnline, PayReturnBanner } from './ui/pay-online';
 import { flushQueue, newIdempotencyKey, submitLead, validateLeadFields, type LeadErrors } from '../lib/lead-client';
 import { isSouthAfricanStore, zarNote, zarRateFromEnv } from '../lib/pricing-display';
+import { configuredCalUrl, formatUsdAddon } from '../lib/prospect-fixes';
 import { byStatus } from '../lib/capabilities';
 interface CheckoutFlowProps {
   isDarkMode?: boolean;
@@ -17,9 +18,7 @@ const LEGACY_PACKAGE_IDS: Record<string, string> = { premium: 'pro' };
 
 const WISE_PAYMENT_URL = (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_WISE_PAYMENT_URL || '';
 const ZAR_RATE = zarRateFromEnv((import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_ZAR_PER_USD);
-const CAL_BOOKING_URL =
-  (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_CAL_BOOKING_URL ||
-  'https://app.cal.com/fourcee/30min';
+const CAL_BOOKING_URL = configuredCalUrl();
 
 
 export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, initialPackageId }) => {
@@ -308,10 +307,10 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                         )}
                       </div>
                       <span className="font-bold text-base text-navy-900 dark:text-white flex-shrink-0 ml-4 text-right">
-                        {u.price ? `+$${u.price}` : null}
+                        {u.price ? formatUsdAddon(u.price) : null}
                         {'monthlyPrice' in u && (u as { monthlyPrice?: number }).monthlyPrice ? (
                           <span className="block text-xs font-medium text-navy-700 dark:text-navy-400 mt-0.5">
-                            ${(u as { monthlyPrice: number }).monthlyPrice}/mo
+                            ${(u as { monthlyPrice: number }).monthlyPrice.toLocaleString('en-US')}/mo
                           </span>
                         ) : u.price ? (
                           <span className="block text-xs font-medium text-navy-700 dark:text-navy-400 mt-0.5">one-time</span>
@@ -449,6 +448,9 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                 </div>
               )}
               <div className="flex flex-col gap-3 pt-2">
+                <p className="text-sm leading-relaxed text-navy-700 dark:text-navy-300">
+                  Request the invoice below. We email it to you with a link to book onboarding. Nothing is charged on this page.
+                </p>
                 {WISE_PAYMENT_URL ? (
                   <a
                     href={WISE_PAYMENT_URL}
@@ -458,19 +460,17 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                   >
                     Pay with Wise · ${total.toLocaleString()}
                   </a>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-navy-300 dark:border-navy-600 px-4 py-3 text-xs text-navy-600 dark:text-navy-400">
-                    Online payment is not switched on yet. Request your invoice below and we&apos;ll email it to you personally.
-                  </div>
-                )}
-                <a
-                  href={CAL_BOOKING_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="fx-btn fx-btn-ghost w-full text-center"
-                >
-                  Book strategy call (Cal.com)
-                </a>
+                ) : null}
+                {CAL_BOOKING_URL ? (
+                  <a
+                    href={CAL_BOOKING_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fx-btn fx-btn-ghost w-full text-center"
+                  >
+                    Book strategy call
+                  </a>
+                ) : null}
               </div>
             </div>
             <p className="text-[10px] text-center text-navy-600 dark:text-navy-500 uppercase tracking-widest">

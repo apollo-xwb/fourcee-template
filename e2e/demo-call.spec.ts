@@ -2,7 +2,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
-import { openApp } from './helpers';
+import { openApp, unlockAuditReport } from './helpers';
 import { startLeadStack, type LeadStack } from './lead-server';
 
 const EVID = process.env.E2E_EVIDENCE_DIR || 'e2e-results/evidence';
@@ -21,6 +21,7 @@ test.beforeEach(async ({ page }) => {
 
 async function openPhone(page: Page) {
   await openApp(page, '#/audit');
+  await unlockAuditReport(page);
   const input = page.getByLabel('Phone number').first();
   await input.scrollIntoViewIfNeeded();
   await expect(input).toBeVisible();

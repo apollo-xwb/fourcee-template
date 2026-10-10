@@ -2,7 +2,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
-import { openApp } from './helpers';
+import { openApp, unlockAuditReport } from './helpers';
 
 const EVID = process.env.E2E_EVIDENCE_DIR || 'e2e-results/evidence';
 const BEFORE = process.env.E2E_BEFORE === '1';
@@ -68,7 +68,8 @@ test('invoice step + confirmation say what is true', async ({ page }, info) => {
 test('audit page CTAs no longer promise 2 hours', async ({ page }, info) => {
   await asSouthAfrica(page);
   await openApp(page, '#/audit');
-  await page.waitForTimeout(1200);
+  await unlockAuditReport(page);
+  await page.waitForTimeout(400);
   await shot(page, '04-audit-hero', info);
   if (BEFORE) return;
   const t = await visibleText(page);

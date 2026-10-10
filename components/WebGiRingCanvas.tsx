@@ -16,9 +16,16 @@ const SCROLL_KEYS: { pos: Vec3; target: Vec3; rot: Vec3 }[] = [
   { pos: [-1.83, -0.14, 6.15], target: [-0.78, -0.03, -0.12], rot: [0, 0, Math.PI / 2] },
   { pos: [-0.06, -1.15, 4.42], target: [-0.01, 0.9, 0.07], rot: [0, 0, -Math.PI / 2] },
   { pos: [-0.17, -0.25, 6.2], target: [0, 0.15, 0], rot: [-Math.PI / 3, 0, -Math.PI / 2.4] },
-  // Docked studio — far enough back for mobile HUD; target below center so ring sits above HUD
-  { pos: [-0.17, 0.72, 8.6], target: [0, -0.55, 0], rot: [-Math.PI / 2.2, 0, -Math.PI / 2] },
+  // Docked studio — pulled back so the band is fully in frame at 390 and 1280, sitting above the HUD.
+  { pos: [-0.17, 0.95, 10.6], target: [0, -0.72, 0], rot: [-Math.PI / 2.2, 0, -Math.PI / 2] },
 ];
+
+/** Orbit (desktop hero / 1280): centered in the canvas, not the mobile HUD pose. */
+const ORBIT_POSE: { pos: Vec3; target: Vec3; rot: Vec3 } = {
+  pos: [-0.1, 0.28, 10.8],
+  target: [0, 0.05, 0],
+  rot: [-Math.PI / 2.2, 0, -Math.PI / 2],
+};
 
 const DOCK_AT = 0.78;
 const DIAMOND_NAMES = ['diamonds', 'diamonds001', 'diamonds002', 'diamonds003', 'diamonds004', 'diamonds005', 'Object'];
@@ -379,7 +386,7 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
               posed = true;
             }
           } else {
-            const dock = SCROLL_KEYS[SCROLL_KEYS.length - 1];
+            const dock = ORBIT_POSE;
             cam.position.set(...dock.pos);
             cam.target.set(...dock.target);
             if (!dragging) orbitY += 0.004;

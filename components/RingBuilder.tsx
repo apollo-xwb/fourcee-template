@@ -53,7 +53,7 @@ function RingCanvas({ progressRef, active, onReady, onContextState, ...props }: 
 /** Lower edge of the docked ring as a fraction of the sticky viewport height (measured, iPhone 14 + Pixel). */
 const RING_BOTTOM_RATIO = 0.63;
 /** The docked ring is ~5-8% wider than a phone screen; 0.84 leaves a small margin on both sides (checked on iPhone 14 / Pixel). */
-const RING_PHONE_SCALE = 0.84;
+const RING_PHONE_SCALE = 0.74;
 
 function findSwatch(list: RingSwatch[], id: string, fallback: RingSwatch): RingSwatch {
   return list.find((item) => item.id === id) ?? fallback;
@@ -124,7 +124,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
       const scale = phone ? RING_PHONE_SCALE : 1;
       const originY = sh * 0.42;
       const bottom = originY + (sh * RING_BOTTOM_RATIO - originY) * scale;
-      const lift = phone ? Math.max(0, Math.round(bottom - (hudTop - 16))) : 0;
+      const lift = phone ? Math.max(0, Math.round(bottom - (hudTop - 28))) : 0;
       sticky.style.setProperty('--ring-lift', `${lift}px`);
       sticky.style.setProperty('--ring-scale', String(scale));
     };
@@ -259,9 +259,9 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
       : null;
 
   // one scrollable line on phones (pan-x only inside the row, page still scrolls vertically), wrapping from sm up
-  const swatchRow = 'flex min-w-0 flex-1 gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-2 sm:flex-wrap sm:overflow-visible';
+  const swatchRow = 'flex w-full min-w-0 flex-1 gap-2 overflow-x-auto overscroll-x-contain pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-2 sm:flex-wrap sm:overflow-visible';
   const chipClass = (active: boolean, accent: 'copper' | 'ice') =>
-    `inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] ${
+    `inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.06em] ${
       active
         ? accent === 'copper'
           ? 'border-[#c8b58f] bg-white/10 text-[#f4efe4]'
@@ -284,12 +284,19 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
         <p className="mt-1 text-[11px] text-[#a8957a]">
           {heroEmbed ? 'Drag to orbit · swap metal & stone' : '3D ring · not the voice SOP'}
         </p>
-        <div className={canvasH} style={{ touchAction: 'pan-y' }}>
+        <div className={`${canvasH} bg-[#0c0b09]`} style={{ touchAction: 'pan-y' }}>
+          <img
+            src={posterUrl}
+            alt=""
+            decoding="async"
+            className={`pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${sceneReady ? 'opacity-0' : 'opacity-80'}`}
+          />
           <RingCanvas
             metalColor={metal.color}
             gemColor={gem.color}
             mode="orbit"
             interactive={heroEmbed || compact}
+            onReady={() => setSceneReady(true)}
           />
         </div>
         <p className="fx-kicker mt-4">Metal</p>
@@ -331,7 +338,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
   // —— One continuous scene: short scroll → same ring docks → HUD customize ——
   return (
     <div className="relative" ref={rootRef}>
-      <div ref={scrollRoot} className="relative h-[150vh] sm:h-[200vh]">
+      <div ref={scrollRoot} data-testid="ring-scroll-track" className="relative h-[112vh] sm:h-[160vh]">
         <div
           ref={stickyRef}
           className="sticky top-0 z-[1] h-[100svh] min-h-[100svh] w-full overflow-hidden bg-[#0c0b09]"
@@ -459,7 +466,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
           >
             <div
               ref={hudRef}
-              className="liquid-glass mx-auto w-full max-w-lg rounded-2xl border border-[rgba(200,181,143,0.35)] bg-[rgba(12,11,9,0.55)] p-3 backdrop-blur-xl shadow-[0_-12px_48px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.08)] sm:p-4"
+              className="liquid-glass mx-auto w-[min(100%,32rem)] min-w-0 max-w-full overflow-hidden rounded-2xl border border-[rgba(200,181,143,0.35)] bg-[rgba(12,11,9,0.55)] p-3 backdrop-blur-xl shadow-[0_-12px_48px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.08)] sm:p-4"
               data-testid="ring-hud"
             >
               <div className="flex items-start justify-between gap-2">

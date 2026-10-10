@@ -63,9 +63,9 @@ export function normalizeAuditData(raw: AuditData): AuditData {
     liveDemo: {
       ...liveDemo,
       ctaLabel: liveDemo.ctaLabel || 'Try Fourcee on your phone',
-      helperCopy: liveDemo.helperCopy || 'No charge. ~60-90s.',
-      phoneCountryDefault: liveDemo.phoneCountryDefault || '+1',
-      demoDurationHint: liveDemo.demoDurationHint || '~60-90s',
+      helperCopy: liveDemo.helperCopy || 'No charge.',
+      phoneCountryDefault: liveDemo.phoneCountryDefault || '+27',
+      demoDurationHint: liveDemo.demoDurationHint || '~60–90s.',
     },
     ringBuilder: raw.ringBuilder,
     recoveryPlan: {

@@ -21,7 +21,6 @@ import {
   Info,
   House,
   FileSearch,
-  LayoutDashboard,
   CreditCard,
   CalendarDays,
   Gem,
@@ -45,6 +44,7 @@ import { AuditPage } from './components/AuditPage';
 import { LazyRingBuilderSection } from './components/LazyRingBuilderSection';
 import type { AuditData } from './types/audit';
 import { loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from './lib/audit-content';
+import { configuredCalUrl, demoDurationLine, SIDE_DEAL_DEFAULT, snapDeal } from './lib/prospect-fixes';
 import { resolveRingBuilder } from './lib/ring-builder';
 import { assetUrl } from './lib/asset-url';
 import { renderSimpleMarkdown } from './lib/markdown';
@@ -171,8 +171,6 @@ const App: React.FC = () => {
   const [preSelectedPackageId, setPreSelectedPackageId] = useState<string | null>(null);
   const [auditData, setAuditData] = useState<AuditData | null>(null);
   const [auditDataLoading, setAuditDataLoading] = useState(true);
-  const [portalNotifCount, setPortalNotifCount] = useState<1 | 2>(1);
-  const [showPortalGuide, setShowPortalGuide] = useState(false);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
   // Synchronous initial value: exactly ONE Ring Builder (WebGi context) is ever mounted - the desktop hero rail OR the phone/tablet
   // section - never both (the hidden one used to stay mounted, wait 4 s for a zero-size host and then spin up a second, fallback WebGL context).
@@ -185,7 +183,9 @@ const App: React.FC = () => {
     return () => mq.removeEventListener('change', apply);
   }, []);
   const [sideMenuCallsPerMonth, setSideMenuCallsPerMonth] = useState(12);
-  const [sideMenuAvgDeal, setSideMenuAvgDeal] = useState(4200);
+  const [sideMenuAvgDeal, setSideMenuAvgDeal] = useState(SIDE_DEAL_DEFAULT);
+  const dealValue = snapDeal(sideMenuAvgDeal);
+  const calUrl = configuredCalUrl();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const businessName = auditData?.business.name ?? PLACEHOLDER_BUSINESS_NAME;
   const ringBuilder = useMemo(() => resolveRingBuilder(auditData), [auditData]);
@@ -235,24 +235,13 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const forever = window.localStorage.getItem('fourcee-hide-portal-guide') === 'true';
-    const seenSession = window.sessionStorage.getItem('fourcee-portal-guide-seen') === 'true';
-    if (forever || seenSession) return;
-    const t = window.setTimeout(() => setShowPortalGuide(true), 2800);
-    return () => window.clearTimeout(t);
-  }, []);
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setPortalNotifCount(Math.random() > 0.5 ? 2 : 1);
-    }, 4500);
-    return () => window.clearInterval(id);
-  }, []);
-
-  const reopenPortalGuide = () => {
-    window.localStorage.removeItem('fourcee-hide-portal-guide');
-    setShowPortalGuide(true);
-  };
+    if (!isSideMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsSideMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isSideMenuOpen]);
 
   const navigate = useCallback((view: AppView, post?: BlogPost, packageId?: string) => {
     setCurrentView(view);
@@ -280,20 +269,16 @@ const App: React.FC = () => {
     }
   }, []);
 
-
-  const viewToHash = useCallback((view: AppView, post?: BlogPost | null) => {
-    switch (view) {
-      case AppView.LEAD_MAGNET: return '#/audit';
-      case AppView.DASHBOARD: return '#/ops';
-      case AppView.CHECKOUT: return '#/checkout';
-      case AppView.BLOG: return '#/insights';
-      case AppView.BLOG_POST: return post?.slug ? `#/insights/${post.slug}` : '#/insights';
-      case AppView.TERMS: return '#/terms';
-      case AppView.ADMIN: return '#/admin';
-      case AppView.LANDING:
-      default: return '#/';
-    }
-  }, []);
+  const scrollLandingSection = (head: string) => {
+    const wide = window.matchMedia('(min-width: 1024px)').matches;
+    const id = head === 'roi' ? 'roi-calculator'
+      : head === 'demo' ? 'demo'
+      : head === 'faq' ? 'signal-faq'
+      : wide ? 'ring-studio-hero' : 'ring-studio';
+    const container = scrollContainerRef.current;
+    const target = container?.querySelector<HTMLElement>(`#${id}`) || document.getElementById(id);
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const applyHashRoute = useCallback(() => {
     const raw = (window.location.hash || '#/').replace(/^#/, '') || '/';
@@ -313,9 +298,14 @@ const App: React.FC = () => {
         }
       }
       setCurrentView(AppView.BLOG);
-    } else if (head === 'terms') setCurrentView(AppView.TERMS);
+    }     else if (head === 'terms') setCurrentView(AppView.TERMS);
     else if (head === 'admin' && ADMIN_ENABLED) setCurrentView(AppView.ADMIN);
-    else setCurrentView(AppView.LANDING);
+    else {
+      setCurrentView(AppView.LANDING);
+      if (head === 'roi' || head === 'demo' || head === 'ring' || head === 'faq') {
+        window.setTimeout(() => scrollLandingSection(head), 60);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -330,91 +320,17 @@ const App: React.FC = () => {
   }, [applyHashRoute]);
 
   const goToRingBuilder = useCallback(() => {
+    const next = '#/ring';
+    if (window.location.hash !== next) window.history.pushState(null, '', next);
     setCurrentView(AppView.LANDING);
-    window.setTimeout(() => {
-      const container = scrollContainerRef.current;
-      const wide = window.matchMedia('(min-width: 1024px)').matches;
-      const sel = wide ? '#ring-studio-hero' : '#ring-studio';
-      const target = container?.querySelector<HTMLElement>(sel);
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 280);
+    window.setTimeout(() => scrollLandingSection('ring'), 280);
   }, []);
 
   const toggleDarkMode = () => {}; // dark mode retired
-  const sideMenuRecoveredMonthly = Math.round(sideMenuCallsPerMonth * sideMenuAvgDeal * 0.22);
+  const sideMenuRecoveredMonthly = Math.round(sideMenuCallsPerMonth * dealValue * 0.22);
   const openCalendarBooking = () => {
-    const win = window as Window & {
-      Cal?: ((...args: unknown[]) => void) & {
-        q?: unknown[];
-        ns?: Record<string, ((...args: unknown[]) => void) & { q?: unknown[] }>;
-        loaded?: boolean;
-      };
-    };
-
-    // Cal element-click embed logic
-    ((C: typeof window, A: string, L: string) => {
-      const runtimeWindow = C as typeof window & { Cal?: unknown };
-      const p = (a: { q?: unknown[] }, ar: IArguments | unknown[]) => {
-        a.q = a.q || [];
-        a.q.push(Array.from(ar));
-      };
-      const d = C.document;
-      runtimeWindow.Cal =
-        (runtimeWindow.Cal as unknown) ||
-        function () {
-          const cal = runtimeWindow.Cal as ((...args: unknown[]) => void) & {
-            loaded?: boolean;
-            ns?: Record<string, ((...args: unknown[]) => void) & { q?: unknown[] }>;
-            q?: unknown[];
-          };
-          const ar = arguments;
-          if (!cal.loaded) {
-            cal.ns = {};
-            cal.q = cal.q || [];
-            d.head.appendChild(d.createElement('script')).src = A;
-            cal.loaded = true;
-          }
-          if (ar[0] === L) {
-            const api = function () {
-              p(api as { q?: unknown[] }, arguments);
-            } as ((...args: unknown[]) => void) & { q?: unknown[] };
-            const namespace = ar[1] as string | undefined;
-            api.q = api.q || [];
-            if (typeof namespace === 'string') {
-              cal.ns![namespace] = cal.ns![namespace] || api;
-              p(cal.ns![namespace] as { q?: unknown[] }, ar);
-              p(cal as { q?: unknown[] }, ['initNamespace', namespace]);
-            } else {
-              p(cal as { q?: unknown[] }, ar);
-            }
-            return;
-          }
-          p(cal as { q?: unknown[] }, ar);
-        };
-    })(window, 'https://app.cal.com/embed/embed.js', 'init');
-
-    win.Cal?.('init', '30min', { origin: 'https://app.cal.com' });
-    win.Cal?.ns?.['30min']?.('ui', {
-      cssVarsPerTheme: { light: { 'cal-brand': '#fff' }, dark: { 'cal-brand': '#000' } },
-      hideEventTypeDetails: false,
-      layout: 'week_view',
-    });
-
-    let triggerEl = document.getElementById('cal-booking-trigger') as HTMLButtonElement | null;
-    if (!triggerEl) {
-      triggerEl = document.createElement('button');
-      triggerEl.id = 'cal-booking-trigger';
-      triggerEl.type = 'button';
-      triggerEl.style.display = 'none';
-      triggerEl.setAttribute('data-cal-link', 'fourcee/30min');
-      triggerEl.setAttribute('data-cal-namespace', '30min');
-      triggerEl.setAttribute('data-cal-config', '{"layout":"week_view","useSlotsViewOnSmallScreen":"true"}');
-      document.body.appendChild(triggerEl);
-    }
-    window.setTimeout(() => triggerEl?.click(), 0);
-    window.setTimeout(() => triggerEl?.click(), 180);
+    if (!calUrl) return;
+    window.open(calUrl, '_blank', 'noopener,noreferrer');
   };
 
 
@@ -506,11 +422,16 @@ const App: React.FC = () => {
       }
     };
 
-    const scrollToRoi = () => scrollToSectionById('roi-calculator');
+    const pushSection = (section: string) => {
+      const next = `#/${section}`;
+      if (window.location.hash !== next) window.history.pushState(null, '', next);
+    };
+    const scrollToRoi = () => { pushSection('roi'); scrollToSectionById('roi-calculator'); };
     const scrollToPricing = () => navigate(AppView.CHECKOUT);
     const goToAudit = () => navigate(AppView.LEAD_MAGNET);
     const scrollToRingStudio = () => {
       const wide = typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches;
+      pushSection('ring');
       scrollToSectionById(wide ? 'ring-studio-hero' : 'ring-studio');
     };
 
@@ -547,7 +468,7 @@ const App: React.FC = () => {
       {/* Hero: ribbed gold-glow texture + desktop ring-left / copy-right */}
       <section
         id="hero"
-        className="fourcee-hero-beige relative min-h-[100svh] overflow-hidden"
+        className="fourcee-hero-beige relative min-h-0 overflow-hidden lg:min-h-[100svh]"
       >
         <div
           className="fourcee-hero-beige-veil pointer-events-none absolute inset-0"
@@ -563,7 +484,7 @@ const App: React.FC = () => {
             solid beige, so the dark vertical slats of the background texture never sit behind small text. Starts at ~38% of the hero,
             fully solid by ~69%. Keeps the existing background, veil and grid above; md+ is unchanged. */}
         <div className="fourcee-hero-fade pointer-events-none absolute inset-0 z-[2] md:hidden" data-testid="hero-fade" aria-hidden />
-        <div className="relative z-10 mx-auto grid min-h-[100svh] w-full max-w-7xl grid-cols-1 content-start items-start gap-5 px-5 pt-16 pb-28 sm:px-8 sm:pt-20 md:px-12 md:items-center lg:grid-cols-2 lg:gap-10 lg:content-center lg:py-20">
+        <div className="relative z-10 mx-auto grid min-h-0 w-full max-w-7xl grid-cols-1 content-start items-start gap-5 px-5 pt-24 pb-16 sm:px-8 sm:pt-24 md:px-12 md:items-center lg:min-h-[100svh] lg:grid-cols-2 lg:gap-10 lg:content-center lg:py-20">
           {/* Desktop: Ring Builder inhabiting the left rail */}
           <div
             id="ring-studio-hero"
@@ -631,7 +552,7 @@ const App: React.FC = () => {
                 leadId={auditData?.lead_id}
                 phoneCountryDefault={auditData?.liveDemo.phoneCountryDefault}
                 ctaLabel={auditData?.liveDemo.ctaLabel}
-                helperCopy={auditData?.liveDemo.helperCopy}
+                helperCopy={demoDurationLine(auditData?.liveDemo.helperCopy, auditData?.liveDemo.demoDurationHint)}
               />
             </div>
           </div>
@@ -654,18 +575,16 @@ const App: React.FC = () => {
             </p>
           </div>
           <div className="mx-auto w-full max-w-6xl px-0 sm:px-1">
-            <LazyRingBuilderSection config={ringBuilder} isDarkMode={false} eager businessName={businessName} />
+            <LazyRingBuilderSection config={ringBuilder} isDarkMode={false} businessName={businessName} />
           </div>
         </section>
       )}
 
       {/* Demo Video Section - now directly after hero; 9:16 portrait on mobile */}
-      <section ref={demoRef} id="demo" className="min-h-screen flex flex-col justify-center py-24 md:py-32 px-4 sm:px-6 bg-transparent relative">
+      <section ref={demoRef} id="demo" className="flex flex-col justify-center py-16 md:py-24 px-4 sm:px-6 bg-transparent relative scroll-mt-24">
         <div className="max-w-6xl mx-auto flex flex-col items-center w-full min-w-0">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif text-navy-900 mb-6 md:mb-10 text-center tracking-tighter">
-            <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-emerald-700 dark:from-white dark:via-slate-200 dark:to-emerald-300 bg-clip-text text-transparent">
-              Experience the Demo
-            </span>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif text-navy-900 mb-6 md:mb-10 text-center px-2">
+            Experience the Demo
           </h2>
           <button
             type="button"
@@ -678,7 +597,7 @@ const App: React.FC = () => {
             style={{ scale: demoScale, opacity: demoOpacity, y: demoY }}
             className="relative w-full max-w-[280px] aspect-[9/16] md:max-w-4xl md:aspect-video rounded-2xl md:rounded-[3rem] overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] group origin-center"
           >
-             <img src={demoImage} alt="Demo" className="w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-1000" />
+             <img src={demoImage} alt="Demo" loading="lazy" decoding="async" className="w-full h-full object-cover brightness-75 group-hover:scale-105 transition-transform duration-1000" />
              <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 md:p-0">
                 <div className="mt-4 md:mt-8 text-center max-w-md px-2 md:px-6">
                   <p className="text-sm md:text-xl serif italic leading-relaxed">"Fourcee didn't just replace our receptionist; it enhanced the entire client experience. Our ROI was instant."</p>
@@ -724,7 +643,7 @@ const App: React.FC = () => {
                 leadId={auditData?.lead_id}
                 phoneCountryDefault={auditData?.liveDemo.phoneCountryDefault}
                 ctaLabel={auditData?.liveDemo.ctaLabel}
-                helperCopy={auditData?.liveDemo.helperCopy}
+                helperCopy={demoDurationLine(auditData?.liveDemo.helperCopy, auditData?.liveDemo.demoDurationHint)}
                 onCallCompleted={handleDemoCallCompleted}
               />
             </div>
@@ -733,7 +652,7 @@ const App: React.FC = () => {
       )}
 
       {/* Value Calculator Section - before ROI messaging; its own snap after demo */}
-      <section id="roi-calculator" className="min-h-screen flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent">
+      <section id="roi-calculator" className="flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent scroll-mt-24">
         <div className="w-full max-w-4xl mx-auto">
           <ValueCalculator isDarkMode={isDarkMode} businessName={businessName} />
           <div className="mt-6 flex justify-center">
@@ -749,7 +668,7 @@ const App: React.FC = () => {
       </section>
 
       {/* ROI Messaging Section (without calculator, stacked on mobile) */}
-      <section className="min-h-screen flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent">
+      <section className="flex flex-col justify-center px-4 sm:px-6 py-12 md:py-16 bg-transparent">
         <div className="w-full max-w-6xl mx-auto grid gap-10 lg:gap-16 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] items-start">
           <div className="space-y-6">
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-navy-400 dark:text-navy-300">
@@ -838,12 +757,11 @@ const App: React.FC = () => {
               Recover that revenue
             </button>
           </div>
-          <div className="relative h-[320px] sm:h-[400px] md:h-[500px] flex items-start justify-center pt-4 overflow-visible">
-            <motion.div 
+          <div className="relative flex flex-col items-center gap-6 overflow-visible">
+              <motion.div 
               style={{ y: cardsY }}
-              className="relative group z-10 mt-8 md:mt-16 scale-[0.55] sm:scale-75 md:scale-100 origin-center"
+              className="relative group z-10 mb-10 min-h-[15rem] origin-top scale-[0.72] sm:mb-6 sm:min-h-[17rem] sm:scale-90 md:mb-2 md:min-h-[19rem] md:scale-100"
             >
-              <div className="absolute -inset-10 bg-navy-900/50 blur-[100px] group-hover:bg-navy-800/50 transition-all"></div>
               <DisplayCards 
                 cards={[
                   {
@@ -853,7 +771,7 @@ const App: React.FC = () => {
                     date: "Sunday, 8:14 PM",
                     iconClassName: "text-red-500",
                     titleClassName: "text-red-500",
-                    className: "[grid-area:stack] -translate-y-6 hover:-translate-y-10 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
+                    className: "[grid-area:stack] -translate-y-4 hover:-translate-y-6 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
                   },
                   {
                     icon: <PhoneCall className="size-4 text-red-400" />,
@@ -862,7 +780,7 @@ const App: React.FC = () => {
                     date: "Saturday, 9:30 PM",
                     iconClassName: "text-red-500",
                     titleClassName: "text-red-500",
-                    className: "[grid-area:stack] translate-x-12 translate-y-2 hover:-translate-y-1 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
+                    className: "[grid-area:stack] translate-x-8 translate-y-1 hover:-translate-y-1 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
                   },
                   {
                     icon: <PhoneCall className="size-4 text-red-400" />,
@@ -871,12 +789,12 @@ const App: React.FC = () => {
                     date: "Yesterday, 11:45 PM",
                     iconClassName: "text-red-500",
                     titleClassName: "text-red-500",
-                    className: "[grid-area:stack] translate-x-24 translate-y-10 hover:translate-y-6",
+                    className: "[grid-area:stack] translate-x-16 translate-y-8 hover:translate-y-6",
                   },
                 ]}
               />
             </motion.div>
-            <div className="absolute bottom-0 left-0 md:-left-10 p-4 md:p-8 glass-card rounded-xl md:rounded-[2rem] border-white/10 max-w-[200px] sm:max-w-xs text-navy-950 dark:text-white shadow-2xl z-20">
+            <div className="relative z-20 w-full max-w-sm p-4 md:p-6 glass-card rounded-xl md:rounded-[2rem] border-white/10 text-navy-950 dark:text-white shadow-2xl">
               <p className="italic text-sm md:text-lg serif leading-tight">"We missed a $12k anniversary lead on a Sunday. Never again."</p>
               <p className="text-[9px] md:text-[10px] uppercase font-bold mt-2 md:mt-4 tracking-widest text-navy-400 dark:text-navy-300">- London Diamonds</p>
             </div>
@@ -940,10 +858,8 @@ const App: React.FC = () => {
       <section className="min-h-screen flex flex-col justify-center pt-32 pb-16 overflow-x-hidden bg-transparent transition-colors">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 min-w-0">
           <div className="text-center mb-16 md:mb-24 max-w-3xl mx-auto">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif text-slate-900 mb-5 md:mb-7 tracking-tighter break-words">
-              <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-amber-700 dark:from-white dark:via-slate-200 dark:to-amber-200 bg-clip-text text-transparent">
-                Unified Workflow
-              </span>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif text-navy-900 mb-5 md:mb-7 break-words px-2">
+              Unified Workflow
             </h2>
             <p className="text-slate-600 dark:text-navy-400 uppercase tracking-[0.2em] text-[11px] font-bold mb-6">Built for your current stack</p>
             <p className="text-base sm:text-lg text-slate-800 dark:text-navy-300 font-light leading-relaxed">
@@ -969,7 +885,9 @@ const App: React.FC = () => {
               }}
             >
               <img 
-                src={workflowImage} 
+                src={workflowImage}
+                loading="lazy"
+                decoding="async"
                 className="mx-auto h-full w-full max-w-full object-contain brightness-75" 
                 alt="Connected digital ecosystem" 
               />
@@ -1193,7 +1111,7 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      <section className="min-h-screen flex flex-col justify-center py-16 md:py-20 px-6 bg-transparent transition-colors relative">
+      <section id="signal-faq" className="flex flex-col justify-center scroll-mt-24 py-16 md:py-20 px-6 bg-transparent transition-colors relative">
         <div className="max-w-5xl mx-auto relative z-10 px-4 sm:px-6 w-full min-w-0">
           <div className="mb-5 flex justify-center">
             <button
@@ -1409,19 +1327,15 @@ const App: React.FC = () => {
             </div>
             <div className="mt-5 rounded-2xl border border-[#d9c39a]/80 bg-[#0c0b09] dark:bg-[#faf5ea] p-4">
               <p className="text-[11px] font-semibold text-[#faf5ea] dark:text-[#0c0b09]">{businessName}</p>
-              <p className="mt-1 text-xs text-[#ddd4c6] dark:text-[#3a342b]">Voice agent ops: call logs, transcripts, actions, onboarding, handover.</p>
+              <p className="mt-1 text-xs text-[#ddd4c6] dark:text-[#3a342b]">Prepared brief for this showroom.</p>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
               {[
-                { label: 'Home', sub: 'Main journey', icon: <House className="h-4 w-4" />, action: () => setCurrentView(AppView.LANDING) },
+                { label: 'Home', sub: 'Main journey', icon: <House className="h-4 w-4" />, action: () => navigate(AppView.LANDING) },
                 { label: 'Ring Builder', sub: '3D lead magnet', icon: <Gem className="h-4 w-4" />, action: () => goToRingBuilder() },
-                { label: 'Audit', sub: 'Custom report', icon: <FileSearch className="h-4 w-4" />, action: () => setCurrentView(AppView.LEAD_MAGNET) },
-                { label: 'CRM / Ops', sub: 'Demo portal · onboarding', icon: <LayoutDashboard className="h-4 w-4" />, action: () => {
-                  try { window.sessionStorage.setItem('fourcee-crm-tab', 'onboard'); } catch {}
-                  navigate(AppView.DASHBOARD);
-                } },
-                { label: 'Checkout', sub: 'Plans and pricing', icon: <CreditCard className="h-4 w-4" />, action: () => setCurrentView(AppView.CHECKOUT) },
-                { label: 'Book Call', sub: 'Strategy meeting', icon: <CalendarDays className="h-4 w-4" />, action: () => openCalendarBooking() },
+                { label: 'Audit', sub: 'Custom report', icon: <FileSearch className="h-4 w-4" />, action: () => navigate(AppView.LEAD_MAGNET) },
+                { label: 'Checkout', sub: 'Plans and pricing', icon: <CreditCard className="h-4 w-4" />, action: () => navigate(AppView.CHECKOUT) },
+                ...(calUrl ? [{ label: 'Book Call', sub: 'Strategy meeting', icon: <CalendarDays className="h-4 w-4" />, action: () => openCalendarBooking() }] : []),
               ].map((item) => (
                 <button
                   key={item.label}
@@ -1443,34 +1357,13 @@ const App: React.FC = () => {
             <div className="mt-6 rounded-2xl border border-[#d9c39a]/70 dark:border-[#c8b58f]/25 bg-[#fbf4e7]/90 dark:bg-[#1a1712] p-4">
               <p className="text-[10px] uppercase tracking-[0.22em] text-[#3a342b] dark:text-[#c8b58f]">Onboarding & help</p>
               <p className="mt-2 text-xs text-[#0c0b09] dark:text-[#faf5ea]">
-                Re-open the portal walkthrough at any time or launch a demo call popup to guide buyers through your concierge journey.
+                Home, audit, checkout and the ring studio. Press Escape or tap outside to close this menu.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => {
-                    try { window.sessionStorage.setItem('fourcee-crm-tab', 'onboard'); } catch {}
-                    navigate(AppView.DASHBOARD);
-                    setIsSideMenuOpen(false);
-                  }}
-                  className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] bg-[#0c0b09] text-[#faf5ea] dark:bg-[#faf5ea] dark:text-[#0c0b09]"
-                >
-                  Open CRM / Ops
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    reopenPortalGuide();
-                    setIsSideMenuOpen(false);
-                  }}
-                  className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] border border-[#d9c39a]/80 dark:border-[#c8b58f]/35 text-[#0c0b09] dark:text-[#faf5ea]"
-                >
-                  Open walkthrough
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentView(AppView.LANDING);
+                    navigate(AppView.LANDING);
                     setIsSideMenuOpen(false);
                   }}
                   className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] border border-[#d9c39a]/80 dark:border-[#c8b58f]/35 text-[#0c0b09] dark:text-[#faf5ea]"
@@ -1495,15 +1388,15 @@ const App: React.FC = () => {
                   className="w-full accent-emerald-600"
                 />
                 <label className="block text-[11px] text-[#0c0b09] dark:text-[#faf5ea]">
-                  Average deal value: <span className="font-semibold">${sideMenuAvgDeal.toLocaleString()}</span>
+                  Average deal value: <span className="font-semibold">${dealValue.toLocaleString()}</span>
                 </label>
                 <input
                   type="range"
                   min={1000}
                   max={20000}
                   step={250}
-                  value={sideMenuAvgDeal}
-                  onChange={(e) => setSideMenuAvgDeal(Number(e.target.value))}
+                  value={dealValue}
+                  onChange={(e) => setSideMenuAvgDeal(snapDeal(Number(e.target.value)))}
                   className="w-full accent-emerald-600"
                 />
                 <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900/25 border border-emerald-200 dark:border-emerald-500/20 px-3 py-2">
@@ -1534,24 +1427,12 @@ const App: React.FC = () => {
       )}
       {!isSideMenuOpen && (
       <FloatingNav
-        onNavigate={setCurrentView}
+        onNavigate={navigate}
         currentView={currentView}
         toggleDarkMode={toggleDarkMode}
         isDarkMode={isDarkMode}
         onOpenMenu={() => setIsSideMenuOpen(true)}
-        onBookMeeting={openCalendarBooking}
-        portalNotifCount={portalNotifCount}
-        showPortalGuide={showPortalGuide}
-        onDismissPortalGuide={() => {
-          window.sessionStorage.setItem('fourcee-portal-guide-seen', 'true');
-          setShowPortalGuide(false);
-        }}
-        onHidePortalGuideForever={() => {
-          window.localStorage.setItem('fourcee-hide-portal-guide', 'true');
-          window.sessionStorage.setItem('fourcee-portal-guide-seen', 'true');
-          setShowPortalGuide(false);
-        }}
-        onReopenPortalGuide={reopenPortalGuide}
+        onBookMeeting={calUrl ? openCalendarBooking : undefined}
       />
       )}
 
@@ -1615,18 +1496,8 @@ const App: React.FC = () => {
         {currentView === AppView.TERMS && <TermsPage />}
       </main>
 
-      {ADMIN_ENABLED && (
-        <button
-          type="button"
-          onClick={() => navigate(AppView.ADMIN)}
-          className="fixed bottom-4 left-4 z-[120] h-3 w-3 rounded-full bg-navy-900/20 dark:bg-white/20 hover:bg-navy-900/50 dark:hover:bg-white/50 transition-colors"
-          aria-label="Hidden admin access"
-          title="Admin access (internal preview)"
-        />
-      )}
-
       {/* Global footer — dotted ball field fills the band above Terms (no empty gap) */}
-      <footer className="relative w-full min-h-[120px] h-[min(18vh,160px)] flex-shrink-0 overflow-visible z-20 -mt-4">
+      <footer className="relative w-full min-h-[200px] h-[min(28vh,240px)] flex-shrink-0 overflow-visible z-20 -mt-4">
         <div
           className="absolute inset-0 rounded-t-[2rem]"
           style={{
