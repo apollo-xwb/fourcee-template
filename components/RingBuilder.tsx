@@ -285,10 +285,11 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
         )
       : null;
 
-  // one scrollable line on phones (pan-x only inside the row, page still scrolls vertically), wrapping from sm up
-  const swatchRow = 'flex w-full min-w-0 flex-1 gap-2 overflow-x-auto overscroll-x-contain pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-2 sm:flex-wrap sm:overflow-visible';
+  // Phones wrap onto extra lines so every metal/stone name is fully on screen. A single nowrap row was clipping
+  // "Rose" and "Sapphire" at 390px with the scrollbar hidden, so there was no way to reach the rest.
+  const swatchRow = 'flex w-full min-w-0 flex-1 flex-wrap content-start gap-1.5';
   const chipClass = (active: boolean, accent: 'copper' | 'ice') =>
-    `inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.06em] ${
+    `inline-flex max-w-full shrink-0 items-center gap-1.5 overflow-visible whitespace-nowrap rounded-full border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.06em] ${
       active
         ? accent === 'copper'
           ? 'border-[#c8b58f] bg-white/10 text-[#f4efe4]'
@@ -493,7 +494,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
           {/* Studio HUD — same canvas, same ring, customize overlay */}
           <div
             id="ring-studio-interact"
-            className={`absolute inset-0 z-20 flex flex-col justify-end p-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-8 transition-all duration-500 ${
+            className={`absolute inset-0 z-20 flex flex-col justify-end p-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-8 transition-all duration-500 ${
               hudOn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
             }`}
             data-hud-on={hudOn ? '1' : '0'}

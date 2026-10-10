@@ -108,10 +108,8 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
         <button
           type="button"
           onClick={() => onNavigate(AppView.CHECKOUT)}
-          className={`h-11 sm:h-12 px-4 sm:px-5 rounded-full text-[10px] sm:text-xs font-semibold transition-all uppercase tracking-[0.14em] shrink-0 ${
-            isActive(AppView.CHECKOUT)
-              ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950 shadow-lg scale-105'
-              : 'bg-navy-900 dark:bg-white text-white dark:text-navy-950 hover:shadow-xl hover:scale-105 active:scale-95'
+          className={`h-11 sm:h-12 px-4 sm:px-5 rounded-full text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] shrink-0 bg-[#0c0b09] text-[#faf5ea] hover:brightness-125 active:scale-95 ${
+            isActive(AppView.CHECKOUT) ? 'shadow-lg scale-105' : 'hover:shadow-xl hover:scale-105'
           }`}
         >
           {isActive(AppView.CHECKOUT) ? 'Paying' : 'Get Fourcee'}
@@ -133,12 +131,11 @@ const DockItem: React.FC<{
     onClick={onClick}
     aria-label={label}
     title={label}
+    data-theme={isDarkMode ? 'dark' : 'light'}
     className={`flex h-11 sm:h-12 items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 rounded-full transition-all duration-300 shrink-0 ${
       active
-        ? 'bg-navy-900 text-white shadow-md scale-105 dark:bg-white dark:text-navy-950'
-        : isDarkMode
-          ? 'text-white/90 hover:text-white hover:bg-white/10'
-          : 'text-navy-800 hover:text-navy-950 hover:bg-navy-900/5'
+        ? 'bg-[#0c0b09] text-[#faf5ea] shadow-md scale-105'
+        : 'text-[#1a1714] hover:bg-black/5'
     }`}
   >
     {icon}

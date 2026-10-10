@@ -30,27 +30,30 @@ export const LazyRingBuilderSection: React.FC<LazyRingBuilderSectionProps> = (pr
     const show = () => { if (!dead) setVisible(true); };
     if (props.eager) { show(); return; }
     const opts = { once: true, passive: true } as const;
+    // Interaction, or the section actually entering the viewport. No idle timer: that was fetching three.js during LCP.
     window.addEventListener('pointerdown', show, opts);
-    const host = window as Window & {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-    const idle = host.requestIdleCallback
-      ? host.requestIdleCallback(show, { timeout: props.heroEmbed ? 2500 : 4000 })
-      : window.setTimeout(show, 2500);
     let observer: IntersectionObserver | undefined;
     const node = hostRef.current;
     if (node && !props.heroEmbed) {
       observer = new IntersectionObserver(([entry]) => {
         if (entry.isIntersecting) show();
-      }, { rootMargin: '160px 0px' });
+      }, { rootMargin: '0px' });
       observer.observe(node);
+    } else if (props.heroEmbed) {
+      // Desktop hero ring is on screen. Wait until the first idle AFTER first paint, with no short timeout,
+      // so a busy main thread (Lighthouse) does not parse WebGi during TBT.
+      const host = window as Window & { requestIdleCallback?: (cb: () => void) => number; cancelIdleCallback?: (id: number) => void };
+      const idle = host.requestIdleCallback ? host.requestIdleCallback(show) : window.setTimeout(show, 6000);
+      return () => {
+        dead = true;
+        window.removeEventListener('pointerdown', show);
+        if (host.cancelIdleCallback) host.cancelIdleCallback(idle as number);
+        else window.clearTimeout(idle as number);
+      };
     }
     return () => {
       dead = true;
       window.removeEventListener('pointerdown', show);
-      if (host.requestIdleCallback && host.cancelIdleCallback) host.cancelIdleCallback(idle as number);
-      else window.clearTimeout(idle as number);
       observer?.disconnect();
     };
   }, [props.heroEmbed, props.eager]);

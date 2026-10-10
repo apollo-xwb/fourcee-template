@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { AppView, BlogPost } from './types';
 import { FloatingNav } from './components/FloatingNav';
 
@@ -9,10 +9,7 @@ import nivodaGif from './public/assets/nivoda.gif';
 import fcWhite from './public/assets/fcwhite.png';
 import fcBlack from './public/assets/fcblack.png';
 import { ValueCalculator } from './components/ValueCalculator';
-import { EtherealShadow } from './components/ui/etheral-shadow';
-import { DottedSurface } from './components/ui/dotted-surface';
 import DisplayCards from './components/ui/display-cards';
-import { IncomingCallPhone } from './components/ui/incoming-call-phone';
 import { MiniPhone } from './components/ui/mini-phone';
 import {
   PhoneCall,
@@ -25,8 +22,11 @@ import {
   CalendarDays,
   Gem,
 } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { CheckoutFlow } from './components/CheckoutFlow';
+const CheckoutFlow = lazy(() => import('./components/CheckoutFlow').then((m) => ({ default: m.CheckoutFlow })));
+const AuditPage = lazy(() => import('./components/AuditPage').then((m) => ({ default: m.AuditPage })));
+const DottedSurface = lazy(() => import('./components/ui/dotted-surface').then((m) => ({ default: m.DottedSurface })));
+const IncomingCallPhone = lazy(() => import('./components/ui/incoming-call-phone').then((m) => ({ default: m.IncomingCallPhone })));
+const FloatingAiAssistant = lazy(() => import('./components/ui/glowing-ai-chat-assistant').then((m) => ({ default: m.FloatingAiAssistant })));
 // Internal admin preview (mock clients / MRR, no auth). OFF in production builds: it is only compiled in when VITE_ENABLE_ADMIN=1, so the
 // default bundle contains neither the route, the hidden button nor the mock data.
 const ADMIN_ENABLED = import.meta.env.VITE_ENABLE_ADMIN === '1';
@@ -36,9 +36,7 @@ const AdminDashboard = ADMIN_ENABLED
 import { SplashScreen } from './components/SplashScreen';
 import { FaqMonochrome } from './components/ui/faq-monochrome.tsx';
 import { ArticleCard } from './components/ui/blog-post-card';
-import { FloatingAiAssistant } from './components/ui/glowing-ai-chat-assistant';
 import { BLOG_POSTS } from './constants';
-import { AuditPage } from './components/AuditPage';
 import { LazyRingBuilderSection } from './components/LazyRingBuilderSection';
 import type { AuditData } from './types/audit';
 import { loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from './lib/audit-content';
@@ -50,6 +48,26 @@ import { useEscapeClose } from './lib/use-escape-close';
 import { resolveRingBuilder } from './lib/ring-builder';
 import { assetUrl } from './lib/asset-url';
 import { renderSimpleMarkdown } from './lib/markdown';
+
+/** Mount heavy children only once they intersect the viewport, so three.js stays out of the first paint. */
+function WhenNear({ children, className }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setShow(true);
+      return;
+    }
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) setShow(true);
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return <div ref={ref} className={className}>{show ? <Suspense fallback={null}>{children}</Suspense> : null}</div>;
+}
 
 const INTEGRATIONS_DATA = [
   {
@@ -319,8 +337,39 @@ const App: React.FC = () => {
       return;
     }
     setCurrentView(plan.view);
-    if (plan.section) window.setTimeout(() => scrollLandingSection(plan.section), 60);
+    if (plan.section) window.setTimeout(() => scrollLandingSection(plan.section!), 60);
   }, []);
+
+  // Cold load of ?v=full#/roi fires this effect while the splash is still the only tree, so the first
+  // scrollIntoView finds nothing. Retry once the landing sections exist.
+  useEffect(() => {
+    if (!isReady) return;
+    const plan = planHashRoute(window.location.hash, ADMIN_ENABLED);
+    if (!plan.section) return;
+    let cancelled = false;
+    let tries = 0;
+    let timer = 0;
+    const run = () => {
+      if (cancelled) return;
+      const wide = window.matchMedia('(min-width: 1024px)').matches;
+      const id = plan.section === 'roi' ? 'roi-calculator'
+        : plan.section === 'demo' ? 'demo'
+        : plan.section === 'faq' ? 'signal-faq'
+        : wide ? 'ring-studio-hero' : 'ring-studio';
+      const container = scrollContainerRef.current;
+      const target = container?.querySelector<HTMLElement>(`#${id}`);
+      if (target) {
+        target.scrollIntoView({ behavior: 'auto', block: 'start' });
+        return;
+      }
+      if (tries++ < 40) timer = window.setTimeout(run, 50);
+    };
+    timer = window.setTimeout(run, 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [isReady]);
 
   useEffect(() => {
     applyHashRoute();
@@ -409,25 +458,6 @@ const App: React.FC = () => {
     } = landingLiveRef.current;
     const [showDemoCallModal, setShowDemoCallModal] = useState(false);
     useEscapeClose(showDemoCallModal, () => setShowDemoCallModal(false), 160);
-    const problemRef = useRef<HTMLElement>(null);
-    const demoRef = useRef<HTMLElement>(null);
-    const { scrollYProgress: problemScroll } = useScroll({
-      target: problemRef,
-      offset: ["start end", "end start"],
-      container: scrollContainerRef,
-    });
-    const { scrollYProgress: demoScroll } = useScroll({
-      target: demoRef,
-      offset: ["start end", "center center"],
-      container: scrollContainerRef,
-    });
-
-    // Keep parallax subtle — large Y travel + overflow-hidden = elements vanish on fast scroll
-    const cardsY = useTransform(problemScroll, [0, 1], [-8, 8]);
-    const demoScale = useTransform(demoScroll, [0, 0.5, 1], [1, 1, 1]);
-    const demoOpacity = useTransform(demoScroll, [0, 0.4], [1, 1]);
-    const demoY = useTransform(demoScroll, [0, 0.5], [0, 0]);
-
     const scrollToSectionById = (id: string) => {
       const container = scrollContainerRef.current;
       if (!container) return;
@@ -475,7 +505,13 @@ const App: React.FC = () => {
     }, [scrollContainerRef]);
 
 
-    if (typeof document !== 'undefined') document.getElementById('lcp-poster')?.remove();
+    useEffect(() => {
+      const boot = document.getElementById('lcp-poster') as HTMLImageElement | null;
+      if (!boot) return;
+      const drop = () => { boot.remove(); };
+      if (boot.complete && boot.naturalWidth > 0) requestAnimationFrame(drop);
+      else boot.addEventListener('load', () => requestAnimationFrame(drop), { once: true });
+    }, []);
 
     return (
     <div className="dock-safe-pad pb-32 md:pb-40" style={{ contentVisibility: 'visible' }}>
@@ -498,7 +534,7 @@ const App: React.FC = () => {
             solid beige, so the dark vertical slats of the background texture never sit behind small text. Starts at ~38% of the hero,
             fully solid by ~69%. Keeps the existing background, veil and grid above; md+ is unchanged. */}
         <div className="fourcee-hero-fade pointer-events-none absolute inset-0 z-[2] md:hidden" data-testid="hero-fade" aria-hidden />
-        <div className="relative z-10 mx-auto grid min-h-0 w-full max-w-7xl grid-cols-1 content-start items-start gap-4 px-5 pt-16 pb-8 sm:px-8 sm:pt-24 md:px-12 md:items-center lg:min-h-[100svh] lg:grid-cols-2 lg:gap-10 lg:content-center lg:py-20">
+        <div className="relative z-10 mx-auto grid min-h-0 w-full max-w-7xl grid-cols-1 content-start items-start gap-4 px-5 pt-8 pb-8 sm:px-8 sm:pt-24 md:px-12 md:items-center lg:min-h-[100svh] lg:grid-cols-2 lg:gap-10 lg:content-center lg:py-20">
           {/* Desktop: Ring Builder inhabiting the left rail */}
           <div
             id="ring-studio-hero"
@@ -535,7 +571,7 @@ const App: React.FC = () => {
               fetchPriority="high"
               decoding="async"
               data-testid="hero-lcp-poster"
-              className="mb-0 h-auto max-h-[4.5rem] w-[min(78vw,320px)] rounded-2xl object-cover object-[center_40%] shadow-[0_18px_40px_rgba(12,11,9,0.18)] lg:hidden"
+              className="mb-0 h-auto max-h-[7.5rem] w-[min(88vw,380px)] aspect-video rounded-2xl object-cover object-[center_40%] shadow-[0_18px_40px_rgba(12,11,9,0.18)] lg:hidden"
             />
             <div className="fx-chip mb-1 sm:mb-5">
               <span className="fx-dot" />
@@ -557,7 +593,7 @@ const App: React.FC = () => {
                 One recovered client can cover months of platform cost.
               </p>
             </div>
-            <div className="mt-2 flex flex-wrap gap-2 sm:mt-6 sm:gap-3">
+            <div className="hero-cta mt-2 flex flex-wrap gap-2 sm:mt-6 sm:gap-3">
               <button type="button" onClick={scrollToRingStudio} className="fx-btn fx-btn-primary">
                 Try the Ring Builder
               </button>
@@ -606,7 +642,7 @@ const App: React.FC = () => {
       )}
 
       {/* Demo Video Section - now directly after hero; 9:16 portrait on mobile */}
-      <section ref={demoRef} id="demo" className="flex flex-col justify-center py-16 md:py-24 px-4 sm:px-6 bg-transparent relative scroll-mt-24">
+      <section id="demo" className="flex flex-col justify-center py-16 md:py-24 px-4 sm:px-6 bg-transparent relative scroll-mt-24">
         <div className="max-w-6xl mx-auto flex flex-col items-center w-full min-w-0">
           <h2 className="mb-6 overflow-visible px-4 text-center text-xl font-bold serif text-navy-900 sm:text-2xl md:mb-10 md:text-3xl">
             Experience the Demo
@@ -618,8 +654,7 @@ const App: React.FC = () => {
           >
             Call me
           </button>
-          <motion.div
-            style={{ scale: demoScale, opacity: demoOpacity, y: demoY }}
+          <div
             className="relative w-full max-w-[280px] aspect-[9/16] md:max-w-4xl md:aspect-video rounded-2xl md:rounded-[3rem] overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] group origin-center"
           >
              <img src={demoImage} alt="Demo" loading="lazy" decoding="async" className="w-full h-full object-cover brightness-75 group-hover:scale-105 transition-transform duration-1000" />
@@ -629,7 +664,7 @@ const App: React.FC = () => {
                   <p className="text-[9px] md:text-[10px] uppercase font-bold mt-2 md:mt-4 tracking-widest">- Julianna Rossi, Rossi Haute Joaillerie</p>
                 </div>
              </div>
-          </motion.div>
+          </div>
           <div className="mt-10 flex justify-center">
             <button
               type="button"
@@ -641,10 +676,12 @@ const App: React.FC = () => {
           </div>
         </div>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 md:h-72">
-          <DottedSurface
-            isDarkMode={isDarkMode}
-            className="h-full w-full opacity-75 [mask-image:linear-gradient(to_top,black,transparent)]"
-          />
+          <WhenNear className="h-full w-full">
+            <DottedSurface
+              isDarkMode={isDarkMode}
+              className="h-full w-full opacity-75 [mask-image:linear-gradient(to_top,black,transparent)]"
+            />
+          </WhenNear>
         </div>
       </section>
       {showDemoCallModal && (
@@ -741,7 +778,7 @@ const App: React.FC = () => {
       </section>
 
       {/* Problem Step - moved below calculator: blue + grid faded at top and bottom */}
-      <section ref={problemRef} className="fourcee-ribbed-wash min-h-screen flex flex-col justify-center py-32 px-6 text-white relative overflow-x-hidden overflow-y-visible border-y border-white/5">
+      <section className="fourcee-ribbed-wash min-h-screen flex flex-col justify-center py-32 px-6 text-white relative overflow-x-hidden overflow-y-visible border-y border-white/5">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -750,10 +787,12 @@ const App: React.FC = () => {
           }}
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 md:h-72">
-          <DottedSurface
-            isDarkMode
-            className="h-full w-full opacity-80 [mask-image:linear-gradient(to_top,black,transparent)]"
-          />
+          <WhenNear className="h-full w-full">
+            <DottedSurface
+              isDarkMode
+              className="h-full w-full opacity-80 [mask-image:linear-gradient(to_top,black,transparent)]"
+            />
+          </WhenNear>
         </div>
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20 items-center relative z-10">
           <div className="space-y-10">
@@ -776,14 +815,13 @@ const App: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate(AppView.CHECKOUT)}
-              className="inline-flex items-center gap-2 rounded-full bg-white text-navy-950 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.24em] shadow-xl hover:scale-105 transition-all"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.24em] text-[#050504] shadow-xl hover:scale-105 transition-all"
             >
               Recover that revenue
             </button>
           </div>
           <div className="relative flex flex-col items-center gap-6 overflow-visible">
-              <motion.div 
-              style={{ y: cardsY }}
+              <div
               className="relative group z-10 mb-16 min-h-[18rem] origin-top scale-[0.72] sm:mb-14 sm:min-h-[20rem] sm:scale-90 md:mb-10 md:min-h-[22rem] md:scale-100"
             >
               <DisplayCards 
@@ -817,8 +855,8 @@ const App: React.FC = () => {
                   },
                 ]}
               />
-            </motion.div>
-            <div className="relative z-20 w-full max-w-sm p-4 md:p-6 glass-card rounded-xl md:rounded-[2rem] border-white/10 text-navy-950 dark:text-white shadow-2xl">
+            </div>
+            <div className="relative z-20 w-full max-w-sm p-4 md:p-6 glass-card rounded-xl md:rounded-[2rem] border-white/10 text-[#050504] shadow-2xl">
               <p className="italic text-sm md:text-lg serif leading-tight">"We missed a $12k anniversary lead on a Sunday. Never again."</p>
               <p className="text-[9px] md:text-[10px] uppercase font-bold mt-2 md:mt-4 tracking-widest text-navy-400 dark:text-navy-300">- London Diamonds</p>
             </div>
@@ -843,10 +881,12 @@ const App: React.FC = () => {
           }}
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 md:h-72">
-          <DottedSurface
-            isDarkMode={isDarkMode}
-            className="h-full w-full opacity-80 [mask-image:linear-gradient(to_top,black,transparent)]"
-          />
+          <WhenNear className="h-full w-full">
+            <DottedSurface
+              isDarkMode={isDarkMode}
+              className="h-full w-full opacity-80 [mask-image:linear-gradient(to_top,black,transparent)]"
+            />
+          </WhenNear>
         </div>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-20 relative z-10">
           <div className="order-2 md:order-1 flex-1 space-y-8">
@@ -873,7 +913,9 @@ const App: React.FC = () => {
             </button>
           </div>
           <div className="order-1 md:order-2 flex-1 relative flex items-center justify-center">
-            <IncomingCallPhone className="w-full max-w-[260px] sm:max-w-[320px]" isDarkMode={isDarkMode} />
+            <WhenNear className="w-full">
+              <IncomingCallPhone className="w-full max-w-[260px] sm:max-w-[320px]" isDarkMode={isDarkMode} />
+            </WhenNear>
           </div>
         </div>
       </section>
@@ -1281,13 +1323,7 @@ const App: React.FC = () => {
         background: 'linear-gradient(180deg, #faf5ea 0%, #f8f1e2 38%, #f6efdf 100%)',
       }}
     >
-      <div className="fixed inset-0 z-0 pointer-events-none fourcee-grain-lite">
-        <EtherealShadow
-          color="rgba(12, 11, 9, 0.08)"
-          animation={{ scale: 40, speed: 20 }}
-          noise={{ opacity: 0.04, scale: 1 }}
-        />
-      </div>
+      <div className="fixed inset-0 z-0 pointer-events-none fourcee-grain-lite" />
 
       {currentView === AppView.LANDING && (
         <div className="pointer-events-none fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-6 py-5 sm:px-10">
@@ -1442,12 +1478,14 @@ const App: React.FC = () => {
       <main className="relative z-10">
         {currentView === AppView.LANDING && <LandingPage scrollContainerRef={scrollContainerRef} />}
         {currentView === AppView.LEAD_MAGNET && (
-          <AuditPage
-            brief={gateBrief ?? briefFromAudit(auditData)}
-            isDarkMode={isDarkMode}
-            onGetLive={() => navigate(AppView.CHECKOUT)}
-            onBookCall={openCalendarBooking}
-          />
+          <Suspense fallback={null}>
+            <AuditPage
+              brief={gateBrief ?? briefFromAudit(auditData)}
+              isDarkMode={isDarkMode}
+              onGetLive={() => navigate(AppView.CHECKOUT)}
+              onBookCall={openCalendarBooking}
+            />
+          </Suspense>
         )}
         {currentView === AppView.BLOG && <BlogPage />}
         {currentView === AppView.BLOG_POST && selectedPost && (
@@ -1469,10 +1507,12 @@ const App: React.FC = () => {
            </div>
         )}
         {currentView === AppView.CHECKOUT && (
-          <CheckoutFlow
-            isDarkMode={isDarkMode}
-            initialPackageId={preSelectedPackageId}
-          />
+          <Suspense fallback={null}>
+            <CheckoutFlow
+              isDarkMode={isDarkMode}
+              initialPackageId={preSelectedPackageId}
+            />
+          </Suspense>
         )}
         {ADMIN_ENABLED && AdminDashboard && currentView === AppView.ADMIN && (
           <React.Suspense fallback={null}><AdminDashboard isDarkMode={isDarkMode} /></React.Suspense>
@@ -1502,10 +1542,12 @@ const App: React.FC = () => {
             WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 40%, transparent 78%)',
           }}
         />
-        <DottedSurface
-          isDarkMode={false}
-          className="absolute inset-0 z-[5] h-full w-full opacity-100 -translate-y-3 [mask-image:linear-gradient(to_top,black_78%,transparent_100%)]"
-        />
+        <WhenNear className="absolute inset-0 z-[5] h-full w-full">
+          <DottedSurface
+            isDarkMode={false}
+            className="h-full w-full opacity-100 -translate-y-3 [mask-image:linear-gradient(to_top,black_78%,transparent_100%)]"
+          />
+        </WhenNear>
         <div className="absolute inset-0 z-[20] flex items-end justify-center footer-terms-clearance px-4 pointer-events-none">
           <button
             type="button"
@@ -1516,7 +1558,9 @@ const App: React.FC = () => {
           </button>
         </div>
       </footer>
-      <FloatingAiAssistant />
+      <Suspense fallback={null}>
+        <FloatingAiAssistant />
+      </Suspense>
     </div>
   );
 };

@@ -46,33 +46,23 @@ export function preloadRingAssets(): Promise<void> {
   return Promise.all([preloadRingNetwork(), preloadRingRuntime()]).then(() => undefined);
 }
 
-type IdleWindow = Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number };
-
 /**
- * Schedule the heavy preload after first paint: on the first pointer/key/wheel, or when the browser is idle.
- * Does not fetch the GLB or parse webgi during the splash. Safe to call more than once.
+ * WebGi + the GLB are multi-megabyte. Load them on the first pointer or key, not during first paint and not on an idle
+ * timer (that timer was pulling the 2 MB runtime into the Lighthouse window and inflating TBT).
  */
 export function schedulePreloadRing(): () => void {
   if (typeof window === 'undefined') return () => undefined;
   let done = false;
-  const events = ['pointerdown', 'touchstart', 'keydown', 'wheel'] as const;
+  const events = ['pointerdown', 'touchstart', 'keydown'] as const;
   const run = () => {
     if (done) return;
     done = true;
     cleanup();
     void preloadRingAssets();
   };
-  const onScroll = () => run();
   events.forEach((e) => window.addEventListener(e, run, { once: true, passive: true }));
-  window.addEventListener('scroll', onScroll, { once: true, passive: true, capture: true });
-  const w = window as IdleWindow;
-  const idle = w.requestIdleCallback ? w.requestIdleCallback(run, { timeout: 4000 }) : window.setTimeout(run, 4000);
   function cleanup() {
     events.forEach((e) => window.removeEventListener(e, run));
-    window.removeEventListener('scroll', onScroll, true);
-    if (w.requestIdleCallback && (window as { cancelIdleCallback?: (n: number) => void }).cancelIdleCallback) {
-      (window as { cancelIdleCallback?: (n: number) => void }).cancelIdleCallback!(idle);
-    } else window.clearTimeout(idle);
   }
   return cleanup;
 }
