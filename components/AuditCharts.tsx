@@ -284,16 +284,16 @@ export function GbpSnapshotMockup({
           <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-navy-500'}`}>({reviews.count.toLocaleString()} reviews)</span>
         </div>
         {reviews.quote1 ? (
-          <p className={`mt-4 text-sm italic leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-navy-700'}`}>
+          <p className={`mt-4 text-sm italic leading-relaxed ${isDarkMode ? 'text-slate-100' : 'text-[#1a1714]'}`}>
             &ldquo;{reviews.quote1}&rdquo;
           </p>
         ) : null}
         {reviews.quote2 ? (
-          <p className={`mt-2 text-sm italic leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-navy-600'}`}>
+          <p className={`mt-2 text-sm italic leading-relaxed ${isDarkMode ? 'text-slate-200' : 'text-[#3a342b]'}`}>
             &ldquo;{reviews.quote2}&rdquo;
           </p>
         ) : null}
-        <p className={`mt-3 text-[10px] uppercase tracking-[0.2em] ${isDarkMode ? 'text-slate-600' : 'text-navy-500'}`}>Representative themes from public reviews</p>
+        <p className={`mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] ${isDarkMode ? 'text-slate-200' : 'text-[#1a1714]'}`}>Representative themes from public reviews</p>
         {themes.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
             {themes.map((theme) => (

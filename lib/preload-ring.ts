@@ -47,6 +47,94 @@ export function preloadRingAssets(): Promise<void> {
 }
 
 /**
+ * Start WebGi on the first pointer or key, or on requestIdleCallback after LCP has already painted.
+ * The idle path waits out a quiet stretch first: parsing the 2MB runtime is one long task, and a timeout
+ * that fires during that stretch is what put ~600ms on the desktop main thread.
+ * One shared gate: the hero section and the canvas both call this, and the second call must not wait
+ * another 6.5s after the first has already opened.
+ */
+let lcpGateOpen = false;
+const lcpGateWaiters: Array<() => void> = [];
+
+function openLcpGate(immediate: boolean) {
+  if (lcpGateOpen) return;
+  lcpGateOpen = true;
+  const pending = lcpGateWaiters.splice(0);
+  pending.forEach((fn) => fn(immediate));
+}
+
+export function scheduleAfterLcpIdle(run: () => void): () => void {
+  if (typeof window === 'undefined') return () => undefined;
+  let cancelled = false;
+  let idleId = 0;
+  const start = (immediate: boolean) => {
+    if (cancelled) return;
+    if (immediate) {
+      run();
+      return;
+    }
+    const ric = window.requestIdleCallback;
+    if (ric) idleId = ric(() => { if (!cancelled) run(); });
+    else run();
+  };
+  if (lcpGateOpen) {
+    start(false);
+    return () => {
+      cancelled = true;
+      if (idleId) window.cancelIdleCallback?.(idleId);
+    };
+  }
+
+  let po: PerformanceObserver | undefined;
+  let quietTimer = 0;
+  let fallbackTimer = 0;
+  const events = ['pointerdown', 'touchstart', 'keydown'] as const;
+  const release = () => {
+    events.forEach((e) => window.removeEventListener(e, onInteract));
+    po?.disconnect();
+    window.clearTimeout(quietTimer);
+    window.clearTimeout(fallbackTimer);
+  };
+  function onInteract() {
+    if (cancelled) return;
+    release();
+    openLcpGate(true);
+  }
+  const armQuiet = () => {
+    if (cancelled || lcpGateOpen || quietTimer) return;
+    quietTimer = window.setTimeout(() => {
+      if (cancelled || lcpGateOpen) return;
+      release();
+      const ric = window.requestIdleCallback;
+      if (ric) ric(() => openLcpGate(false));
+      else openLcpGate(false);
+    }, 6500);
+  };
+
+  lcpGateWaiters.push(start);
+  events.forEach((e) => window.addEventListener(e, onInteract, { once: true, passive: true }));
+  try {
+    po = new PerformanceObserver((list) => {
+      if (!list.getEntries().length) return;
+      po?.disconnect();
+      po = undefined;
+      armQuiet();
+    });
+    po.observe({ type: 'largest-contentful-paint', buffered: true });
+  } catch {
+    armQuiet();
+  }
+  fallbackTimer = window.setTimeout(armQuiet, 8000);
+  return () => {
+    cancelled = true;
+    const i = lcpGateWaiters.indexOf(start);
+    if (i >= 0) lcpGateWaiters.splice(i, 1);
+    release();
+    if (idleId) window.cancelIdleCallback?.(idleId);
+  };
+}
+
+/**
  * WebGi + the GLB are multi-megabyte. Load them on the first pointer or key, not during first paint and not on an idle
  * timer (that timer was pulling the 2 MB runtime into the Lighthouse window and inflating TBT).
  */

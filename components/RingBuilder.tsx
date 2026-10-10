@@ -7,7 +7,7 @@ import { CrystalRingCanvas } from './CrystalRingCanvas';
 import { WebGiRingCanvas } from './WebGiRingCanvas';
 import { findScroller, hudVisible, isDocked, ringProgress } from '../lib/ring-scroll';
 import { assetUrl } from '../lib/asset-url';
-import { schedulePreloadRing } from '../lib/preload-ring';
+import { preloadRingAssets, scheduleAfterLcpIdle } from '../lib/preload-ring';
 
 const posterUrl = assetUrl('assets/plates/plate_hero_ring.webp');
 
@@ -83,30 +83,13 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
   const hudRef = useRef<HTMLDivElement | null>(null);
   const [metalId, setMetalId] = useState(config.defaultMetalId);
   const [gemId, setGemId] = useState(config.defaultGemId);
-  // Poster is the first paint. WebGi / three start after idle or the first gesture, not during LCP.
+  // Poster stays up until the first WebGi frame. The runtime starts on a gesture, or on idle after LCP,
+  // never on a short timeout (that parsed the 2MB bundle inside the desktop TBT window).
   const [engine, setEngine] = useState(false);
-  useEffect(() => schedulePreloadRing(), []);
-  useEffect(() => {
-    let dead = false;
-    const start = () => { if (!dead) setEngine(true); };
-    const opts = { once: true, passive: true } as const;
-    window.addEventListener('pointerdown', start, opts);
-    window.addEventListener('keydown', start, opts);
-    const host = window as Window & {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-    const idle = host.requestIdleCallback
-      ? host.requestIdleCallback(start, { timeout: 4000 })
-      : window.setTimeout(start, 4000);
-    return () => {
-      dead = true;
-      window.removeEventListener('pointerdown', start);
-      window.removeEventListener('keydown', start);
-      if (host.cancelIdleCallback && host.requestIdleCallback) host.cancelIdleCallback(idle as number);
-      else window.clearTimeout(idle as number);
-    };
-  }, []);
+  useEffect(() => scheduleAfterLcpIdle(() => {
+    void preloadRingAssets();
+    setEngine(true);
+  }), []);
   // Scroll state is owned HERE (a passive scroll listener on the section's real scroller), not by the WebGi scene: the HUD and the
   // poster must work even when the 3D scene is still loading, failed, or the user flung past the section before it was ready.
   const [docked, setDocked] = useState(false); // camera docked / ring interactive
@@ -291,12 +274,8 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
   const chipClass = (active: boolean, accent: 'copper' | 'ice') =>
     `inline-flex max-w-full shrink-0 items-center gap-1.5 overflow-visible whitespace-nowrap rounded-full border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.06em] ${
       active
-        ? accent === 'copper'
-          ? 'border-[#c8b58f] bg-white/10 text-[#f4efe4]'
-          : 'border-[#c8b58f] bg-white/10 text-[#f4efe4]'
-        : isDarkMode
-          ? 'border-white/15 text-[#ddd4c6]'
-          : 'border-white/20 text-[#f3ebe0]'
+        ? 'border-[#0c0b09] bg-[#0c0b09] text-[#faf5ea]'
+        : 'border-[#1a1714]/30 bg-[#faf5ea] text-[#1a1714]'
     }`;
 
   if (compact || heroEmbed) {

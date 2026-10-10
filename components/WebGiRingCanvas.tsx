@@ -222,6 +222,8 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
         canvas.style.height = '100%';
         const webgi = await import('webgi');
         if (cancelled) return;
+        await new Promise<void>((resolve) => { window.setTimeout(resolve, 0); });
+        if (cancelled) return;
         ColorCtor = webgi.Color;
         const {
           ViewerApp,
@@ -264,6 +266,8 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
         const bloom = await viewer.addPlugin(BloomPlugin);
         await viewer.addPlugin(TemporalAAPlugin);
         await viewer.addPlugin(DiamondPlugin);
+        await new Promise<void>((resolve) => { window.setTimeout(resolve, 0); });
+        if (cancelled) return;
         await viewer.addPlugin(RandomizedDirectionalLightPlugin, false);
 
         try {
@@ -291,6 +295,8 @@ export const WebGiRingCanvas: React.FC<WebGiRingCanvasProps> = ({
         viewer.renderer.refreshPipeline();
 
         const manager = viewer.getPlugin(AssetManagerPlugin);
+        await new Promise<void>((resolve) => { window.setTimeout(resolve, 0); });
+        if (cancelled) return;
         await manager.addFromPath(RING_URL);
         if (cancelled) return;
 

@@ -21,7 +21,7 @@ interface AuditLeadGateProps {
 /**
  * Name, email and phone before the report. The business name and location are read from the
  * injected audit payload and are not editable here. The report body is not mounted, and not
- * fetched, until submitLead returns status "sent".
+ * fetched, until /api/lead returns JSON {ok:true} (status "sent"). An HTML 200 keeps this form up.
  */
 export const AuditLeadGate: React.FC<AuditLeadGateProps> = ({ brief, isDarkMode, onUnlocked }) => {
   const [name, setName] = useState('');

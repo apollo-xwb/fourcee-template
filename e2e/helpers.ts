@@ -21,7 +21,7 @@ export async function openApp(page: Page, query = '') {
 export async function unlockAuditReport(page: Page) {
   const gate = page.locator('#audit-lead-name');
   if (!(await gate.isVisible().catch(() => false))) return;
-  await page.route('**/api/lead', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'e2e-lead' }) }));
+  await page.route('**/api/lead', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: 'e2e-lead' }) }));
   await gate.fill('Zoe Tester');
   await page.locator('#audit-lead-email').fill('zoe@testco.example');
   await page.locator('#audit-lead-phone').fill('0821234567');

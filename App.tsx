@@ -427,22 +427,6 @@ const App: React.FC = () => {
   }, [isDarkMode, businessName, auditData, ringBuilder, expandedIntegration, heroRingDesktop]);
 
 
-  // Scroll-linked horizontal carousels (mobile): vertical scroll drives scrollLeft
-  const scrollLinkedHorizontal = (
-    container: HTMLElement | null,
-    track: HTMLElement | null,
-  ) => {
-    if (!container || !track) return;
-    const maxX = Math.max(0, track.scrollWidth - track.clientWidth);
-    if (maxX <= 0) return;
-    const rect = container.getBoundingClientRect();
-    const viewH = window.innerHeight || 1;
-    const start = viewH * 0.85;
-    const end = viewH * 0.15;
-    const t = Math.min(1, Math.max(0, (start - rect.top) / (start - end)));
-    track.scrollLeft = maxX * t;
-  };
-
   const LandingPage = useMemo(() => {
     // LANDING_PAGE_STABLE — created once; reads live values via landingLiveRef
     return function LandingPageImpl({ scrollContainerRef }: { scrollContainerRef: React.RefObject<HTMLDivElement | null> }) {
@@ -486,24 +470,6 @@ const App: React.FC = () => {
         navigate(AppView.LEAD_MAGNET);
       }, 1700);
     };
-
-    useEffect(() => {
-      const root = scrollContainerRef.current;
-      if (!root) return;
-      const onScroll = () => {
-        if (window.matchMedia('(min-width: 768px)').matches) return;
-        const integSec = root.querySelector('#integrations-h-track')?.closest('section') as HTMLElement | null;
-        const integTrack = root.querySelector('#integrations-h-track') as HTMLElement | null;
-        scrollLinkedHorizontal(integSec, integTrack);
-        const journeyTrack = root.querySelector('#faq-journey-track') as HTMLElement | null;
-        const faqSec = journeyTrack?.closest('section') as HTMLElement | null;
-        scrollLinkedHorizontal(faqSec, journeyTrack);
-      };
-      root.addEventListener('scroll', onScroll, { passive: true });
-      onScroll();
-      return () => root.removeEventListener('scroll', onScroll);
-    }, [scrollContainerRef]);
-
 
     useEffect(() => {
       const boot = document.getElementById('lcp-poster') as HTMLImageElement | null;
@@ -661,7 +627,7 @@ const App: React.FC = () => {
              <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 md:p-0">
                 <div className="mt-4 md:mt-8 text-center max-w-md px-2 md:px-6">
                   <p className="text-sm md:text-xl serif italic leading-relaxed">"Fourcee didn't just replace our receptionist; it enhanced the entire client experience. Our ROI was instant."</p>
-                  <p className="text-[9px] md:text-[10px] uppercase font-bold mt-2 md:mt-4 tracking-widest">- Julianna Rossi, Rossi Haute Joaillerie</p>
+                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#faf5ea] [text-shadow:0_1px_2px_rgba(0,0,0,0.9)] md:mt-4">— Julianna Rossi, Rossi Haute Joaillerie</p>
                 </div>
              </div>
           </div>
@@ -688,11 +654,11 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[160] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Demo callback">
           <button
             type="button"
-            className="absolute inset-0 bg-black/45 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#0c0b09]/80 backdrop-blur-md"
             onClick={() => setShowDemoCallModal(false)}
             aria-label="Close demo call popup"
           />
-          <div className="relative w-full max-w-md rounded-3xl border border-white/20 bg-white/90 dark:bg-navy-950/90 p-6 shadow-2xl">
+          <div className="relative w-full max-w-md rounded-3xl border border-[#d9c39a] bg-[#faf5ea] p-6 shadow-2xl">
             <p className="text-[10px] uppercase tracking-[0.26em] text-navy-600 dark:text-navy-300">Demo callback</p>
             <h3 className="mt-2 text-xl serif text-navy-900 dark:text-white">Get your live callback now</h3>
             <p className="mt-2 text-sm text-navy-700 dark:text-navy-300">
@@ -729,9 +695,9 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* ROI follow-up: a filled band, not a wide empty column under the calculator */}
-      <section className="px-4 pb-6 pt-0 sm:px-6 md:pb-10">
-        <div className="mx-auto grid w-full max-w-6xl items-stretch gap-4 rounded-[1.75rem] border border-[#d9c39a]/70 bg-white/50 p-5 sm:p-6 lg:grid-cols-2 lg:gap-8">
+      {/* ROI follow-up: both columns and a full-width strip, so the band under the calculator is not an empty field */}
+      <section className="px-4 pb-6 pt-2 sm:px-6 md:pb-10">
+        <div className="mx-auto grid w-full max-w-6xl items-stretch gap-4 rounded-[1.75rem] border border-[#d9c39a]/70 bg-white/70 p-5 sm:p-6 lg:grid-cols-2 lg:gap-8">
           <div className="flex flex-col justify-center space-y-4">
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-navy-400 dark:text-navy-300">
               See if the numbers make sense
@@ -773,6 +739,18 @@ const App: React.FC = () => {
             >
               Configure your solution →
             </button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3 lg:col-span-2">
+            {[
+              ['Answered after hours', 'The line is covered when the showroom is dark.'],
+              ['A summary your team can use', 'Each recovered caller arrives with the ask already written down.'],
+              ['One number, still yours', 'Callers reach the same shop. Fourcee picks up the ones you miss.'],
+            ].map(([title, body]) => (
+              <div key={title} className="rounded-2xl border border-[#d9c39a]/80 bg-[#faf5ea] p-4">
+                <p className="text-sm font-semibold text-[#1a1714]">{title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#3a342b]">{body}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -858,7 +836,7 @@ const App: React.FC = () => {
             </div>
             <div className="relative z-20 w-full max-w-sm p-4 md:p-6 glass-card rounded-xl md:rounded-[2rem] border-white/10 text-[#050504] shadow-2xl">
               <p className="italic text-sm md:text-lg serif leading-tight">"We missed a $12k anniversary lead on a Sunday. Never again."</p>
-              <p className="text-[9px] md:text-[10px] uppercase font-bold mt-2 md:mt-4 tracking-widest text-navy-400 dark:text-navy-300">- London Diamonds</p>
+              <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1a1714] md:mt-4">— London Diamonds</p>
             </div>
           </div>
         </div>
@@ -947,7 +925,7 @@ const App: React.FC = () => {
                 loading="lazy"
                 decoding="async"
                 alt="Connected digital ecosystem"
-                className="mx-auto h-auto max-h-[440px] w-full object-contain brightness-95 [mask-image:radial-gradient(ellipse_at_center,black_38%,transparent_72%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_38%,transparent_72%)]"
+                className="mx-auto h-auto max-h-[440px] w-full rounded-[2rem] object-contain brightness-95 [mask-image:radial-gradient(ellipse_at_center,black_46%,transparent_78%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_46%,transparent_78%)]"
               />
               <figcaption className="mx-auto mt-2 max-w-xl px-4 text-center">
                 <h3 className={`mb-2 font-serif text-2xl font-bold italic sm:text-3xl ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>The Synchronized Showroom</h3>
@@ -956,9 +934,9 @@ const App: React.FC = () => {
             </figure>
           </div>
 
-          <div id="integrations-h-track" className="md:grid md:grid-cols-2 lg:grid-cols-3 gap-8 flex w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain gap-4 sm:gap-6 pb-2 md:overflow-visible md:flex-none scrollbar-thin" data-scroll-link="1">
+          <div id="integrations-h-track" className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
             {INTEGRATIONS_DATA.map((cat, idx) => (
-              <div key={idx} className="glass-card p-5 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border border-navy-50 dark:border-navy-800 flex flex-col flex-shrink-0 w-[min(86vw,320px)] min-w-[min(86vw,320px)] sm:min-w-0 md:w-auto md:min-w-0">
+              <div key={idx} className="glass-card flex w-full min-w-0 flex-col rounded-[2rem] border border-navy-50 p-5 dark:border-navy-800 sm:rounded-[3rem] sm:p-10">
                 <h4 className="text-[11px] font-bold uppercase tracking-[0.2em] text-navy-400 mb-6">{cat.category}</h4>
                 <div className="flex flex-wrap gap-2 mb-6">
                   {cat.popular.map(p => (
@@ -1016,7 +994,7 @@ const App: React.FC = () => {
         />
         <div className="relative max-w-6xl mx-auto grid gap-10 lg:gap-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] items-center">
           <div className="relative flex items-center justify-center order-1">
-            <div className="w-full max-w-[220px] sm:max-w-[260px] md:max-w-md aspect-[4/5]">
+            <div className="aspect-[4/5] w-full max-w-[220px] overflow-hidden rounded-[2rem] sm:max-w-[260px] md:max-w-md [mask-image:radial-gradient(ellipse_at_center,black_58%,transparent_88%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_58%,transparent_88%)]">
               <svg
                 viewBox="0 0 100 125"
                 className={`w-full h-full ${!isDarkMode ? 'invert' : ''}`}

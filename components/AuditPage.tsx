@@ -63,6 +63,32 @@ const HeroMetricPill: React.FC<{ label: string; value: string; isDarkMode: boole
   </div>
 );
 
+/** Sits just above the dock, and only after the first stats row has scrolled off, so it does not cover that card. */
+const RecoverDock: React.FC<{ label: string; onClick: () => void }> = ({ label, onClick }) => {
+  const [clear, setClear] = useState(false);
+  useEffect(() => {
+    const el = document.getElementById('audit-hero-metrics');
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setClear(true);
+      return;
+    }
+    const io = new IntersectionObserver(([entry]) => setClear(!entry.isIntersecting), { threshold: 0.25 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  if (!clear) return null;
+  return (
+    <div
+      className="pointer-events-none fixed inset-x-0 z-20 flex justify-center px-4 md:hidden"
+      style={{ bottom: 'calc(var(--nav-dock-bottom, 1rem) + var(--nav-dock-height, 3.5rem) + 0.75rem)' }}
+    >
+      <button type="button" onClick={onClick} className="pointer-events-auto fx-btn fx-btn-primary max-w-[calc(100vw-2rem)] shadow-lg">
+        {label}
+      </button>
+    </div>
+  );
+};
+
 const KpiCard: React.FC<{ title: string; value: string; isDarkMode: boolean }> = ({ title, value, isDarkMode }) => (
   <div className={`group rounded-3xl border p-6 transition hover:-translate-y-0.5 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950/80 to-black shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-amber-500/20' : 'border-navy-200 bg-white/85 shadow-[0_10px_28px_rgba(12,11,9,0.06)] hover:border-navy-300'}`}>
     <p className={`text-[10px] uppercase tracking-[0.24em] ${isDarkMode ? 'text-slate-500' : 'text-navy-500'}`}>{title}</p>
@@ -285,27 +311,10 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
         <section
           className={`relative isolate overflow-hidden rounded-[2rem] border p-6 md:p-10 ${
             isDarkMode
-              ? 'border-white/10 text-white'
-              : 'border-navy-200/80 text-navy-900 shadow-[0_18px_55px_rgba(12,11,9,0.08)]'
+              ? 'border-white/10 bg-[#0c0b09] text-white'
+              : 'border-navy-200/80 bg-[#faf5ea] text-navy-900 shadow-[0_18px_55px_rgba(12,11,9,0.08)]'
           }`}
         >
-          <img
-            src={businessHeroImage}
-            alt=""
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover object-top"
-            aria-hidden
-          />
-          <div
-            className={`pointer-events-none absolute inset-0 ${
-              isDarkMode ? 'bg-navy-950/70' : 'bg-[#faf5ea]/82'
-            }`}
-            aria-hidden
-          />
-          {/* Soft black fade at bottom — not harsh */}
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-gradient-to-b from-transparent via-black/25 to-black/70"
-            aria-hidden
-          />
           {isDarkMode && (
             <div
               className="pointer-events-none absolute inset-0 opacity-35 mix-blend-soft-light"
@@ -358,7 +367,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                 Fourcee responds before you commit.
               </p>
 
-              <div className="mt-7 grid gap-3 sm:grid-cols-3">
+              <div id="audit-hero-metrics" className="mt-7 grid gap-3 sm:grid-cols-3">
                 <HeroMetricPill label="Inbound Calls / Week" value={formatRange(data.callModel.inboundCallsPerWeekMin, data.callModel.inboundCallsPerWeekMax)} isDarkMode={isDarkMode} />
                 <HeroMetricPill label="Typical Answer Rate" value={`${formatRange(data.callModel.answerRateMin, data.callModel.answerRateMax)}%`} isDarkMode={isDarkMode} />
                 <HeroMetricPill label="Likely Missed / Week" value={`${formatRange(data.callModel.missedCallsPerWeekMin, data.callModel.missedCallsPerWeekMax)} calls`} isDarkMode={isDarkMode} />
@@ -375,6 +384,13 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
             </div>
 
             <div className="flex min-w-0 flex-col gap-8 lg:max-w-[min(100%,440px)] lg:justify-self-end">
+              {businessHeroImage ? (
+                <img
+                  src={businessHeroImage}
+                  alt=""
+                  className="mx-auto max-h-56 w-full rounded-[1.75rem] object-contain [mask-image:radial-gradient(ellipse_at_center,black_62%,transparent_92%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_62%,transparent_92%)]"
+                />
+              ) : null}
               <div className={`relative isolate flex min-h-[200px] w-full items-center justify-center overflow-visible rounded-2xl border sm:min-h-[260px] md:min-h-[300px] ${isDarkMode ? 'border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent' : 'border-navy-200 bg-gradient-to-b from-white to-slate-100'}`}>
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_40%_35%,rgba(212,175,55,0.14),transparent_55%)]" />
                 <div className="pointer-events-none absolute bottom-6 left-1/2 h-14 w-44 -translate-x-1/2 rounded-[100%] bg-white/10 blur-2xl" />
@@ -765,20 +781,10 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
         </section>
       </div>
 
-      {(
-        <div
-          className="fixed inset-x-0 z-20 flex justify-center px-4 md:hidden pointer-events-none"
-          style={{ bottom: 'calc(var(--footer-nav-clearance, 6.5rem) + 0.25rem)' }}
-        >
-          <button
-            type="button"
-            onClick={onGetLive}
-            className="pointer-events-auto fx-btn fx-btn-primary shadow-lg"
-          >
-            Recover {formatCurrency(data.revenueModel.monthlyLossMidpoint)} / mo
-          </button>
-        </div>
-      )}
+      <RecoverDock
+        label={`Recover ${formatCurrency(data.revenueModel.monthlyLossMidpoint)} / mo`}
+        onClick={onGetLive}
+      />
     </div>
   );
 };

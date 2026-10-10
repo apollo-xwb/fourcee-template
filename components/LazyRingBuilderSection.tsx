@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { RingBuilderConfig } from '../types/audit';
 import { assetUrl } from '../lib/asset-url';
+import { scheduleAfterLcpIdle } from '../lib/preload-ring';
 import { ErrorBoundary } from './ErrorBoundary';
 
 const RingBuilder = lazy(() => import('./RingBuilder').then((m) => ({ default: m.RingBuilder })));
@@ -29,27 +30,21 @@ export const LazyRingBuilderSection: React.FC<LazyRingBuilderSectionProps> = (pr
     let dead = false;
     const show = () => { if (!dead) setVisible(true); };
     if (props.eager) { show(); return; }
+    if (props.heroEmbed) {
+      // Desktop hero is on screen. Keep the poster until a gesture, or until idle after LCP.
+      const stop = scheduleAfterLcpIdle(show);
+      return () => { dead = true; stop(); };
+    }
     const opts = { once: true, passive: true } as const;
-    // Interaction, or the section actually entering the viewport. No idle timer: that was fetching three.js during LCP.
+    // Below the fold: a gesture, or the section actually entering the viewport. No idle timer during LCP.
     window.addEventListener('pointerdown', show, opts);
     let observer: IntersectionObserver | undefined;
     const node = hostRef.current;
-    if (node && !props.heroEmbed) {
+    if (node) {
       observer = new IntersectionObserver(([entry]) => {
         if (entry.isIntersecting) show();
       }, { rootMargin: '0px' });
       observer.observe(node);
-    } else if (props.heroEmbed) {
-      // Desktop hero ring is on screen. Wait until the first idle AFTER first paint, with no short timeout,
-      // so a busy main thread (Lighthouse) does not parse WebGi during TBT.
-      const host = window as Window & { requestIdleCallback?: (cb: () => void) => number; cancelIdleCallback?: (id: number) => void };
-      const idle = host.requestIdleCallback ? host.requestIdleCallback(show) : window.setTimeout(show, 6000);
-      return () => {
-        dead = true;
-        window.removeEventListener('pointerdown', show);
-        if (host.cancelIdleCallback) host.cancelIdleCallback(idle as number);
-        else window.clearTimeout(idle as number);
-      };
     }
     return () => {
       dead = true;

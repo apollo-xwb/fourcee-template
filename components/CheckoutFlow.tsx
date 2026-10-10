@@ -535,7 +535,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
         {renderStep()}
 
         {state.step < 4 && (
-          <div className="mt-16 flex justify-between items-center relative z-30 min-h-[72px] pb-24 sm:pb-20">
+          <div className="relative z-30 mt-16 flex min-h-[72px] flex-col-reverse items-stretch gap-3 px-1 pb-24 sm:flex-row sm:items-center sm:justify-between sm:pb-20">
             <button 
               type="button"
               onClick={prevStep}
@@ -553,7 +553,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
               }}
               disabled={sending}
               data-testid="checkout-next"
-              className="fx-btn fx-btn-primary px-12 py-5 text-xs cursor-pointer shrink-0 select-none touch-manipulation disabled:opacity-60"
+              className="fx-btn fx-btn-primary w-full cursor-pointer select-none touch-manipulation px-4 py-3 text-center text-[10px] leading-snug disabled:opacity-60 sm:w-auto sm:px-12 sm:py-5 sm:text-xs"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               {state.step === 3 ? (sending ? 'Sending…' : `Request invoice · $${total.toLocaleString()}`) : 'Forward →'}
