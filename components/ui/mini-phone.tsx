@@ -208,7 +208,7 @@ export function MiniPhone({
             <Phone className="w-5 h-5" />
             {status === 'calling' ? 'Calling…' : 'Call'}
           </button>
-          <p className={cn('mt-3 text-[10px] leading-relaxed', mutedClass)}>
+          <p className={cn('mt-1.5 text-[10px] leading-snug', mutedClass)}>
             Optional. By requesting a call you consent to one demo callback to this number for product demonstration.
             We do not sell your number. Recording only if legally permitted and disclosed on the call.
           </p>

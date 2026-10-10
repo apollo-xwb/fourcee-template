@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { assetUrl } from '../lib/asset-url';
 import { AuditLeadGate } from './AuditLeadGate';
+import { loadAuditContent } from '../lib/audit-content';
+import { loadAuditGateBrief, type AuditGateBrief } from '../lib/audit-gate-brief';
+import { takeSealedAudit } from '../lib/audit-sealed';
 import { configuredCalUrl, demoDurationLine, isPlaceholderReportId, visitAuditDate } from '../lib/prospect-fixes';
 import fcWhite from '../public/assets/fcwhite.png';
 import fcBlack from '../public/assets/fcblack.png';
@@ -30,7 +33,8 @@ interface AuditPageProps {
   isDarkMode: boolean;
   onGetLive: () => void;
   onBookCall: () => void;
-  data: AuditData;
+  /** Showroom name/city already read for the long page. Omit on a direct #/audit visit so the report file is not fetched yet. */
+  brief?: AuditGateBrief | null;
 }
 
 /** `surface`: navy = light page header (blue bar); white = dark page header (white bar). */
@@ -105,10 +109,47 @@ const gridBgStyleLight: React.CSSProperties = {
   backgroundSize: '28px 28px',
 };
 
-export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onBookCall, data }) => {
-  // Unlocked only in this view, and only after submitLead returns status "sent". A refresh shows the gate again.
-  const [unlocked, setUnlocked] = useState(false);
+export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onBookCall, brief: briefProp }) => {
+  // The report tree is not created until a sent lead. A refresh shows the gate again.
+  const [brief, setBrief] = useState<AuditGateBrief | null>(briefProp ?? null);
+  const [report, setReport] = useState<AuditData | null>(null);
+  const [gateError, setGateError] = useState(false);
   const [showHeaderStats, setShowHeaderStats] = useState(false);
+
+  useEffect(() => {
+    if (briefProp) setBrief(briefProp);
+  }, [briefProp]);
+
+  useEffect(() => {
+    if (briefProp || brief) return;
+    let live = true;
+    loadAuditGateBrief()
+      .then((next) => { if (live) setBrief(next); })
+      .catch(() => { if (live) setGateError(true); });
+    return () => { live = false; };
+  }, [briefProp, brief]);
+
+  const unlock = () => {
+    const sealed = takeSealedAudit();
+    const pending = sealed ? Promise.resolve(sealed) : loadAuditContent();
+    void pending.then((full) => setReport(full)).catch(() => setGateError(true));
+  };
+
+  if (!report) {
+    return (
+      <div className={`relative min-h-screen dock-safe-pad ${isDarkMode ? 'text-white' : 'text-navy-900'} font-sans`}>
+        {brief ? (
+          <AuditLeadGate brief={brief} isDarkMode={isDarkMode} onUnlocked={unlock} />
+        ) : gateError ? (
+          <p className="px-6 pt-24 text-center text-navy-700">The showroom brief could not be loaded.</p>
+        ) : (
+          <p className="px-6 pt-24 text-center text-navy-700">Loading audit…</p>
+        )}
+      </div>
+    );
+  }
+
+  const data = report;
   const headerSurface = 'navy';
   const triggerBooking = () => {
     scrollToId('audit-booking-cta');
@@ -129,14 +170,6 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
   const panelClass = isDarkMode
     ? 'border-white/10 bg-white/[0.04] text-white'
     : 'border-navy-200/80 bg-white/85 text-navy-900 shadow-[0_10px_35px_rgba(12,11,9,0.06)]';
-
-  if (!unlocked) {
-    return (
-      <div className={`relative min-h-screen dock-safe-pad ${isDarkMode ? 'text-white' : 'text-navy-900'} font-sans`}>
-        <AuditLeadGate data={data} isDarkMode={isDarkMode} onUnlocked={() => setUnlocked(true)} />
-      </div>
-    );
-  }
 
   return (
     <div

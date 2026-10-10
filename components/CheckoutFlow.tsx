@@ -3,7 +3,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { PACKAGES, UPSELLS } from '../constants.tsx';
 import { CheckoutState } from '../types';
 import fcShad from '../public/assets/fcshad.png';
-import { isPlaceholderBusinessName, loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from '../lib/audit-content';
+import { isPlaceholderBusinessName, PLACEHOLDER_BUSINESS_NAME } from '../lib/audit-content';
+import { loadAuditGateBrief } from '../lib/audit-gate-brief';
 import { PayOnline, PayReturnBanner } from './ui/pay-online';
 import { flushQueue, newIdempotencyKey, submitLead, validateLeadFields, type LeadErrors } from '../lib/lead-client';
 import { isSouthAfricanStore, zarNote, zarRateFromEnv } from '../lib/pricing-display';
@@ -60,11 +61,11 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
 
   useEffect(() => {
     let mounted = true;
-    loadAuditContent()
-      .then((data) => {
+    loadAuditGateBrief()
+      .then((brief) => {
         if (!mounted) return;
-        setIsZar(isSouthAfricanStore({ currencyCode: data?.auditMeta?.currencyCode, phoneCountryDefault: data?.liveDemo?.phoneCountryDefault }));
-        const incomingName = data?.business?.name?.trim();
+        setIsZar(isSouthAfricanStore({ currencyCode: brief.currencyCode, phoneCountryDefault: brief.phoneCountryDefault }));
+        const incomingName = brief.businessName?.trim();
         if (!incomingName) return;
         setCompanyName((current) =>
           isPlaceholderBusinessName(current) ? incomingName : current

@@ -6,6 +6,9 @@ import { computeRingPose, type RingPose } from '../lib/hand-pose';
 import { HandSideVote, PoseFilter, poseToQuat, type FilteredPose } from '../lib/pose-filter';
 import { RingOverlay } from '../lib/ring-overlay';
 import { useModalA11y } from '../lib/use-modal-a11y';
+import { assetUrl } from '../lib/asset-url';
+
+const posterUrl = assetUrl('assets/plates/plate_hero_ring.webp');
 
 type Phase = 'idle' | 'starting' | 'live' | 'photo' | 'error';
 type HandLandmarkerT = import('@mediapipe/tasks-vision').HandLandmarker;
@@ -355,7 +358,7 @@ export const RingTryOn: React.FC<Props> = ({ metal, gem, onClose }) => {
           data-phase={phase}
           data-hand={handSeen ? 'detected' : 'none'}
         >
-          <video ref={videoRef} playsInline muted autoPlay className={`absolute inset-0 h-full w-full object-cover ${phase === 'live' ? '' : 'hidden'}`} data-testid="tryon-video" />
+          <video ref={videoRef} playsInline muted preload="none" poster={posterUrl} className={`absolute inset-0 h-full w-full object-cover ${phase === 'live' ? '' : 'hidden'}`} data-testid="tryon-video" />
           <canvas ref={photoRef} className={`absolute inset-0 h-full w-full object-cover ${phase === 'photo' ? '' : 'hidden'}`} data-testid="tryon-photo" />
           <canvas ref={canvasRef} className={`absolute inset-0 h-full w-full object-cover ${mediaVisible ? '' : 'invisible'}`} data-testid="tryon-overlay" aria-label="Ring drawn on your finger" />
           {!mediaVisible && (

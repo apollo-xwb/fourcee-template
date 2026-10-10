@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { AuditData } from '../types/audit';
+import type { AuditGateBrief } from '../lib/audit-gate-brief';
 import { newIdempotencyKey, submitLead } from '../lib/lead-client';
 import { leadSubmitUnlocksReport } from '../lib/prospect-fixes';
 
@@ -13,25 +13,26 @@ const COUNTRIES = [
 ];
 
 interface AuditLeadGateProps {
-  data: AuditData;
+  brief: AuditGateBrief;
   isDarkMode: boolean;
   onUnlocked: () => void;
 }
 
 /**
  * Name, email and phone before the report. The business name and location are read from the
- * injected audit payload and are not editable here.
+ * injected audit payload and are not editable here. The report body is not mounted, and not
+ * fetched, until submitLead returns status "sent".
  */
-export const AuditLeadGate: React.FC<AuditLeadGateProps> = ({ data, isDarkMode, onUnlocked }) => {
+export const AuditLeadGate: React.FC<AuditLeadGateProps> = ({ brief, isDarkMode, onUnlocked }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('+27');
+  const [code, setCode] = useState(brief.phoneCountryDefault || '+27');
   const [phone, setPhone] = useState('');
   const [trap, setTrap] = useState('');
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
-  const businessName = data.business.name;
-  const location = data.business.location;
+  const businessName = brief.businessName;
+  const location = brief.location;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +54,7 @@ export const AuditLeadGate: React.FC<AuditLeadGateProps> = ({ data, isDarkMode, 
       notes: 'Audit report request',
       crm: '',
       total: null,
-      currency: data.auditMeta?.currencyCode || 'USD',
+      currency: brief.currencyCode || 'USD',
       website: trap,
       idempotency_key: newIdempotencyKey(),
       page_url: typeof window !== 'undefined' ? window.location.href : '',
@@ -76,7 +77,7 @@ export const AuditLeadGate: React.FC<AuditLeadGateProps> = ({ data, isDarkMode, 
       <div className={`rounded-[1.75rem] border p-6 sm:p-8 ${isDarkMode ? 'border-white/15 bg-navy-950/80' : 'border-[#d9c39a]/80 bg-[#faf5ea] shadow-[0_18px_50px_rgba(12,11,9,0.08)]'}`}>
         <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#8a7349]">Confidential audit</p>
         <h1 className={`mt-3 font-sans text-2xl font-semibold normal-case leading-tight tracking-normal sm:text-3xl ${ink}`}>
-          {data.auditMeta.preparedForLabel} {businessName}
+          {brief.preparedForLabel} {businessName}
         </h1>
         <p className={`mt-2 text-sm ${muted}`}>{location}</p>
         <p className={`mt-4 text-sm leading-relaxed ${muted}`}>

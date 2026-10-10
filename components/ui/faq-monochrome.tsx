@@ -210,7 +210,7 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
                         {item.meta && (
                           <span
                             className={[
-                              'inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold normal-case tracking-normal',
+                              'inline-flex max-w-full shrink-0 items-center whitespace-normal break-words rounded-full border px-2.5 py-1 text-[10px] font-semibold normal-case tracking-normal',
                               isDarkMode
                                 ? 'border-white/20 text-slate-200 bg-white/5'
                                 : 'border-slate-200 text-slate-700 bg-white/80',

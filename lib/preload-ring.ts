@@ -49,12 +49,11 @@ export function preloadRingAssets(): Promise<void> {
 type IdleWindow = Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number };
 
 /**
- * Schedule the heavy preload: network now, runtime when idle (max 1.5 s wait), or immediately on the first user interaction,
- * whichever comes first. Returns a cleanup. Safe to call more than once.
+ * Schedule the heavy preload after first paint: on the first pointer/key/wheel, or when the browser is idle.
+ * Does not fetch the GLB or parse webgi during the splash. Safe to call more than once.
  */
 export function schedulePreloadRing(): () => void {
   if (typeof window === 'undefined') return () => undefined;
-  void preloadRingNetwork();
   let done = false;
   const events = ['pointerdown', 'touchstart', 'keydown', 'wheel'] as const;
   const run = () => {
@@ -67,7 +66,7 @@ export function schedulePreloadRing(): () => void {
   events.forEach((e) => window.addEventListener(e, run, { once: true, passive: true }));
   window.addEventListener('scroll', onScroll, { once: true, passive: true, capture: true });
   const w = window as IdleWindow;
-  const idle = w.requestIdleCallback ? w.requestIdleCallback(run, { timeout: 1500 }) : window.setTimeout(run, 600);
+  const idle = w.requestIdleCallback ? w.requestIdleCallback(run, { timeout: 4000 }) : window.setTimeout(run, 4000);
   function cleanup() {
     events.forEach((e) => window.removeEventListener(e, run));
     window.removeEventListener('scroll', onScroll, true);

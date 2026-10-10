@@ -1,8 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { RingBuilderConfig } from '../types/audit';
+import { assetUrl } from '../lib/asset-url';
 import { ErrorBoundary } from './ErrorBoundary';
-import { RingBuilder } from './RingBuilder';
-import { schedulePreloadRing } from '../lib/preload-ring';
+
+const RingBuilder = lazy(() => import('./RingBuilder').then((m) => ({ default: m.RingBuilder })));
+const POSTER = assetUrl('assets/plates/plate_hero_ring.webp');
 
 interface LazyRingBuilderSectionProps {
   config: Required<RingBuilderConfig>;
@@ -15,35 +17,43 @@ interface LazyRingBuilderSectionProps {
 }
 
 /**
- * Defers painting the Three.js / WebGi studio until near viewport.
- * RingBuilder is a STATIC import so Vite does not emit a separate hashed
- * RingBuilder-*.js chunk that can 404→SPA HTML (MIME text/html) after deploys.
- * Heavy webgi runtime stays dynamically imported inside WebGiRingCanvas.
+ * Poster first. The RingBuilder chunk (three.js) loads after a gesture, when the section
+ * is near the viewport, or once the browser is idle — not during the first paint.
+ * webgi itself stays a dynamic import inside WebGiRingCanvas.
  */
 export const LazyRingBuilderSection: React.FC<LazyRingBuilderSectionProps> = (props) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const [visible, setVisible] = useState(Boolean(props.heroEmbed || props.compact || props.eager));
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    schedulePreloadRing(); // idempotent: network now, webgi runtime when idle / on first interaction
-    if (props.heroEmbed || props.compact || props.eager) {
-      setVisible(true);
-      return;
-    }
+    let dead = false;
+    const show = () => { if (!dead) setVisible(true); };
+    if (props.eager) { show(); return; }
+    const opts = { once: true, passive: true } as const;
+    window.addEventListener('pointerdown', show, opts);
+    const host = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const idle = host.requestIdleCallback
+      ? host.requestIdleCallback(show, { timeout: props.heroEmbed ? 2500 : 4000 })
+      : window.setTimeout(show, 2500);
+    let observer: IntersectionObserver | undefined;
     const node = hostRef.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '480px 0px' }
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [props.heroEmbed, props.compact, props.eager]);
+    if (node && !props.heroEmbed) {
+      observer = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) show();
+      }, { rootMargin: '160px 0px' });
+      observer.observe(node);
+    }
+    return () => {
+      dead = true;
+      window.removeEventListener('pointerdown', show);
+      if (host.requestIdleCallback && host.cancelIdleCallback) host.cancelIdleCallback(idle as number);
+      else window.clearTimeout(idle as number);
+      observer?.disconnect();
+    };
+  }, [props.heroEmbed, props.eager]);
 
   const placeholderClass = `rounded-[2rem] border px-6 py-16 text-center text-xs uppercase tracking-[0.22em] ${
     props.isDarkMode ? 'border-white/10 text-slate-500' : 'border-navy-200 text-navy-500'
@@ -66,10 +76,12 @@ export const LazyRingBuilderSection: React.FC<LazyRingBuilderSectionProps> = (pr
     <div ref={hostRef} className="min-h-[240px]">
       {visible ? (
         <ErrorBoundary label="Ring Builder" fallback={fallback}>
-          <RingBuilder {...props} />
+          <Suspense fallback={<img src={POSTER} alt="" width={1280} height={720} decoding="async" className="h-full min-h-[240px] w-full object-cover" />}>
+            <RingBuilder {...props} />
+          </Suspense>
         </ErrorBoundary>
       ) : (
-        <div className={placeholderClass}>Ring studio preview</div>
+        <img src={POSTER} alt="" width={1280} height={720} decoding="async" className={`${placeholderClass} h-full min-h-[240px] w-full object-cover`} />
       )}
     </div>
   );

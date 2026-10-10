@@ -34,7 +34,6 @@ const AdminDashboard = ADMIN_ENABLED
   ? React.lazy(() => import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard })))
   : null;
 import { SplashScreen } from './components/SplashScreen';
-import { schedulePreloadRing } from './lib/preload-ring';
 import { FaqMonochrome } from './components/ui/faq-monochrome.tsx';
 import { ArticleCard } from './components/ui/blog-post-card';
 import { FloatingAiAssistant } from './components/ui/glowing-ai-chat-assistant';
@@ -43,6 +42,8 @@ import { AuditPage } from './components/AuditPage';
 import { LazyRingBuilderSection } from './components/LazyRingBuilderSection';
 import type { AuditData } from './types/audit';
 import { loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from './lib/audit-content';
+import { briefFromAudit, loadAuditGateBrief, withoutReport, type AuditGateBrief } from './lib/audit-gate-brief';
+import { sealAudit } from './lib/audit-sealed';
 import { configuredCalUrl, demoDurationLine, SIDE_DEAL_DEFAULT, snapDeal } from './lib/prospect-fixes';
 import { planHashRoute } from './lib/hash-route';
 import { useEscapeClose } from './lib/use-escape-close';
@@ -163,14 +164,12 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.LANDING);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [isReady, setIsReady] = useState(false);
-
-  // Ring assets: the splash only fetches the files (cheap). Once the splash is gone, parse the webgi runtime when the main thread is idle
-  // or on the first touch/scroll, so the studio scene is warm long before the user reaches it.
-  useEffect(() => (isReady ? schedulePreloadRing() : undefined), [isReady]);
+  const heroPoster = assetUrl('assets/plates/plate_hero_ring.webp');
   const [isDarkMode] = useState(false); // light theme only — dark mode retired
   const [expandedIntegration, setExpandedIntegration] = useState<number | null>(null);
   const [preSelectedPackageId, setPreSelectedPackageId] = useState<string | null>(null);
   const [auditData, setAuditData] = useState<AuditData | null>(null);
+  const [gateBrief, setGateBrief] = useState<AuditGateBrief | null>(null);
   const [auditDataLoading, setAuditDataLoading] = useState(true);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
   // Synchronous initial value: exactly ONE Ring Builder (WebGi context) is ever mounted - the desktop hero rail OR the phone/tablet
@@ -188,21 +187,46 @@ const App: React.FC = () => {
   const dealValue = snapDeal(sideMenuAvgDeal);
   const calUrl = configuredCalUrl();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const businessName = auditData?.business.name ?? PLACEHOLDER_BUSINESS_NAME;
+  const businessName = auditData?.business.name ?? gateBrief?.businessName ?? PLACEHOLDER_BUSINESS_NAME;
   const ringBuilder = useMemo(() => resolveRingBuilder(auditData), [auditData]);
 
-  // Neuro contract: always load /content.json (generator overwrites this file).
-  useEffect(() => {
+  // Direct #/audit reads only the name/city prefix. The rest of content.json is fetched after a sent lead.
+  // The long page still loads the file (ring studio + showroom name) but does not keep report sections on the React tree.
+  const prospectLoaded = useRef(false);
+  const loadProspect = useCallback(() => {
+    if (prospectLoaded.current) return;
+    prospectLoaded.current = true;
     loadAuditContent()
       .then((data: AuditData) => {
-        setAuditData(data);
+        sealAudit(data);
+        setAuditData(withoutReport(data));
+        setGateBrief(briefFromAudit(data));
         setAuditDataLoading(false);
       })
       .catch(err => {
         console.error('Failed to load audit data:', err);
+        prospectLoaded.current = false;
         setAuditDataLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    const auditFirst = planHashRoute(window.location.hash, ADMIN_ENABLED).view === AppView.LEAD_MAGNET;
+    if (auditFirst) {
+      let live = true;
+      loadAuditGateBrief()
+        .then((brief) => { if (live) setGateBrief(brief); })
+        .catch((err) => { console.error('Failed to load audit gate:', err); })
+        .finally(() => { if (live) setAuditDataLoading(false); });
+      return () => { live = false; };
+    }
+    loadProspect();
+  }, [loadProspect]);
+
+  useEffect(() => {
+    if (planHashRoute(window.location.hash, ADMIN_ENABLED).view === AppView.LEAD_MAGNET) return;
+    loadProspect();
+  }, [currentView, loadProspect]);
 
   useEffect(() => {
     const theme = auditData?.branding?.theme;
@@ -451,6 +475,8 @@ const App: React.FC = () => {
     }, [scrollContainerRef]);
 
 
+    if (typeof document !== 'undefined') document.getElementById('lcp-poster')?.remove();
+
     return (
     <div className="dock-safe-pad pb-32 md:pb-40" style={{ contentVisibility: 'visible' }}>
       {/* Hero: ribbed gold-glow texture + desktop ring-left / copy-right */}
@@ -472,7 +498,7 @@ const App: React.FC = () => {
             solid beige, so the dark vertical slats of the background texture never sit behind small text. Starts at ~38% of the hero,
             fully solid by ~69%. Keeps the existing background, veil and grid above; md+ is unchanged. */}
         <div className="fourcee-hero-fade pointer-events-none absolute inset-0 z-[2] md:hidden" data-testid="hero-fade" aria-hidden />
-        <div className="relative z-10 mx-auto grid min-h-0 w-full max-w-7xl grid-cols-1 content-start items-start gap-5 px-5 pt-24 pb-16 sm:px-8 sm:pt-24 md:px-12 md:items-center lg:min-h-[100svh] lg:grid-cols-2 lg:gap-10 lg:content-center lg:py-20">
+        <div className="relative z-10 mx-auto grid min-h-0 w-full max-w-7xl grid-cols-1 content-start items-start gap-4 px-5 pt-16 pb-8 sm:px-8 sm:pt-24 md:px-12 md:items-center lg:min-h-[100svh] lg:grid-cols-2 lg:gap-10 lg:content-center lg:py-20">
           {/* Desktop: Ring Builder inhabiting the left rail */}
           <div
             id="ring-studio-hero"
@@ -501,7 +527,17 @@ const App: React.FC = () => {
 
           {/* Copy / CTAs — full width on mobile, right rail on desktop */}
           <div className="w-full max-w-xl text-left lg:justify-self-end">
-            <div className="fx-chip mb-3 sm:mb-5">
+            <img
+              src={heroPoster}
+              alt=""
+              width={1280}
+              height={720}
+              fetchPriority="high"
+              decoding="async"
+              data-testid="hero-lcp-poster"
+              className="mb-0 h-auto max-h-[4.5rem] w-[min(78vw,320px)] rounded-2xl object-cover object-[center_40%] shadow-[0_18px_40px_rgba(12,11,9,0.18)] lg:hidden"
+            />
+            <div className="fx-chip mb-1 sm:mb-5">
               <span className="fx-dot" />
               Concierge standby · audit compiled
             </div>
@@ -514,14 +550,14 @@ const App: React.FC = () => {
             <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-[#3a342b] sm:mt-4 sm:text-[11px] sm:tracking-[0.22em]">
               Tailored exclusively for high-end jewelers
             </p>
-            <div className="liquid-glass mt-4 max-w-[440px] rounded-2xl px-5 py-3.5 sm:mt-6 sm:py-4">
+            <div className="liquid-glass mt-2 max-w-[440px] rounded-2xl px-5 py-2.5 sm:mt-6 sm:py-4">
               <p className="fx-kicker">Prepared for</p>
               <p className="mt-1.5 text-sm sm:text-base text-[#0c0b09] font-medium tracking-wide">{businessName}</p>
               <p className="mt-1.5 text-[12px] sm:text-[13px] leading-relaxed text-[#3a342b]">
                 One recovered client can cover months of platform cost.
               </p>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2.5 sm:mt-6 sm:gap-3">
+            <div className="mt-2 flex flex-wrap gap-2 sm:mt-6 sm:gap-3">
               <button type="button" onClick={scrollToRingStudio} className="fx-btn fx-btn-primary">
                 Try the Ring Builder
               </button>
@@ -533,8 +569,9 @@ const App: React.FC = () => {
               </button>
             </div>
             {/* Raised on mobile so phone demo is visible without deep scroll */}
-            <div className="mt-4 max-w-sm sm:mt-6 opacity-95 -translate-y-1 sm:translate-y-0">
+            <div className="mt-2 max-w-sm sm:mt-6 opacity-95 sm:translate-y-0">
               <MiniPhone
+                className="pb-2"
                 isDarkMode={false}
                 businessName={businessName}
                 leadId={auditData?.lead_id}
@@ -571,7 +608,7 @@ const App: React.FC = () => {
       {/* Demo Video Section - now directly after hero; 9:16 portrait on mobile */}
       <section ref={demoRef} id="demo" className="flex flex-col justify-center py-16 md:py-24 px-4 sm:px-6 bg-transparent relative scroll-mt-24">
         <div className="max-w-6xl mx-auto flex flex-col items-center w-full min-w-0">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif text-navy-900 mb-6 md:mb-10 text-center px-2">
+          <h2 className="mb-6 overflow-visible px-4 text-center text-xl font-bold serif text-navy-900 sm:text-2xl md:mb-10 md:text-3xl">
             Experience the Demo
           </h2>
           <button
@@ -747,7 +784,7 @@ const App: React.FC = () => {
           <div className="relative flex flex-col items-center gap-6 overflow-visible">
               <motion.div 
               style={{ y: cardsY }}
-              className="relative group z-10 mb-10 min-h-[15rem] origin-top scale-[0.72] sm:mb-6 sm:min-h-[17rem] sm:scale-90 md:mb-2 md:min-h-[19rem] md:scale-100"
+              className="relative group z-10 mb-16 min-h-[18rem] origin-top scale-[0.72] sm:mb-14 sm:min-h-[20rem] sm:scale-90 md:mb-10 md:min-h-[22rem] md:scale-100"
             >
               <DisplayCards 
                 cards={[
@@ -845,7 +882,7 @@ const App: React.FC = () => {
       <section className="min-h-screen flex flex-col justify-center pt-32 pb-16 overflow-x-hidden bg-transparent transition-colors">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 min-w-0">
           <div className="text-center mb-16 md:mb-24 max-w-3xl mx-auto">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif text-navy-900 mb-5 md:mb-7 break-words px-2">
+            <h2 className="mb-5 overflow-visible break-words px-4 text-xl font-bold serif text-navy-900 sm:text-2xl md:mb-7 md:text-3xl">
               Unified Workflow
             </h2>
             <p className="text-slate-600 dark:text-navy-400 uppercase tracking-[0.2em] text-[11px] font-bold mb-6">Built for your current stack</p>
@@ -1404,23 +1441,13 @@ const App: React.FC = () => {
 
       <main className="relative z-10">
         {currentView === AppView.LANDING && <LandingPage scrollContainerRef={scrollContainerRef} />}
-        {currentView === AppView.LEAD_MAGNET && auditData && (
+        {currentView === AppView.LEAD_MAGNET && (
           <AuditPage
-            data={auditData}
+            brief={gateBrief ?? briefFromAudit(auditData)}
             isDarkMode={isDarkMode}
             onGetLive={() => navigate(AppView.CHECKOUT)}
             onBookCall={openCalendarBooking}
           />
-        )}
-        {currentView === AppView.LEAD_MAGNET && !auditData && !auditDataLoading && (
-          <div className="min-h-screen flex items-center justify-center">
-            <p className="text-navy-600 dark:text-navy-300">Failed to load audit data</p>
-          </div>
-        )}
-        {currentView === AppView.LEAD_MAGNET && auditDataLoading && (
-          <div className="min-h-screen flex items-center justify-center">
-            <p className="text-navy-600 dark:text-navy-300">Loading audit...</p>
-          </div>
         )}
         {currentView === AppView.BLOG && <BlogPage />}
         {currentView === AppView.BLOG_POST && selectedPost && (

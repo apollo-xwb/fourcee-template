@@ -6,7 +6,10 @@ import type { RingBuilderConfig, RingSwatch } from '../types/audit';
 import { CrystalRingCanvas } from './CrystalRingCanvas';
 import { WebGiRingCanvas } from './WebGiRingCanvas';
 import { findScroller, hudVisible, isDocked, ringProgress } from '../lib/ring-scroll';
-import posterUrl from '../public/assets/plates/plate_hero_ring.png';
+import { assetUrl } from '../lib/asset-url';
+import { schedulePreloadRing } from '../lib/preload-ring';
+
+const posterUrl = assetUrl('assets/plates/plate_hero_ring.webp');
 
 // AR + camera try-on are loaded on demand: model-viewer and MediaPipe never touch the first paint.
 const ArViewSheet = lazy(() => import('./ArViewSheet').then((m) => ({ default: m.ArViewSheet })));
@@ -80,6 +83,30 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
   const hudRef = useRef<HTMLDivElement | null>(null);
   const [metalId, setMetalId] = useState(config.defaultMetalId);
   const [gemId, setGemId] = useState(config.defaultGemId);
+  // Poster is the first paint. WebGi / three start after idle or the first gesture, not during LCP.
+  const [engine, setEngine] = useState(false);
+  useEffect(() => schedulePreloadRing(), []);
+  useEffect(() => {
+    let dead = false;
+    const start = () => { if (!dead) setEngine(true); };
+    const opts = { once: true, passive: true } as const;
+    window.addEventListener('pointerdown', start, opts);
+    window.addEventListener('keydown', start, opts);
+    const host = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const idle = host.requestIdleCallback
+      ? host.requestIdleCallback(start, { timeout: 4000 })
+      : window.setTimeout(start, 4000);
+    return () => {
+      dead = true;
+      window.removeEventListener('pointerdown', start);
+      window.removeEventListener('keydown', start);
+      if (host.cancelIdleCallback && host.requestIdleCallback) host.cancelIdleCallback(idle as number);
+      else window.clearTimeout(idle as number);
+    };
+  }, []);
   // Scroll state is owned HERE (a passive scroll listener on the section's real scroller), not by the WebGi scene: the HUD and the
   // poster must work even when the 3D scene is still loading, failed, or the user flung past the section before it was ready.
   const [docked, setDocked] = useState(false); // camera docked / ring interactive
@@ -288,9 +315,13 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
           <img
             src={posterUrl}
             alt=""
+            width={1280}
+            height={720}
             decoding="async"
+            fetchPriority="high"
             className={`pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${sceneReady ? 'opacity-0' : 'opacity-80'}`}
           />
+          {engine ? (
           <RingCanvas
             metalColor={metal.color}
             gemColor={gem.color}
@@ -298,6 +329,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
             interactive={heroEmbed || compact}
             onReady={() => setSceneReady(true)}
           />
+          ) : null}
         </div>
         <p className="fx-kicker mt-4">Metal</p>
         <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Metal">
@@ -365,6 +397,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
                 <p className="absolute left-4 top-4 font-mono text-[10px] uppercase tracking-[0.18em] text-[#c8b58f]">Preparing the studio…</p>
               ) : null}
             </div>
+            {engine ? (
             <RingCanvas
               metalColor={metal.color}
               gemColor={gem.color}
@@ -378,6 +411,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
               dockAt={0.78}
               className="absolute inset-0"
             />
+            ) : null}
           </div>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_38%_48%,rgba(58,36,28,0.18),transparent_42%)]" />
           <div
@@ -466,7 +500,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
           >
             <div
               ref={hudRef}
-              className="liquid-glass mx-auto w-[min(100%,32rem)] min-w-0 max-w-full overflow-hidden rounded-2xl border border-[rgba(200,181,143,0.35)] bg-[rgba(12,11,9,0.55)] p-3 backdrop-blur-xl shadow-[0_-12px_48px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.08)] sm:p-4"
+              className="liquid-glass mx-auto w-[min(100%,32rem)] min-w-0 max-w-full overflow-visible rounded-2xl border border-[rgba(200,181,143,0.35)] bg-[rgba(12,11,9,0.55)] p-3 backdrop-blur-xl shadow-[0_-12px_48px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.08)] sm:p-4"
               data-testid="ring-hud"
             >
               <div className="flex items-start justify-between gap-2">

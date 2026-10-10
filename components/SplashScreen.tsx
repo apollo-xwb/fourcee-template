@@ -122,9 +122,9 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
             alt="fourcee concierge"
             width={831}
             height={271}
-            decoding="sync"
-            fetchPriority="high"
-            className="w-64 sm:w-72 md:w-[22rem] h-auto aspect-[831/271] mx-auto object-contain drop-shadow-sm"
+            decoding="async"
+            fetchPriority="low"
+            className="w-40 sm:w-48 md:w-56 h-auto aspect-[831/271] mx-auto object-contain drop-shadow-sm"
           />
         </div>
 

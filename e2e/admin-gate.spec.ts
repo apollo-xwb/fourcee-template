@@ -60,23 +60,13 @@ test('VITE_ENABLE_ADMIN=1 build: admin opens with the internal-preview banner', 
   await shot(page, '02-admin-enabled-with-banner', info);
 });
 
-test('#/ops: KPIs and call log are labelled sample and never change on their own', async ({ page }, info) => {
+test('#/ops falls back to the site home', async ({ page }, info) => {
   await openApp(page, '#/ops');
-  await page.waitForTimeout(1000);
-  await shot(page, '03-ops-portal', info);
-  if (BEFORE) {
-    await page.waitForTimeout(12_000);
-    await shot(page, '04-ops-portal-after-12s', info);
-    return;
-  }
-  await expect(page.getByTestId('ops-sample-banner')).toContainText(/sample data/i);
-  const body = () => page.evaluate(() => document.body.innerText.replace(/\d{1,2}:\d{2}(:\d{2})?/g, '').replace(/\s+/g, ' ').replace(/^.*?(SAMPLE DATA)/i, '$1')); // drop the leading nav badge count (a tip counter, not ops data)
-  const t0 = await body();
-  expect(t0).toMatch(/Recovered \(sample\)/i);
-  expect(t0).toMatch(/Booked today \(sample\)/i);
-  expect(t0).toMatch(/Call log · sample/i);
-  await page.waitForTimeout(12_000);
-  const t1 = await body();
-  expect(t1).toBe(t0); // no random leads / revenue / appointments appear
-  await shot(page, '04-ops-portal-after-12s', info);
+  await page.waitForTimeout(800);
+  await shot(page, '03-ops-route', info);
+  if (BEFORE) return;
+  expect(page.url()).not.toMatch(/#\/ops/);
+  await expect(page.getByTestId('ops-sample-banner')).toHaveCount(0);
+  const t = await page.evaluate(() => document.body.innerText);
+  expect(t).not.toMatch(/Recovered \(sample\)|Call log · sample|SAMPLE DATA/i);
 });
