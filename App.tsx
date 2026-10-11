@@ -49,6 +49,12 @@ import { useEscapeClose } from './lib/use-escape-close';
 import { resolveRingBuilder } from './lib/ring-builder';
 import { assetUrl } from './lib/asset-url';
 import { renderSimpleMarkdown } from './lib/markdown';
+import { ViewFade } from './components/view-fade';
+import { useHeroField, useMotionPolish } from './components/use-landing-chrome';
+
+function PlainBlock({ className, children }: { className?: string; children: React.ReactNode }) {
+  return <div className={className}>{children}</div>;
+}
 
 /** Mount heavy children only once they intersect the viewport, so three.js stays out of the first paint. */
 function WhenNear({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -453,6 +459,14 @@ const App: React.FC = () => {
       scrollToSectionById(wide ? 'ring-studio-hero' : 'ring-studio');
     };
 
+    const Field = useHeroField();
+    const polish = useMotionPolish();
+    const Reveal = polish?.Reveal;
+    const StaggerWords = polish?.StaggerWords;
+    const CountUp = polish?.CountUp;
+    const Press = polish?.PressButton;
+    const Section = Reveal ?? PlainBlock;
+
     const handleDemoCallCompleted = () => {
       window.setTimeout(() => {
         setShowDemoCallModal(false);
@@ -469,12 +483,16 @@ const App: React.FC = () => {
     }, []);
 
     return (
-    <div className="dock-safe-pad pb-32 md:pb-40" style={{ contentVisibility: 'visible' }}>
+    <div className="dock-safe-pad fc-premium pb-32 md:pb-40" style={{ contentVisibility: 'visible' }}>
       {/* Hero: ribbed gold-glow texture + desktop ring-left / copy-right */}
       <section
         id="hero"
         className="fourcee-hero-beige relative min-h-0 overflow-hidden lg:min-h-[100svh]"
       >
+        <div className="pointer-events-none absolute inset-0 z-0" data-testid="hero-field" aria-hidden="true">
+          {Field ? <Field variant="hero" /> : null}
+          <div className="fc-mesh-poster" data-testid="hero-field-poster" data-mesh-poster="" />
+        </div>
         <div
           className="fourcee-hero-beige-veil pointer-events-none absolute inset-0"
           style={{
@@ -533,10 +551,19 @@ const App: React.FC = () => {
               Concierge standby · audit compiled
             </div>
             <h1
-              className="fx-display text-[22px] leading-[1.05] text-[#0c0b09] sm:text-[30px] md:text-4xl lg:text-5xl"
+              className="fx-display text-[22px] leading-[1.05] text-[#0c0b09] sm:text-[30px] md:text-4xl lg:text-[3.35rem] lg:leading-[1.02]"
             >
-              <span className="block">The gold standard</span>
-              <span className="block">of voice AI</span>
+              {StaggerWords ? (
+                <>
+                  <StaggerWords text="The gold standard" />
+                  <StaggerWords text="of voice AI" />
+                </>
+              ) : (
+                <>
+                  <span className="block">The gold standard</span>
+                  <span className="block">of voice AI</span>
+                </>
+              )}
             </h1>
             <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-[#3a342b] sm:mt-4 sm:text-[11px] sm:tracking-[0.22em]">
               Tailored exclusively for high-end jewelers
@@ -549,15 +576,18 @@ const App: React.FC = () => {
               </p>
             </div>
             <div className="hero-cta mt-2 flex flex-wrap gap-2 sm:mt-6 sm:gap-3">
-              <button type="button" onClick={scrollToRingStudio} className="fx-btn fx-btn-primary">
-                Try the Ring Builder
-              </button>
-              <button type="button" onClick={goToAudit} className="fx-btn fx-btn-ghost">
-                Access my custom audit
-              </button>
-              <button type="button" onClick={scrollToRoi} className="fx-btn fx-btn-ghost">
-                Calculate ROI
-              </button>
+              {([
+                ['Try the Ring Builder', scrollToRingStudio, 'fx-btn fx-btn-primary'],
+                ['Access my custom audit', goToAudit, 'fx-btn fx-btn-ghost'],
+                ['Calculate ROI', scrollToRoi, 'fx-btn fx-btn-ghost'],
+              ] as const).map(([label, action, cls]) => {
+                const Btn = Press ?? 'button';
+                return (
+                  <Btn key={label} type="button" onClick={action} className={cls}>
+                    {label}
+                  </Btn>
+                );
+              })}
             </div>
             {/* Raised on mobile so phone demo is visible without deep scroll */}
             <div className="mt-2 max-w-sm sm:mt-6 opacity-95 sm:translate-y-0">
@@ -598,7 +628,7 @@ const App: React.FC = () => {
 
       {/* Demo Video Section - now directly after hero; 9:16 portrait on mobile */}
       <section id="demo" className="flex flex-col justify-center py-16 md:py-24 px-4 sm:px-6 bg-transparent relative scroll-mt-24">
-        <div className="max-w-6xl mx-auto flex flex-col items-center w-full min-w-0">
+        <Section className="max-w-6xl mx-auto flex flex-col items-center w-full min-w-0">
           <h2 id="demo-heading" className="mb-6 scroll-mt-24 overflow-visible px-4 text-center text-xl font-bold serif text-navy-900 sm:text-2xl md:mb-10 md:text-3xl">
             Experience the Demo
           </h2>
@@ -629,7 +659,7 @@ const App: React.FC = () => {
               <span>Select a package</span>
             </button>
           </div>
-        </div>
+        </Section>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 md:h-72">
           <WhenNear className="h-full w-full">
             <DottedSurface
@@ -670,7 +700,7 @@ const App: React.FC = () => {
 
       {/* Value Calculator Section - before ROI messaging; its own snap after demo */}
       <section id="roi-calculator" className="flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent scroll-mt-24">
-        <div className="w-full max-w-4xl mx-auto">
+        <Section className="w-full max-w-4xl mx-auto">
           <ValueCalculator isDarkMode={isDarkMode} businessName={businessName} />
           <div className="mt-6 flex justify-center">
             <button
@@ -681,7 +711,7 @@ const App: React.FC = () => {
               Start recovering revenue now
             </button>
           </div>
-        </div>
+        </Section>
       </section>
 
       {/* ROI follow-up: both columns and a full-width strip, so the band under the calculator is not an empty field */}
@@ -746,6 +776,10 @@ const App: React.FC = () => {
 
       {/* Problem Step - moved below calculator: blue + grid faded at top and bottom */}
       <section className="fourcee-ribbed-wash min-h-screen flex flex-col justify-center py-32 px-6 text-white relative overflow-x-hidden overflow-y-visible border-y border-white/5">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-1/2" data-testid="section-accent" aria-hidden="true">
+          {Field ? <Field variant="accent" /> : null}
+          <div className="fc-mesh-poster fc-mesh-poster-dark" data-testid="section-accent-poster" data-mesh-poster="" />
+        </div>
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -771,7 +805,9 @@ const App: React.FC = () => {
             </p>
             <div className="flex gap-12">
               <div>
-                <p className="text-3xl font-bold mb-1 serif">$50k</p>
+                <p className="text-3xl font-bold mb-1 serif tabular-nums">
+                  {CountUp ? <CountUp value={50} format={(n) => `$${Math.round(n)}k`} /> : '$50k'}
+                </p>
                 <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-silver-500">Annual Opportunity Loss</p>
               </div>
               <div>
@@ -863,7 +899,9 @@ const App: React.FC = () => {
             </p>
             <div className="grid grid-cols-2 gap-8 pt-4">
               <div className="glass-card p-6 rounded-3xl">
-                <p className="text-4xl font-bold serif text-navy-900 dark:text-white">30%</p>
+                <p className="text-4xl font-bold serif text-navy-900 dark:text-white tabular-nums">
+                  {CountUp ? <CountUp value={30} format={(n) => `${Math.round(n)}%`} /> : '30%'}
+                </p>
                 <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-navy-400 mt-2">No-show reduction</p>
               </div>
               <div className="glass-card p-6 rounded-3xl">
@@ -1462,6 +1500,7 @@ const App: React.FC = () => {
       )}
 
       <main className="relative z-10">
+        <ViewFade viewKey={String(currentView)}>
         {currentView === AppView.LANDING && <LandingPage scrollContainerRef={scrollContainerRef} />}
         {currentView === AppView.LEAD_MAGNET && (
           <Suspense fallback={null}>
@@ -1504,6 +1543,7 @@ const App: React.FC = () => {
           <React.Suspense fallback={null}><AdminDashboard isDarkMode={isDarkMode} /></React.Suspense>
         )}
         {currentView === AppView.TERMS && <TermsPage />}
+        </ViewFade>
       </main>
 
       {/* Global footer — dotted ball field fills the band above Terms (no empty gap) */}

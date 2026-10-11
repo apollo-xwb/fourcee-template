@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { CountUp, RangeCount } from './count-up';
 import type { AuditData } from '../types/audit';
 import {
   formatAuditCurrency,
@@ -37,6 +38,10 @@ const COUNTRIES = [
 const INK = '#0c0b09';
 const CREAM = '#faf5ea';
 const GOLD = '#8a6a2c';
+
+function PassThrough({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
 
 const Chevron = () => (
   <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 transition-transform group-open:rotate-180"><path d="m6 9 6 6 6-6" /></svg>
@@ -124,6 +129,29 @@ export default function ShortAudit() {
   const finalCta = useRef<HTMLDivElement>(null);
   const ctaViewed = useRef(false);
   const label = CTA_LABEL[variant];
+  const [Reveal, setReveal] = useState<React.ComponentType<{ children: React.ReactNode; className?: string }> | null>(null);
+  useEffect(() => {
+    let live = true;
+    const start = () => {
+      void import('./motion-polish').then((m) => {
+        if (live) setReveal(() => m.Reveal);
+      });
+    };
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    let cancel = () => {};
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(start, { timeout: 1800 });
+      cancel = () => w.cancelIdleCallback?.(id);
+    } else {
+      const id = window.setTimeout(start, 500);
+      cancel = () => window.clearTimeout(id);
+    }
+    return () => {
+      live = false;
+      cancel();
+    };
+  }, []);
+  const Below = Reveal ?? PassThrough;
 
   useEffect(() => {
     document.title = 'Your phone audit · Fourcee';
@@ -190,7 +218,7 @@ export default function ShortAudit() {
   // below the hero, so nothing visible moves when the data lands (CLS).
   if (!data && !failed) {
     return (
-      <main className="min-h-[100svh]" style={{ background: CREAM, color: INK }} data-testid="short-audit" data-variant={variant} aria-busy="true">
+      <main className="fc-premium min-h-[100svh]" style={{ background: CREAM, color: INK }} data-testid="short-audit" data-variant={variant} aria-busy="true">
         <header className="mx-auto flex max-w-5xl items-center justify-between px-5 pt-4 md:px-8 md:pt-6">
           <span className="text-[13px] font-bold tracking-[0.28em]">FOURCEE</span>
           <span className="h-8 w-8" />
@@ -201,15 +229,16 @@ export default function ShortAudit() {
   }
 
   return (
-    <main className="min-h-[100svh] pb-[calc(88px+env(safe-area-inset-bottom))] md:pb-16" style={{ background: CREAM, color: INK }} data-testid="short-audit" data-variant={variant}>
+    <main className="fc-premium min-h-[100svh] pb-[calc(88px+env(safe-area-inset-bottom))] md:pb-16" style={{ background: CREAM, color: INK }} data-testid="short-audit" data-variant={variant}>
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 pt-4 md:px-8 md:pt-6">
         <span className="text-[13px] font-bold tracking-[0.28em]">FOURCEE</span>
         {logo ? <img src={logo} alt="" width={32} height={32} loading="lazy" decoding="async" fetchPriority="low" className="h-8 w-8 rounded-md object-contain" /> : <span className="h-8" />}
       </header>
 
       {/* 1. Hero: one outcome line + the prospect's own number + ONE CTA */}
-      <section className="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)] gap-6 px-5 pb-8 pt-5 md:grid-cols-2 md:items-center md:gap-12 md:px-8 md:pt-12" data-testid="hero">
-        <div>
+      <section className="relative mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)] gap-6 px-5 pb-8 pt-5 md:grid-cols-2 md:items-center md:gap-12 md:px-8 md:pt-12" data-testid="hero">
+        <div className="fc-mesh-poster opacity-70" aria-hidden="true" />
+        <div className="relative z-10">
           <p className="mb-2 min-h-[18px] text-[12px] font-semibold uppercase tracking-[0.18em]" style={{ color: GOLD }}>
             {name ? `Audit prepared for ${name}` : 'Your phone audit'}
           </p>
@@ -220,7 +249,9 @@ export default function ShortAudit() {
           {/* 10-second proof (their own audit number) */}
           {proof && (
             <div className="mt-5 rounded-2xl border border-[#0c0b09]/15 bg-white/80 p-4" data-testid="proof">
-              <p className="text-[34px] font-bold leading-none tracking-tight md:text-[40px]">{fmt(proof.lossMin)}–{fmt(proof.lossMax)}</p>
+              <p className="text-[34px] font-bold leading-none tracking-tight tabular-nums md:text-[40px]">
+                <CountUp value={proof.lossMin} format={(n) => fmt(Math.round(n))} />–<CountUp value={proof.lossMax} format={(n) => fmt(Math.round(n))} />
+              </p>
               <p className="mt-2 text-[15px] leading-snug text-[#3a342b]">
                 estimated revenue a month walking out unanswered.
               </p>
@@ -228,7 +259,7 @@ export default function ShortAudit() {
             </div>
           )}
 
-          <div className="mt-5">
+          <div className="fc-press mt-5">
             {cta('hero', heroCta)}
             <p className="mt-2 text-center text-[13px] text-[#3a342b]">{OFFER_LINE}</p>
           </div>
@@ -236,14 +267,16 @@ export default function ShortAudit() {
         </div>
 
         {proof && proof.inboundMax > 0 && (
-          <dl className="hidden grid-cols-3 gap-3 text-center md:grid md:gap-4" data-testid="stats">
-            {[
-              [`${proof.inboundMin}–${proof.inboundMax}`, 'calls a week'],
-              [`${proof.answerMin}–${proof.answerMax}%`, 'answered today (est.)'],
-              [`${proof.missedMin}–${proof.missedMax}`, 'missed a week (est.)'],
-            ].map(([v, l]) => (
+          <dl className="relative z-10 hidden grid-cols-3 gap-3 text-center md:grid md:gap-4" data-testid="stats">
+            {([
+              [proof.inboundMin, proof.inboundMax, '', 'calls a week'],
+              [proof.answerMin, proof.answerMax, '%', 'answered today (est.)'],
+              [proof.missedMin, proof.missedMax, '', 'missed a week (est.)'],
+            ] as const).map(([min, max, suffix, l]) => (
               <div key={l} className="rounded-2xl border border-[#0c0b09]/10 bg-white/60 px-2 py-4">
-                <dd className="text-[22px] font-bold leading-none md:text-[28px]">{v}</dd>
+                <dd className="text-[22px] font-bold leading-none tabular-nums md:text-[28px]">
+                  <RangeCount min={min} max={max} suffix={suffix} />
+                </dd>
                 <dt className="mt-2 text-[12px] leading-tight text-[#5b5346]">{l}</dt>
               </div>
             ))}
@@ -253,8 +286,9 @@ export default function ShortAudit() {
 
       <div className="mx-auto max-w-3xl px-5 md:px-8">
         {/* 2. What happens next: three steps, truthful (done-for-you, founder-assisted) */}
+        <Below>
         <section aria-labelledby="fc-how" className="py-6">
-          <h2 id="fc-how" className="mb-3 text-[20px] font-semibold">What happens next</h2>
+          <h2 id="fc-how" className="mb-3 text-[20px] font-semibold tracking-tight">What happens next</h2>
           <ol className="grid gap-3 text-[15px] leading-snug">
             {[
               ['Walk through this audit', 'A short call.'],
@@ -268,6 +302,7 @@ export default function ShortAudit() {
             ))}
           </ol>
         </section>
+        </Below>
 
         {/* 3. Social proof: only what the audit actually contains (their own public reviews) */}
         {proof?.rating && proof.reviews ? (
@@ -313,11 +348,13 @@ export default function ShortAudit() {
         </section>
 
         {/* 5. Final CTA (the same single action) */}
+        <Below>
         <section className="py-8" data-testid="final-cta">
-          <h2 className="mb-3 text-[22px] font-semibold leading-tight">Ready to stop losing those calls?</h2>
+          <h2 className="mb-3 text-[22px] font-semibold leading-tight tracking-tight">Ready to stop losing those calls?</h2>
           {cta('final', finalCta)}
           <p className="mt-2 text-center text-[13px] text-[#3a342b]">{OFFER_LINE}</p>
         </section>
+        </Below>
 
         <footer className="border-t border-[#0c0b09]/15 pb-6 pt-4 text-[12px] leading-relaxed text-[#5b5346]">
           <p>{data?.compliance?.disclaimerLong || 'Figures are estimates based on public data and industry benchmarks, not a guarantee of results.'}</p>

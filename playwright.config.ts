@@ -37,9 +37,12 @@ export default defineConfig({
     },
   ],
   projects: [
-    { name: 'iphone14', use: { ...use, viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1' } },
-    { name: 'pixel', use: { ...use, viewport: { width: 412, height: 915 }, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36' } },
-    { name: 'desktop-1366x768', use: { ...use, viewport: { width: 1366, height: 768 } } },
-    { name: 'desktop-1280x800', use: { ...use, viewport: { width: 1280, height: 800 } } },
+    { name: 'iphone14', testIgnore: [/premium-surface\.spec/, /audit-identity\.spec/], use: { ...use, viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1' } },
+    { name: 'pixel', testIgnore: [/premium-surface\.spec/, /audit-identity\.spec/], use: { ...use, viewport: { width: 412, height: 915 }, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36' } },
+    { name: 'desktop-1366x768', testIgnore: [/premium-surface\.spec/, /audit-identity\.spec/], use: { ...use, viewport: { width: 1366, height: 768 } } },
+    { name: 'desktop-1280x800', testIgnore: [/premium-surface\.spec/, /audit-identity\.spec/], use: { ...use, viewport: { width: 1280, height: 800 } } },
+    // Premium surface + audit identity. Kept off the legacy matrix so those suites stay on their existing profiles.
+    { name: 'webkit-390', testMatch: [/premium-surface\.spec/, /audit-identity\.spec/], use: { ...use, browserName: 'webkit', launchOptions: { args: [] }, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1' } },
+    { name: 'chromium-1440', testMatch: [/premium-surface\.spec/, /audit-identity\.spec/], use: { ...use, browserName: 'chromium', viewport: { width: 1440, height: 900 } } },
   ],
 });
