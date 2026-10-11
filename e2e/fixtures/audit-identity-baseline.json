@@ -1,0 +1,664 @@
+{
+  "chromium-1440": {
+    "raw": {
+      "gate": [
+        {
+          "path": "div:nth-of-type(1) > h1:nth-of-type(1)",
+          "tag": "H1",
+          "text": "Specially Prepared for PLACEHOLDER Business",
+          "attrs": {
+            "class": "mt-3 font-sans text-2xl font-semibold normal-case leading-tight tracking-normal sm:text-3xl text-navy-900"
+          }
+        },
+        {
+          "path": "div:nth-of-type(1) > p:nth-of-type(2)",
+          "tag": "P",
+          "text": "City, State",
+          "attrs": {
+            "class": "mt-2 text-sm text-navy-700"
+          }
+        },
+        {
+          "path": "div:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > input:nth-of-type(1)",
+          "tag": "INPUT",
+          "text": "",
+          "attrs": {
+            "id": "audit-lead-phone",
+            "inputmode": "tel",
+            "autocomplete": "tel-national",
+            "placeholder": "082 123 4567",
+            "class": "h-12 min-w-0 flex-1 rounded-xl border border-navy-200 bg-white px-3 text-base text-navy-900",
+            "type": "tel",
+            "value": "",
+            "name": "phone"
+          }
+        }
+      ],
+      "report": [
+        {
+          "path": "div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > img:nth-of-type(1)",
+          "tag": "IMG",
+          "text": "",
+          "attrs": {
+            "alt": "PLACEHOLDER Business logo",
+            "class": "h-11 w-11 shrink-0 rounded-xl object-cover ring-2 shadow-md ring-white/30",
+            "src": "/assets/logo.png"
+          }
+        },
+        {
+          "path": "div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(2)",
+          "tag": "P",
+          "text": "PLACEHOLDER Business",
+          "attrs": {
+            "class": "truncate text-base font-semibold tracking-tight md:text-lg text-white"
+          }
+        },
+        {
+          "path": "div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(3)",
+          "tag": "P",
+          "text": "City, State",
+          "attrs": {
+            "class": "truncate text-xs text-slate-300"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(1)",
+          "tag": "P",
+          "text": "PLACEHOLDER Business - City, State",
+          "attrs": {
+            "class": "mt-2 text-lg text-navy-700"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > input:nth-of-type(1)",
+          "tag": "INPUT",
+          "text": "",
+          "attrs": {
+            "inputmode": "numeric",
+            "placeholder": "Phone number",
+            "class": "flex-1 min-w-0 h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl border text-base font-medium placeholder:opacity-60 focus:outline-none focus:ring-2 focus:ring-white/30 bg-[#f7efde]/85 border-[#b7d4bf] text-[#2e261c]",
+            "aria-label": "Phone number",
+            "aria-invalid": "false",
+            "autocomplete": "tel-national",
+            "enterkeyhint": "go",
+            "type": "tel",
+            "value": ""
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > p:nth-of-type(2)",
+          "tag": "P",
+          "text": "PLACEHOLDER Business \u00b7 City, State",
+          "attrs": {
+            "class": "mt-1 text-sm text-[#f4efe4]"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > p:nth-of-type(3)",
+          "tag": "P",
+          "text": "Mid-range leak for PLACEHOLDER Business: $21,000 / month. Six-month cumulative: $126,000. Estimates based on benchmarks",
+          "attrs": {
+            "class": "mt-4 max-w-xl text-sm leading-relaxed text-[#a8957a]"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(3) > div:nth-of-type(1) > h3:nth-of-type(1)",
+          "tag": "H3",
+          "text": "PLACEHOLDER Business Value Calculator",
+          "attrs": {
+            "class": "serif text-base sm:text-lg font-bold text-navy-900 tracking-wide"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(3) > div:nth-of-type(1) > p:nth-of-type(1)",
+          "tag": "P",
+          "text": "Calculate ROI now for PLACEHOLDER Business - see if Fourcee is even worth it for your current setup.",
+          "attrs": {
+            "class": "mb-6 mt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-navy-700 sm:text-xs"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(4) > div:nth-of-type(1) > img:nth-of-type(1)",
+          "tag": "IMG",
+          "text": "",
+          "attrs": {
+            "alt": "Call intelligence preview",
+            "class": "max-h-56 w-auto max-w-full object-contain object-center md:max-h-64",
+            "src": "/assets/placeholder-DE6kAJW6.gif"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(11) > div:nth-of-type(2) > img:nth-of-type(1)",
+          "tag": "IMG",
+          "text": "",
+          "attrs": {
+            "alt": "Live inventory intelligence",
+            "class": "h-full min-h-[200px] w-full object-cover",
+            "src": "/assets/placeholder.gif"
+          }
+        }
+      ],
+      "requests": [
+        "http://127.0.0.1:4198/api/lead",
+        "http://127.0.0.1:4199/",
+        "http://127.0.0.1:4199/assets/1.jpg",
+        "http://127.0.0.1:4199/assets/3D/gold%20chatoic%20sphere/scene.bin",
+        "http://127.0.0.1:4199/assets/3D/gold%20chatoic%20sphere/scene.gltf",
+        "http://127.0.0.1:4199/assets/App-*.js",
+        "http://127.0.0.1:4199/assets/AuditPage-*.js",
+        "http://127.0.0.1:4199/assets/GLTFLoader-*.js",
+        "http://127.0.0.1:4199/assets/HDRLoader-*.js",
+        "http://127.0.0.1:4199/assets/audit-content-*.js",
+        "http://127.0.0.1:4199/assets/dotted-surface-*.js",
+        "http://127.0.0.1:4199/assets/fcblack-*.png",
+        "http://127.0.0.1:4199/assets/fcshad-*.png",
+        "http://127.0.0.1:4199/assets/fcwhite-*.png",
+        "http://127.0.0.1:4199/assets/glowing-ai-chat-assistant-*.js",
+        "http://127.0.0.1:4199/assets/incoming-call-phone-*.js",
+        "http://127.0.0.1:4199/assets/index-*.css",
+        "http://127.0.0.1:4199/assets/index-*.js",
+        "http://127.0.0.1:4199/assets/lead-client-*.js",
+        "http://127.0.0.1:4199/assets/logo.png",
+        "http://127.0.0.1:4199/assets/placeholder-*.gif",
+        "http://127.0.0.1:4199/assets/placeholder.gif",
+        "http://127.0.0.1:4199/assets/plates/plate_hero_ring.webp",
+        "http://127.0.0.1:4199/assets/plates/plate_missed_call_phone.png",
+        "http://127.0.0.1:4199/assets/three.module-*.js",
+        "http://127.0.0.1:4199/content.json",
+        "https://challenges.cloudflare.com/turnstile/v0/api.js",
+        "https://challenges.cloudflare.com/turnstile/v0/g/4df4a60fa397/api.js",
+        "https://fonts.googleapis.com/css2",
+        "https://fonts.gstatic.com/s/inter/v20/UcCo3FwrK3iLTcviYwY.woff2",
+        "https://fonts.gstatic.com/s/michroma/v21/PN_zRfy9qWD8fEagAPg9pTk.woff2",
+        "https://threejs.org/examples/textures/equirectangular/venice_sunset_1k.hdr"
+      ]
+    },
+    "fixture": {
+      "gate": [
+        {
+          "path": "div:nth-of-type(1) > h1:nth-of-type(1)",
+          "tag": "H1",
+          "text": "Specially Prepared for AURUM TEST ATELIER",
+          "attrs": {
+            "class": "mt-3 font-sans text-2xl font-semibold normal-case leading-tight tracking-normal sm:text-3xl text-navy-900"
+          }
+        },
+        {
+          "path": "div:nth-of-type(1) > p:nth-of-type(2)",
+          "tag": "P",
+          "text": "Lisbon, PT",
+          "attrs": {
+            "class": "mt-2 text-sm text-navy-700"
+          }
+        }
+      ],
+      "report": [
+        {
+          "path": "div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > img:nth-of-type(1)",
+          "tag": "IMG",
+          "text": "",
+          "attrs": {
+            "alt": "AURUM TEST ATELIER logo",
+            "class": "h-11 w-11 shrink-0 rounded-xl object-cover ring-2 shadow-md ring-white/30",
+            "src": "/assets/logo.png"
+          }
+        },
+        {
+          "path": "div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(2)",
+          "tag": "P",
+          "text": "AURUM TEST ATELIER",
+          "attrs": {
+            "class": "truncate text-base font-semibold tracking-tight md:text-lg text-white"
+          }
+        },
+        {
+          "path": "div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(3)",
+          "tag": "P",
+          "text": "Lisbon, PT",
+          "attrs": {
+            "class": "truncate text-xs text-slate-300"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(1)",
+          "tag": "P",
+          "text": "AURUM TEST ATELIER - Lisbon, PT",
+          "attrs": {
+            "class": "mt-2 text-lg text-navy-700"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1)",
+          "tag": "DIV",
+          "text": "Try Fourcee on your phoneNo charge. ~60\u201390s.\ud83c\uddff\ud83c\udde6+27CallOptional. By requesting a call you consent to one demo callback to this number for product demonstration. We do not sell your number. Recording only if legally permitted and disclosed on the call.",
+          "attrs": {
+            "class": "min-w-0 max-w-sm rounded-2xl p-4 sm:p-6 border backdrop-blur-2xl bg-gradient-to-br from-[#b8e2cd]/85 via-[#a6d8bf]/82 to-[#88c7ab]/78 border-[#7fbaa3]/70 shadow-[0_28px_60px_-18px_rgba(95,130,104,0.45)] w-full",
+            "role": "group",
+            "aria-label": "AURUM TEST ATELIER demo call - enter number and call"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > p:nth-of-type(2)",
+          "tag": "P",
+          "text": "AURUM TEST ATELIER \u00b7 Lisbon, PT",
+          "attrs": {
+            "class": "mt-1 text-sm text-[#f4efe4]"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > span:nth-of-type(2)",
+          "tag": "SPAN",
+          "text": "Report AT-2041",
+          "attrs": {
+            "class": "fx-chip"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > p:nth-of-type(3)",
+          "tag": "P",
+          "text": "Mid-range leak for AURUM TEST ATELIER: $21,000 / month. Six-month cumulative: $126,000. Estimates based on benchmarks",
+          "attrs": {
+            "class": "mt-4 max-w-xl text-sm leading-relaxed text-[#a8957a]"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(3) > div:nth-of-type(1) > h3:nth-of-type(1)",
+          "tag": "H3",
+          "text": "AURUM TEST ATELIER Value Calculator",
+          "attrs": {
+            "class": "serif text-base sm:text-lg font-bold text-navy-900 tracking-wide"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(3) > div:nth-of-type(1) > p:nth-of-type(1)",
+          "tag": "P",
+          "text": "Calculate ROI now for AURUM TEST ATELIER - see if Fourcee is even worth it for your current setup.",
+          "attrs": {
+            "class": "mb-6 mt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-navy-700 sm:text-xs"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(9) > div:nth-of-type(1) > div:nth-of-type(2) > p:nth-of-type(1)",
+          "tag": "P",
+          "text": "\u201cAURUM_QUOTE_ONE\u201d",
+          "attrs": {
+            "class": "mt-4 text-sm italic leading-relaxed text-[#1a1714]"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(11) > div:nth-of-type(1) > p:nth-of-type(1)",
+          "tag": "P",
+          "text": "AURUM_RECOVERY_BODY",
+          "attrs": {
+            "class": "mt-3 max-w-2xl text-sm leading-relaxed text-navy-700"
+          }
+        }
+      ],
+      "requests": [
+        "http://127.0.0.1:4198/api/lead",
+        "http://127.0.0.1:4199/",
+        "http://127.0.0.1:4199/assets/1.jpg",
+        "http://127.0.0.1:4199/assets/3D/gold%20chatoic%20sphere/scene.bin",
+        "http://127.0.0.1:4199/assets/3D/gold%20chatoic%20sphere/scene.gltf",
+        "http://127.0.0.1:4199/assets/App-*.js",
+        "http://127.0.0.1:4199/assets/AuditPage-*.js",
+        "http://127.0.0.1:4199/assets/GLTFLoader-*.js",
+        "http://127.0.0.1:4199/assets/HDRLoader-*.js",
+        "http://127.0.0.1:4199/assets/audit-content-*.js",
+        "http://127.0.0.1:4199/assets/dotted-surface-*.js",
+        "http://127.0.0.1:4199/assets/fcblack-*.png",
+        "http://127.0.0.1:4199/assets/fcshad-*.png",
+        "http://127.0.0.1:4199/assets/fcwhite-*.png",
+        "http://127.0.0.1:4199/assets/glowing-ai-chat-assistant-*.js",
+        "http://127.0.0.1:4199/assets/incoming-call-phone-*.js",
+        "http://127.0.0.1:4199/assets/index-*.css",
+        "http://127.0.0.1:4199/assets/index-*.js",
+        "http://127.0.0.1:4199/assets/lead-client-*.js",
+        "http://127.0.0.1:4199/assets/logo.png",
+        "http://127.0.0.1:4199/assets/placeholder-*.gif",
+        "http://127.0.0.1:4199/assets/placeholder.gif",
+        "http://127.0.0.1:4199/assets/plates/plate_hero_ring.webp",
+        "http://127.0.0.1:4199/assets/plates/plate_missed_call_phone.png",
+        "http://127.0.0.1:4199/assets/three.module-*.js",
+        "http://127.0.0.1:4199/content.json",
+        "https://challenges.cloudflare.com/turnstile/v0/api.js",
+        "https://challenges.cloudflare.com/turnstile/v0/g/4df4a60fa397/api.js",
+        "https://fonts.googleapis.com/css2",
+        "https://fonts.gstatic.com/s/inter/v20/UcCo3FwrK3iLTcviYwY.woff2",
+        "https://fonts.gstatic.com/s/michroma/v21/PN_zRfy9qWD8fEagAPg9pTk.woff2",
+        "https://threejs.org/examples/textures/equirectangular/venice_sunset_1k.hdr"
+      ]
+    }
+  },
+  "webkit-390": {
+    "raw": {
+      "gate": [
+        {
+          "path": "div:nth-of-type(1) > h1:nth-of-type(1)",
+          "tag": "H1",
+          "text": "Specially Prepared for PLACEHOLDER Business",
+          "attrs": {
+            "class": "mt-3 font-sans text-2xl font-semibold normal-case leading-tight tracking-normal sm:text-3xl text-navy-900"
+          }
+        },
+        {
+          "path": "div:nth-of-type(1) > p:nth-of-type(2)",
+          "tag": "P",
+          "text": "City, State",
+          "attrs": {
+            "class": "mt-2 text-sm text-navy-700"
+          }
+        },
+        {
+          "path": "div:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > input:nth-of-type(1)",
+          "tag": "INPUT",
+          "text": "",
+          "attrs": {
+            "id": "audit-lead-phone",
+            "inputmode": "tel",
+            "autocomplete": "tel-national",
+            "placeholder": "082 123 4567",
+            "class": "h-12 min-w-0 flex-1 rounded-xl border border-navy-200 bg-white px-3 text-base text-navy-900",
+            "type": "tel",
+            "value": "",
+            "name": "phone"
+          }
+        }
+      ],
+      "report": [
+        {
+          "path": "div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > img:nth-of-type(1)",
+          "tag": "IMG",
+          "text": "",
+          "attrs": {
+            "alt": "PLACEHOLDER Business logo",
+            "class": "h-11 w-11 shrink-0 rounded-xl object-cover ring-2 shadow-md ring-white/30",
+            "src": "/assets/logo.png"
+          }
+        },
+        {
+          "path": "div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(2)",
+          "tag": "P",
+          "text": "PLACEHOLDER Business",
+          "attrs": {
+            "class": "truncate text-base font-semibold tracking-tight md:text-lg text-white"
+          }
+        },
+        {
+          "path": "div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(3)",
+          "tag": "P",
+          "text": "City, State",
+          "attrs": {
+            "class": "truncate text-xs text-slate-300"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(1)",
+          "tag": "P",
+          "text": "PLACEHOLDER Business - City, State",
+          "attrs": {
+            "class": "mt-2 text-lg text-navy-700"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > input:nth-of-type(1)",
+          "tag": "INPUT",
+          "text": "",
+          "attrs": {
+            "inputmode": "numeric",
+            "placeholder": "Phone number",
+            "class": "flex-1 min-w-0 h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl border text-base font-medium placeholder:opacity-60 focus:outline-none focus:ring-2 focus:ring-white/30 bg-[#f7efde]/85 border-[#b7d4bf] text-[#2e261c]",
+            "aria-label": "Phone number",
+            "aria-invalid": "false",
+            "autocomplete": "tel-national",
+            "enterkeyhint": "go",
+            "type": "tel",
+            "value": ""
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > p:nth-of-type(2)",
+          "tag": "P",
+          "text": "PLACEHOLDER Business \u00b7 City, State",
+          "attrs": {
+            "class": "mt-1 text-sm text-[#f4efe4]"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > p:nth-of-type(3)",
+          "tag": "P",
+          "text": "Mid-range leak for PLACEHOLDER Business: $21,000 / month. Six-month cumulative: $126,000. Estimates based on benchmarks",
+          "attrs": {
+            "class": "mt-4 max-w-xl text-sm leading-relaxed text-[#a8957a]"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(3) > div:nth-of-type(1) > h3:nth-of-type(1)",
+          "tag": "H3",
+          "text": "PLACEHOLDER Business Value Calculator",
+          "attrs": {
+            "class": "serif text-base sm:text-lg font-bold text-navy-900 tracking-wide"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(3) > div:nth-of-type(1) > p:nth-of-type(1)",
+          "tag": "P",
+          "text": "Calculate ROI now for PLACEHOLDER Business - see if Fourcee is even worth it for your current setup.",
+          "attrs": {
+            "class": "mb-6 mt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-navy-700 sm:text-xs"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(4) > div:nth-of-type(1) > img:nth-of-type(1)",
+          "tag": "IMG",
+          "text": "",
+          "attrs": {
+            "alt": "Call intelligence preview",
+            "class": "max-h-56 w-auto max-w-full object-contain object-center md:max-h-64",
+            "src": "/assets/placeholder-DE6kAJW6.gif"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(11) > div:nth-of-type(2) > img:nth-of-type(1)",
+          "tag": "IMG",
+          "text": "",
+          "attrs": {
+            "alt": "Live inventory intelligence",
+            "class": "h-full min-h-[200px] w-full object-cover",
+            "src": "/assets/placeholder.gif"
+          }
+        }
+      ],
+      "requests": [
+        "http://127.0.0.1:4198/api/lead",
+        "http://127.0.0.1:4199/",
+        "http://127.0.0.1:4199/assets/1.jpg",
+        "http://127.0.0.1:4199/assets/3D/gold%20chatoic%20sphere/scene.bin",
+        "http://127.0.0.1:4199/assets/3D/gold%20chatoic%20sphere/scene.gltf",
+        "http://127.0.0.1:4199/assets/App-*.js",
+        "http://127.0.0.1:4199/assets/AuditPage-*.js",
+        "http://127.0.0.1:4199/assets/GLTFLoader-*.js",
+        "http://127.0.0.1:4199/assets/HDRLoader-*.js",
+        "http://127.0.0.1:4199/assets/audit-content-*.js",
+        "http://127.0.0.1:4199/assets/dotted-surface-*.js",
+        "http://127.0.0.1:4199/assets/fcblack-*.png",
+        "http://127.0.0.1:4199/assets/fcshad-*.png",
+        "http://127.0.0.1:4199/assets/fcwhite-*.png",
+        "http://127.0.0.1:4199/assets/glowing-ai-chat-assistant-*.js",
+        "http://127.0.0.1:4199/assets/incoming-call-phone-*.js",
+        "http://127.0.0.1:4199/assets/index-*.css",
+        "http://127.0.0.1:4199/assets/index-*.js",
+        "http://127.0.0.1:4199/assets/lead-client-*.js",
+        "http://127.0.0.1:4199/assets/logo.png",
+        "http://127.0.0.1:4199/assets/placeholder-*.gif",
+        "http://127.0.0.1:4199/assets/placeholder.gif",
+        "http://127.0.0.1:4199/assets/plates/plate_hero_ring.webp",
+        "http://127.0.0.1:4199/assets/plates/plate_missed_call_phone.png",
+        "http://127.0.0.1:4199/assets/three.module-*.js",
+        "http://127.0.0.1:4199/content.json",
+        "https://challenges.cloudflare.com/turnstile/v0/api.js",
+        "https://challenges.cloudflare.com/turnstile/v0/g/4df4a60fa397/api.js",
+        "https://fonts.googleapis.com/css2",
+        "https://fonts.gstatic.com/s/inter/v20/UcCo3FwrK3iLTcviYwYZ8UA3.woff2",
+        "https://fonts.gstatic.com/s/michroma/v21/PN_zRfy9qWD8fEagAPg9pTn5_PDb.woff2",
+        "https://threejs.org/examples/textures/equirectangular/venice_sunset_1k.hdr"
+      ]
+    },
+    "fixture": {
+      "gate": [
+        {
+          "path": "div:nth-of-type(1) > h1:nth-of-type(1)",
+          "tag": "H1",
+          "text": "Specially Prepared for AURUM TEST ATELIER",
+          "attrs": {
+            "class": "mt-3 font-sans text-2xl font-semibold normal-case leading-tight tracking-normal sm:text-3xl text-navy-900"
+          }
+        },
+        {
+          "path": "div:nth-of-type(1) > p:nth-of-type(2)",
+          "tag": "P",
+          "text": "Lisbon, PT",
+          "attrs": {
+            "class": "mt-2 text-sm text-navy-700"
+          }
+        }
+      ],
+      "report": [
+        {
+          "path": "div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > img:nth-of-type(1)",
+          "tag": "IMG",
+          "text": "",
+          "attrs": {
+            "alt": "AURUM TEST ATELIER logo",
+            "class": "h-11 w-11 shrink-0 rounded-xl object-cover ring-2 shadow-md ring-white/30",
+            "src": "/assets/logo.png"
+          }
+        },
+        {
+          "path": "div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(2)",
+          "tag": "P",
+          "text": "AURUM TEST ATELIER",
+          "attrs": {
+            "class": "truncate text-base font-semibold tracking-tight md:text-lg text-white"
+          }
+        },
+        {
+          "path": "div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(3)",
+          "tag": "P",
+          "text": "Lisbon, PT",
+          "attrs": {
+            "class": "truncate text-xs text-slate-300"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(1)",
+          "tag": "P",
+          "text": "AURUM TEST ATELIER - Lisbon, PT",
+          "attrs": {
+            "class": "mt-2 text-lg text-navy-700"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1)",
+          "tag": "DIV",
+          "text": "Try Fourcee on your phoneNo charge. ~60\u201390s.\ud83c\uddff\ud83c\udde6+27CallOptional. By requesting a call you consent to one demo callback to this number for product demonstration. We do not sell your number. Recording only if legally permitted and disclosed on the call.",
+          "attrs": {
+            "class": "min-w-0 max-w-sm rounded-2xl p-4 sm:p-6 border backdrop-blur-2xl bg-gradient-to-br from-[#b8e2cd]/85 via-[#a6d8bf]/82 to-[#88c7ab]/78 border-[#7fbaa3]/70 shadow-[0_28px_60px_-18px_rgba(95,130,104,0.45)] w-full",
+            "role": "group",
+            "aria-label": "AURUM TEST ATELIER demo call - enter number and call"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > p:nth-of-type(2)",
+          "tag": "P",
+          "text": "AURUM TEST ATELIER \u00b7 Lisbon, PT",
+          "attrs": {
+            "class": "mt-1 text-sm text-[#f4efe4]"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > span:nth-of-type(2)",
+          "tag": "SPAN",
+          "text": "Report AT-2041",
+          "attrs": {
+            "class": "fx-chip"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > p:nth-of-type(3)",
+          "tag": "P",
+          "text": "Mid-range leak for AURUM TEST ATELIER: $21,000 / month. Six-month cumulative: $126,000. Estimates based on benchmarks",
+          "attrs": {
+            "class": "mt-4 max-w-xl text-sm leading-relaxed text-[#a8957a]"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(3) > div:nth-of-type(1) > h3:nth-of-type(1)",
+          "tag": "H3",
+          "text": "AURUM TEST ATELIER Value Calculator",
+          "attrs": {
+            "class": "serif text-base sm:text-lg font-bold text-navy-900 tracking-wide"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(3) > div:nth-of-type(1) > p:nth-of-type(1)",
+          "tag": "P",
+          "text": "Calculate ROI now for AURUM TEST ATELIER - see if Fourcee is even worth it for your current setup.",
+          "attrs": {
+            "class": "mb-6 mt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-navy-700 sm:text-xs"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(9) > div:nth-of-type(1) > div:nth-of-type(2) > p:nth-of-type(1)",
+          "tag": "P",
+          "text": "\u201cAURUM_QUOTE_ONE\u201d",
+          "attrs": {
+            "class": "mt-4 text-sm italic leading-relaxed text-[#1a1714]"
+          }
+        },
+        {
+          "path": "div:nth-of-type(3) > section:nth-of-type(11) > div:nth-of-type(1) > p:nth-of-type(1)",
+          "tag": "P",
+          "text": "AURUM_RECOVERY_BODY",
+          "attrs": {
+            "class": "mt-3 max-w-2xl text-sm leading-relaxed text-navy-700"
+          }
+        }
+      ],
+      "requests": [
+        "http://127.0.0.1:4198/api/lead",
+        "http://127.0.0.1:4199/",
+        "http://127.0.0.1:4199/assets/1.jpg",
+        "http://127.0.0.1:4199/assets/3D/gold%20chatoic%20sphere/scene.bin",
+        "http://127.0.0.1:4199/assets/3D/gold%20chatoic%20sphere/scene.gltf",
+        "http://127.0.0.1:4199/assets/App-*.js",
+        "http://127.0.0.1:4199/assets/AuditPage-*.js",
+        "http://127.0.0.1:4199/assets/GLTFLoader-*.js",
+        "http://127.0.0.1:4199/assets/HDRLoader-*.js",
+        "http://127.0.0.1:4199/assets/audit-content-*.js",
+        "http://127.0.0.1:4199/assets/dotted-surface-*.js",
+        "http://127.0.0.1:4199/assets/fcblack-*.png",
+        "http://127.0.0.1:4199/assets/fcshad-*.png",
+        "http://127.0.0.1:4199/assets/fcwhite-*.png",
+        "http://127.0.0.1:4199/assets/glowing-ai-chat-assistant-*.js",
+        "http://127.0.0.1:4199/assets/incoming-call-phone-*.js",
+        "http://127.0.0.1:4199/assets/index-*.css",
+        "http://127.0.0.1:4199/assets/index-*.js",
+        "http://127.0.0.1:4199/assets/lead-client-*.js",
+        "http://127.0.0.1:4199/assets/logo.png",
+        "http://127.0.0.1:4199/assets/placeholder-*.gif",
+        "http://127.0.0.1:4199/assets/placeholder.gif",
+        "http://127.0.0.1:4199/assets/plates/plate_hero_ring.webp",
+        "http://127.0.0.1:4199/assets/plates/plate_missed_call_phone.png",
+        "http://127.0.0.1:4199/assets/three.module-*.js",
+        "http://127.0.0.1:4199/content.json",
+        "https://challenges.cloudflare.com/turnstile/v0/api.js",
+        "https://challenges.cloudflare.com/turnstile/v0/g/4df4a60fa397/api.js",
+        "https://fonts.googleapis.com/css2",
+        "https://fonts.gstatic.com/s/inter/v20/UcCo3FwrK3iLTcviYwYZ8UA3.woff2",
+        "https://fonts.gstatic.com/s/michroma/v21/PN_zRfy9qWD8fEagAPg9pTn5_PDb.woff2",
+        "https://threejs.org/examples/textures/equirectangular/venice_sunset_1k.hdr"
+      ]
+    }
+  }
+}

@@ -1,8 +1,41 @@
+import fs from 'fs';
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import type { Plugin } from 'vite';
+
+/**
+ * Landing motion imports framer-motion. The audit page already loads that library inside the
+ * incoming-call chunk. A second importer makes Rollup extract a shared chunk, and the audit page
+ * then requests it. A private copy for the landing modules keeps the audit request set unchanged.
+ */
+const LANDING_FRAMER = '?fc-landing-copy';
+const landingFramerCopy = (): Plugin => ({
+  name: 'fourcee-landing-framer-copy',
+  enforce: 'pre',
+  async resolveId(source, importer, options) {
+    if (!importer) return null;
+    const fromCopy = importer.includes(LANDING_FRAMER);
+    const fromLanding = /(?:^|[/\\])(?:motion-polish|view-fade)\.tsx$/.test(importer);
+    if (!fromCopy && !fromLanding) return null;
+    if (fromLanding && source !== 'framer-motion' && !source.startsWith('framer-motion/')) return null;
+    const realImporter = fromCopy ? importer.slice(0, importer.indexOf(LANDING_FRAMER)) : importer;
+    const resolved = await this.resolve(source, realImporter, { ...options, skipSelf: true });
+    if (!resolved || resolved.external) return null;
+    const id = resolved.id.replace(/^\0/, '').split('?')[0];
+    const shared = /[/\\]node_modules[/\\](react|react-dom|scheduler)[/\\]/.test(id);
+    if (shared || (!id.includes(`${path.sep}node_modules${path.sep}`) && !id.includes('/node_modules/'))) {
+      return fromCopy ? id : null;
+    }
+    return id + LANDING_FRAMER;
+  },
+  load(id) {
+    if (!id.includes(LANDING_FRAMER)) return null;
+    const real = id.replace(/^\0/, '').slice(0, id.replace(/^\0/, '').indexOf(LANDING_FRAMER));
+    return fs.readFileSync(real, 'utf8');
+  },
+});
 
 /**
  * AR/3D assets need exact MIME types: iOS AR Quick Look only opens `.usdz` served as model/vnd.usdz+zip, Android Scene Viewer
@@ -53,7 +86,7 @@ export default defineConfig(({ mode }) => {
         port: 3000,
         host: '0.0.0.0',
       },
-      plugins: [react(), tailwindcss(), deferCssPlugin(), arMimePlugin()],
+      plugins: [landingFramerCopy(), react(), tailwindcss(), deferCssPlugin(), arMimePlugin()],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
