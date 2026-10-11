@@ -2,12 +2,11 @@ import { test, expect } from '@playwright/test';
 
 test.beforeEach(({}, info) => { test.skip(!['iphone14', 'pixel'].includes(info.project.name), 'splash checked on the phone profiles'); });
 
-test('splash: shows, ends once (timer does not restart) and never lingers past ~5 s', async ({ page }) => {
-  // Count real 2.8 s splash timers: before the fix App re-renders restarted it 6-7 times and the splash stayed up ~6.8 s.
+test('splash: shows, ends once (timer does not restart) and never lingers past 1.5 s', async ({ page }) => {
   await page.addInitScript(() => {
     (window as unknown as { __t: number[] }).__t = [];
     const st = window.setTimeout;
-    window.setTimeout = ((f: TimerHandler, d?: number, ...a: unknown[]) => { if (d === 2800) (window as unknown as { __t: number[] }).__t.push(performance.now()); return st(f, d, ...a); }) as typeof window.setTimeout;
+    window.setTimeout = ((f: TimerHandler, d?: number, ...a: unknown[]) => { if (d === 900) (window as unknown as { __t: number[] }).__t.push(performance.now()); return st(f, d, ...a); }) as typeof window.setTimeout;
   });
   await page.goto('/');
   const splash = page.getByTestId('splash');
@@ -15,15 +14,15 @@ test('splash: shows, ends once (timer does not restart) and never lingers past ~
   const shown = Date.now();
   await splash.waitFor({ state: 'detached', timeout: 15_000 });
   const visibleMs = Date.now() - shown;
-  expect(visibleMs).toBeLessThan(5500);
+  expect(visibleMs).toBeLessThan(1600);
   const starts = await page.evaluate(() => (window as unknown as { __t: number[] }).__t.length);
-  expect(starts, 'only the splash timer (+ the App portal-guide timer) may start a 2800 ms timeout').toBeLessThanOrEqual(2);
+  expect(starts, 'the splash timer must start once').toBeLessThanOrEqual(2);
 });
 
 test('splash cards animate transform/opacity only; no infinite JS loop and no filters on the cards', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('splash')).toBeVisible();
-  await page.waitForTimeout(1800);
+  await page.waitForTimeout(300);
   const info = await page.evaluate(() => {
     const cards = [...document.querySelectorAll('[data-testid=splash] [class*="skew-y"]')];
     const props = new Set<string>();

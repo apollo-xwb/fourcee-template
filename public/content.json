@@ -131,9 +131,9 @@
   },
   "liveDemo": {
     "ctaLabel": "Try Fourcee on your phone",
-    "helperCopy": "No charge. ~60–90s.",
-    "phoneCountryDefault": "+1",
-    "demoDurationHint": "~60–90s"
+    "helperCopy": "No charge.",
+    "phoneCountryDefault": "+27",
+    "demoDurationHint": "~60–90s."
   },
   "ringBuilder": {
     "enabled": true,

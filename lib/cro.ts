@@ -1,4 +1,5 @@
 import type { AuditData } from '../types/audit';
+import { resolveCalUrl } from './prospect-fixes';
 
 /**
  * Short prospect page ("CRO" page) flags and copy.
@@ -8,7 +9,6 @@ import type { AuditData } from '../types/audit';
  * i.e. once the voice onboarding platform exists. The number of days stays generic until TK confirms capacity.
  */
 export const OFFER_LINE = 'Free audit · done-for-you setup · live within days';
-export const DEFAULT_BOOKING_URL = 'https://app.cal.com/fourcee/30min';
 
 export type CtaVariant = 'book' | 'hear' | 'golive';
 
@@ -41,8 +41,9 @@ export const CTA_LABEL: Record<CtaVariant, string> = {
   golive: 'Go live in 5 minutes',
 };
 
+/** Booking link. An http(s) VITE_CAL_BOOKING_URL or VITE_BOOKING_URL overrides the Google appointment page. */
 export function bookingUrl(): string {
-  return env.VITE_BOOKING_URL || DEFAULT_BOOKING_URL;
+  return resolveCalUrl(import.meta.env as { VITE_CAL_BOOKING_URL?: string; VITE_BOOKING_URL?: string });
 }
 
 export function onboardingUrl(): string {

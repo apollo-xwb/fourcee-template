@@ -1,10 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
-import { QUEUE_KEY, enqueueLead, flushQueue, leadEndpoint, readQueue, submitLead, validateLeadFields, type LeadPayload } from '../lib/lead-client';
+import { LEAD_UNCONFIRMED, QUEUE_KEY, enqueueLead, flushQueue, isJsonContentType, leadEndpoint, readConfirmedLead, readQueue, submitLead, validateLeadFields, type LeadPayload } from '../lib/lead-client';
 import fs from 'node:fs';
 
 const mem = () => { const m = new Map<string, string>(); return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) }; };
 const payload = (o: Partial<LeadPayload> = {}): LeadPayload => ({ name: 'Zoe Test', email: 'zoe@testco.example', phone: '', store: 'Test & Co Jewellers', plan: 'pro', billing_cycle: 'monthly', notes: '', crm: '', total: 5997, currency: 'USD', website: '', idempotency_key: 'key-' + Math.random().toString(36).slice(2, 12), page_url: 'https://x.test/', ...o });
-const res = (status: number, body: unknown = {}) => ({ ok: status >= 200 && status < 300, status, json: async () => body }) as unknown as Response;
+const res = (status: number, body: unknown = {}, contentType = 'application/json; charset=utf-8') => ({
+  ok: status >= 200 && status < 300,
+  status,
+  headers: { get: (name: string) => (name.toLowerCase() === 'content-type' ? contentType : null) },
+  json: async () => {
+    if (typeof body === 'string') throw new SyntaxError('not json');
+    return body;
+  },
+}) as unknown as Response;
 
 describe('validateLeadFields', () => {
   const ok = { name: 'Zoe Test', email: 'zoe@testco.example', phone: '', store: 'Test & Co', plan: 'pro' };
@@ -52,7 +60,7 @@ describe('submitLead + queue', () => {
   it('retry reuses the same key, de-duplicates the queue, and clears it on success', async () => {
     const storage = mem(); const p = payload(); const keys: string[] = [];
     let fail = true;
-    const f = (async (_u: string, init: RequestInit) => { keys.push(JSON.parse(init.body as string).idempotency_key); return fail ? res(503) : res(201, { id: 'a' }); }) as unknown as typeof fetch;
+    const f = (async (_u: string, init: RequestInit) => { keys.push(JSON.parse(init.body as string).idempotency_key); return fail ? res(503) : res(201, { ok: true, id: 'a' }); }) as unknown as typeof fetch;
     await submitLead(p, { fetchImpl: f, storage }); await submitLead(p, { fetchImpl: f, storage });
     expect(readQueue(storage)).toHaveLength(1);
     fail = false;
@@ -63,11 +71,32 @@ describe('submitLead + queue', () => {
     const storage = mem(); const a = payload(), b = payload(), c = payload();
     [a, b, c].forEach((x) => enqueueLead(x, storage));
     let calls = 0;
-    const f = (async () => (++calls <= 1 ? res(201, { id: 'x' }) : res(500))) as unknown as typeof fetch;
+    const f = (async () => (++calls <= 1 ? res(201, { ok: true, id: 'x' }) : res(500))) as unknown as typeof fetch;
     expect(await flushQueue({ fetchImpl: f, storage })).toBe(1);
     expect(readQueue(storage).map((x) => x.idempotency_key)).toEqual([b.idempotency_key, c.idempotency_key]);
-    expect(await flushQueue({ fetchImpl: (async () => res(201, { id: 'y' })) as unknown as typeof fetch, storage })).toBe(2);
+    expect(await flushQueue({ fetchImpl: (async () => res(201, { ok: true, id: 'y' })) as unknown as typeof fetch, storage })).toBe(2);
     expect(readQueue(storage)).toEqual([]);
+  });
+  it('200 HTML (SPA fallback) stays locked and asks for a retry', async () => {
+    const storage = mem();
+    const html = res(200, '<!doctype html><div id="root"></div>', 'text/html; charset=utf-8');
+    const r = await submitLead(payload(), { fetchImpl: (async () => html) as typeof fetch, storage });
+    expect(r.status).toBe('queued');
+    if (r.status === 'queued') expect(r.error).toBe(LEAD_UNCONFIRMED);
+    expect(readQueue(storage)).toHaveLength(1);
+  });
+  it('200 JSON without ok:true does not count as sent', async () => {
+    const storage = mem();
+    const r = await submitLead(payload(), { fetchImpl: (async () => res(200, { id: 'orphan' })) as typeof fetch, storage });
+    expect(r.status).toBe('queued');
+    expect(readQueue(storage)).toHaveLength(1);
+  });
+  it('requires an application/json content type before parsing', async () => {
+    expect(isJsonContentType('application/json; charset=utf-8')).toBe(true);
+    expect(isJsonContentType('text/html')).toBe(false);
+    const bare = res(200, { ok: true, id: 'x' }, '');
+    expect(await readConfirmedLead(bare)).toBeNull();
+    expect(await readConfirmedLead(res(200, { ok: true, id: 'srv' }))).toEqual({ id: 'srv' });
   });
   it('survives a corrupt queue value and a missing storage', async () => {
     const storage = mem(); storage.setItem(QUEUE_KEY, '{not json');

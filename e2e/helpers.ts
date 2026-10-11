@@ -9,14 +9,24 @@ export function watchConsole(page: Page) {
   return errors;
 }
 
-/** The splash blocks the page for ~3.5 s; wait for it to unmount, then dismiss the Portal tip so it can't overlap anything. */
+/** The splash is skippable and under 1.5 s; wait for it to unmount. */
 export async function openApp(page: Page, query = '') {
   await page.goto('/' + query);
   // the app is a lazy chunk: #root stays empty until it loads, and waiting for a splash that is not mounted yet would return at once
   await page.waitForFunction(() => (document.getElementById('root')?.childElementCount ?? 0) > 0, undefined, { timeout: 60_000 });
   await page.locator('[data-testid=splash]').waitFor({ state: 'detached', timeout: 60_000 });
-  // DOM click, no auto-wait: the tip can auto-dismiss between the check and the click, and a deep-linked sheet may already cover it
-  await page.getByRole('button', { name: 'Got it' }).evaluateAll((els) => els.forEach((el) => (el as HTMLElement).click()));
+}
+
+/** The audit report sits behind a name / email / phone gate and opens only after the lead API accepts the form. */
+export async function unlockAuditReport(page: Page) {
+  const gate = page.locator('#audit-lead-name');
+  if (!(await gate.isVisible().catch(() => false))) return;
+  await page.route('**/api/lead', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: 'e2e-lead' }) }));
+  await gate.fill('Zoe Tester');
+  await page.locator('#audit-lead-email').fill('zoe@testco.example');
+  await page.locator('#audit-lead-phone').fill('0821234567');
+  await page.getByRole('button', { name: /View my report/i }).click();
+  await page.getByRole('heading', { name: /Phone Performance Audit Report/i }).waitFor({ state: 'visible', timeout: 30_000 });
 }
 
 export async function axeSerious(page: Page, include: string, tags = ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']) {

@@ -16,6 +16,17 @@ const AR_MIME: Record<string, string> = {
   '.wasm': 'application/wasm',
   '.task': 'application/octet-stream',
 };
+/** The compiled stylesheet is not needed for the poster’s first paint. Load it without blocking render. */
+const deferCssPlugin = (): Plugin => ({
+  name: 'fourcee-defer-css',
+  transformIndexHtml(html) {
+    return html.replace(
+      /<link rel="stylesheet" crossorigin href="([^"]+\.css)">/g,
+      '<link rel="stylesheet" crossorigin href="$1" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="$1"></noscript>',
+    );
+  },
+});
+
 const arMimePlugin = (): Plugin => {
   const middleware = (req: { url?: string }, res: { setHeader: (k: string, v: string) => void }, next: () => void) => {
     const path = (req.url ?? '').split('?')[0].toLowerCase();
@@ -42,7 +53,7 @@ export default defineConfig(({ mode }) => {
         port: 3000,
         host: '0.0.0.0',
       },
-      plugins: [react(), tailwindcss(), arMimePlugin()],
+      plugins: [react(), tailwindcss(), deferCssPlugin(), arMimePlugin()],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)

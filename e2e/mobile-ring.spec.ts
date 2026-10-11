@@ -40,7 +40,7 @@ test('fast scroll to the ring section: HUD is visible even when the 3D scene nev
   // instant jumps: top of the section, then straight to the end of it (what a hard fling does), no waiting for anything
   await page.evaluate(() => { const sc = (window as any).__sc, el = document.querySelector('#ring-studio .relative') as HTMLElement; sc.scrollTop += el.getBoundingClientRect().top - sc.getBoundingClientRect().top; });
   const before = await stage();
-  await page.evaluate(() => { const sc = (window as any).__sc, el = document.querySelector('#ring-studio .relative.h-\\[150vh\\]') as HTMLElement; const r = el.getBoundingClientRect(); sc.scrollTop += r.top - sc.getBoundingClientRect().top + (el.offsetHeight - sc.clientHeight); });
+  await page.evaluate(() => { const sc = (window as any).__sc, el = document.querySelector('[data-testid=ring-scroll-track]') as HTMLElement; const r = el.getBoundingClientRect(); sc.scrollTop += r.top - sc.getBoundingClientRect().top + (el.offsetHeight - sc.clientHeight); });
   await expect.poll(async () => (await hud(page)).on, { timeout: 5000 }).toBe('1');
   await expect.poll(async () => (await hud(page)).opacity, { timeout: 3000 }).toBe(1); // 500 ms fade-in
   const h = await hud(page);
@@ -58,7 +58,7 @@ test('fast fling through the whole ring section: HUD turns on at the first frame
   await openApp(page);
   await scroller(page);
   const res = await page.evaluate(async () => {
-    const sc = (window as any).__sc as HTMLElement; const el = document.querySelector('#ring-studio .relative.h-\\[150vh\\]') as HTMLElement;
+    const sc = (window as any).__sc as HTMLElement; const el = document.querySelector('[data-testid=ring-scroll-track]') as HTMLElement;
     const top0 = sc.scrollTop + el.getBoundingClientRect().top - sc.getBoundingClientRect().top;
     const range = el.offsetHeight - sc.clientHeight;
     sc.scrollTop = top0 - sc.clientHeight; await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -105,7 +105,7 @@ test('GL context loss on the ring canvas: page survives, poster comes back, scen
   const errors = watchConsole(page);
   await openApp(page);
   await scroller(page);
-  await page.evaluate(() => { const sc = (window as any).__sc, el = document.querySelector('#ring-studio .relative.h-\\[150vh\\]') as HTMLElement; sc.scrollTop += el.getBoundingClientRect().top - sc.getBoundingClientRect().top; });
+  await page.evaluate(() => { const sc = (window as any).__sc, el = document.querySelector('[data-testid=ring-scroll-track]') as HTMLElement; sc.scrollTop += el.getBoundingClientRect().top - sc.getBoundingClientRect().top; });
   await expect(page.getByTestId('ring-poster')).toHaveAttribute('data-ready', '1', { timeout: 120_000 });
   const lost = await page.evaluate(() => { const c = document.querySelector('canvas[id^=webgi-canvas]') as HTMLCanvasElement; const gl = ((c as any).__gl || c.getContext('webgl2') || c.getContext('webgl')) as WebGL2RenderingContext; const ext = gl.getExtension('WEBGL_lose_context'); if (!ext) return false; ext.loseContext(); (window as any).__ext = ext; return true; });
   test.skip(!lost, 'WEBGL_lose_context not available');
@@ -119,7 +119,7 @@ test('GL context loss on the ring canvas: page survives, poster comes back, scen
 test('splash: the three-card trio is large on phones (>= 300 px wide stack, fits the screen) and has no WebGL canvas', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('splash')).toBeVisible();
-  await page.waitForTimeout(1600);
+  await page.waitForTimeout(300);
   const m = await page.evaluate(() => {
     const cards = [...document.querySelectorAll('[data-testid=splash] [class*="skew-y"]')] as HTMLElement[];
     const rs = cards.map((c) => c.getBoundingClientRect());

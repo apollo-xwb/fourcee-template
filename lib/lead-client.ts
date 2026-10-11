@@ -90,6 +90,31 @@ export interface SendOpts {
   timeoutMs?: number;
 }
 
+/** Shown when the response is not JSON {ok:true}. The report stays locked. */
+export const LEAD_UNCONFIRMED = 'We could not confirm your request. Please try again.';
+
+/** application/json, including a charset parameter. HTML and missing types do not qualify. */
+export function isJsonContentType(header: string | null | undefined): boolean {
+  return /^\s*application\/json\b/i.test(header || '');
+}
+
+/**
+ * The report unlocks only for a JSON body with ok:true.
+ * An SPA-fallback HTML document, a non-JSON type, or JSON without ok:true is not a confirmation.
+ */
+export async function readConfirmedLead(res: Pick<Response, 'headers' | 'json'>): Promise<{ id?: string } | null> {
+  if (!isJsonContentType(res.headers.get('content-type'))) return null;
+  let body: unknown;
+  try {
+    body = await res.json();
+  } catch {
+    return null;
+  }
+  if (!body || typeof body !== 'object' || (body as { ok?: unknown }).ok !== true) return null;
+  const id = (body as { id?: unknown }).id;
+  return { id: typeof id === 'string' && id ? id : undefined };
+}
+
 /** One POST attempt, no queue side effects. */
 async function post(p: LeadPayload, o: SendOpts): Promise<SubmitResult> {
   const f = o.fetchImpl ?? fetch;
@@ -101,8 +126,11 @@ async function post(p: LeadPayload, o: SendOpts): Promise<SubmitResult> {
       signal: AbortSignal.timeout(o.timeoutMs ?? 12000),
     });
     if (res.ok) {
-      const j = (await res.json().catch(() => ({}))) as { id?: string };
-      return { status: 'sent', id: j.id || p.idempotency_key };
+      const j = await readConfirmedLead(res);
+      if (j) return { status: 'sent', id: j.id || p.idempotency_key };
+      // A host that is not proxying /api/lead returns the SPA document with 200 text/html.
+      // res.ok is not a confirmation. Keep the report locked and let the form retry.
+      return { status: 'queued', retryable: true, error: LEAD_UNCONFIRMED };
     }
     if (res.status === 400) {
       const j = (await res.json().catch(() => ({}))) as { fields?: Record<string, string> };
@@ -117,7 +145,7 @@ async function post(p: LeadPayload, o: SendOpts): Promise<SubmitResult> {
 
 /**
  * Send a lead. On network/server failure the lead is written to the localStorage queue (same idempotency key, so a later retry or a
- * background flush can never create a duplicate) and the caller shows an error + Retry. Only a 2xx removes it from the queue.
+ * background flush can never create a duplicate) and the caller shows an error + Retry. Only JSON {ok:true} removes it from the queue.
  */
 export async function submitLead(p: LeadPayload, o: SendOpts = {}): Promise<SubmitResult> {
   const storage = o.storage === undefined ? defaultStorage() : o.storage;

@@ -11,7 +11,8 @@ describe('P0.4 admin gate + sample data', () => {
   });
   it('admin is only reachable behind VITE_ENABLE_ADMIN=1 (default off)', () => {
     expect(app).toMatch(/ADMIN_ENABLED\s*=\s*import\.meta\.env\.VITE_ENABLE_ADMIN\s*===\s*'1'/);
-    expect(app).toMatch(/head === 'admin' && ADMIN_ENABLED/);
+    expect(app).toMatch(/planHashRoute\(window\.location\.hash,\s*ADMIN_ENABLED\)/);
+    expect(app).not.toMatch(/setCurrentView\(AppView\.DASHBOARD\)/);
     expect(app).not.toMatch(/^import .*AdminDashboard/m); // lazy only, so the chunk is dropped from a default build
     expect(read('.env.example')).toMatch(/^VITE_ENABLE_ADMIN=\s*$/m);
   });

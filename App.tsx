@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { AppView, BlogPost } from './types';
 import { FloatingNav } from './components/FloatingNav';
 
@@ -9,10 +9,7 @@ import nivodaGif from './public/assets/nivoda.gif';
 import fcWhite from './public/assets/fcwhite.png';
 import fcBlack from './public/assets/fcblack.png';
 import { ValueCalculator } from './components/ValueCalculator';
-import { EtherealShadow } from './components/ui/etheral-shadow';
-import { DottedSurface } from './components/ui/dotted-surface';
 import DisplayCards from './components/ui/display-cards';
-import { IncomingCallPhone } from './components/ui/incoming-call-phone';
 import { MiniPhone } from './components/ui/mini-phone';
 import {
   PhoneCall,
@@ -21,14 +18,15 @@ import {
   Info,
   House,
   FileSearch,
-  LayoutDashboard,
   CreditCard,
   CalendarDays,
   Gem,
 } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { CheckoutFlow } from './components/CheckoutFlow';
-import { CRMView } from './components/CRMView';
+const CheckoutFlow = lazy(() => import('./components/CheckoutFlow').then((m) => ({ default: m.CheckoutFlow })));
+const AuditPage = lazy(() => import('./components/AuditPage').then((m) => ({ default: m.AuditPage })));
+const DottedSurface = lazy(() => import('./components/ui/dotted-surface').then((m) => ({ default: m.DottedSurface })));
+const IncomingCallPhone = lazy(() => import('./components/ui/incoming-call-phone').then((m) => ({ default: m.IncomingCallPhone })));
+const FloatingAiAssistant = lazy(() => import('./components/ui/glowing-ai-chat-assistant').then((m) => ({ default: m.FloatingAiAssistant })));
 // Internal admin preview (mock clients / MRR, no auth). OFF in production builds: it is only compiled in when VITE_ENABLE_ADMIN=1, so the
 // default bundle contains neither the route, the hidden button nor the mock data.
 const ADMIN_ENABLED = import.meta.env.VITE_ENABLE_ADMIN === '1';
@@ -36,18 +34,41 @@ const AdminDashboard = ADMIN_ENABLED
   ? React.lazy(() => import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard })))
   : null;
 import { SplashScreen } from './components/SplashScreen';
-import { schedulePreloadRing } from './lib/preload-ring';
 import { FaqMonochrome } from './components/ui/faq-monochrome.tsx';
 import { ArticleCard } from './components/ui/blog-post-card';
-import { FloatingAiAssistant } from './components/ui/glowing-ai-chat-assistant';
 import { BLOG_POSTS } from './constants';
-import { AuditPage } from './components/AuditPage';
 import { LazyRingBuilderSection } from './components/LazyRingBuilderSection';
 import type { AuditData } from './types/audit';
 import { loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from './lib/audit-content';
+import { briefFromAudit, loadAuditGateBrief, withoutReport, type AuditGateBrief } from './lib/audit-gate-brief';
+import { sealAudit } from './lib/audit-sealed';
+import { configuredCalUrl, demoDurationLine, SIDE_DEAL_DEFAULT, snapDeal } from './lib/prospect-fixes';
+import { planHashRoute } from './lib/hash-route';
+import { landingSectionElementId, pinScrollTarget } from './lib/scroll-section';
+import { useEscapeClose } from './lib/use-escape-close';
 import { resolveRingBuilder } from './lib/ring-builder';
 import { assetUrl } from './lib/asset-url';
 import { renderSimpleMarkdown } from './lib/markdown';
+
+/** Mount heavy children only once they intersect the viewport, so three.js stays out of the first paint. */
+function WhenNear({ children, className }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setShow(true);
+      return;
+    }
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) setShow(true);
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return <div ref={ref} className={className}>{show ? <Suspense fallback={null}>{children}</Suspense> : null}</div>;
+}
 
 const INTEGRATIONS_DATA = [
   {
@@ -58,8 +79,8 @@ const INTEGRATIONS_DATA = [
   },
   {
     category: "Calendar & Scheduling",
-    popular: ["Google Calendar", "Cal.com"],
-    others: ["Microsoft Outlook", "Office 365", "Cal.com", "Apple Calendar"],
+    popular: ["Google Calendar"],
+    others: ["Microsoft Outlook", "Office 365", "Apple Calendar"],
     description: "Seamless consultation booking and staff availability sync."
   },
   {
@@ -162,17 +183,13 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.LANDING);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [isReady, setIsReady] = useState(false);
-
-  // Ring assets: the splash only fetches the files (cheap). Once the splash is gone, parse the webgi runtime when the main thread is idle
-  // or on the first touch/scroll, so the studio scene is warm long before the user reaches it.
-  useEffect(() => (isReady ? schedulePreloadRing() : undefined), [isReady]);
+  const heroPoster = assetUrl('assets/plates/plate_hero_ring.webp');
   const [isDarkMode] = useState(false); // light theme only — dark mode retired
   const [expandedIntegration, setExpandedIntegration] = useState<number | null>(null);
   const [preSelectedPackageId, setPreSelectedPackageId] = useState<string | null>(null);
   const [auditData, setAuditData] = useState<AuditData | null>(null);
+  const [gateBrief, setGateBrief] = useState<AuditGateBrief | null>(null);
   const [auditDataLoading, setAuditDataLoading] = useState(true);
-  const [portalNotifCount, setPortalNotifCount] = useState<1 | 2>(1);
-  const [showPortalGuide, setShowPortalGuide] = useState(false);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
   // Synchronous initial value: exactly ONE Ring Builder (WebGi context) is ever mounted - the desktop hero rail OR the phone/tablet
   // section - never both (the hidden one used to stay mounted, wait 4 s for a zero-size host and then spin up a second, fallback WebGL context).
@@ -185,23 +202,50 @@ const App: React.FC = () => {
     return () => mq.removeEventListener('change', apply);
   }, []);
   const [sideMenuCallsPerMonth, setSideMenuCallsPerMonth] = useState(12);
-  const [sideMenuAvgDeal, setSideMenuAvgDeal] = useState(4200);
+  const [sideMenuAvgDeal, setSideMenuAvgDeal] = useState(SIDE_DEAL_DEFAULT);
+  const dealValue = snapDeal(sideMenuAvgDeal);
+  const calUrl = configuredCalUrl();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const businessName = auditData?.business.name ?? PLACEHOLDER_BUSINESS_NAME;
+  const businessName = auditData?.business.name ?? gateBrief?.businessName ?? PLACEHOLDER_BUSINESS_NAME;
   const ringBuilder = useMemo(() => resolveRingBuilder(auditData), [auditData]);
 
-  // Neuro contract: always load /content.json (generator overwrites this file).
-  useEffect(() => {
+  // Direct #/audit reads only the name/city prefix. The rest of content.json is fetched after a sent lead.
+  // The long page still loads the file (ring studio + showroom name) but does not keep report sections on the React tree.
+  const prospectLoaded = useRef(false);
+  const loadProspect = useCallback(() => {
+    if (prospectLoaded.current) return;
+    prospectLoaded.current = true;
     loadAuditContent()
       .then((data: AuditData) => {
-        setAuditData(data);
+        sealAudit(data);
+        setAuditData(withoutReport(data));
+        setGateBrief(briefFromAudit(data));
         setAuditDataLoading(false);
       })
       .catch(err => {
         console.error('Failed to load audit data:', err);
+        prospectLoaded.current = false;
         setAuditDataLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    const auditFirst = planHashRoute(window.location.hash, ADMIN_ENABLED).view === AppView.LEAD_MAGNET;
+    if (auditFirst) {
+      let live = true;
+      loadAuditGateBrief()
+        .then((brief) => { if (live) setGateBrief(brief); })
+        .catch((err) => { console.error('Failed to load audit gate:', err); })
+        .finally(() => { if (live) setAuditDataLoading(false); });
+      return () => { live = false; };
+    }
+    loadProspect();
+  }, [loadProspect]);
+
+  useEffect(() => {
+    if (planHashRoute(window.location.hash, ADMIN_ENABLED).view === AppView.LEAD_MAGNET) return;
+    loadProspect();
+  }, [currentView, loadProspect]);
 
   useEffect(() => {
     const theme = auditData?.branding?.theme;
@@ -234,25 +278,7 @@ const App: React.FC = () => {
     link.href = logoUrl;
   }, []);
 
-  useEffect(() => {
-    const forever = window.localStorage.getItem('fourcee-hide-portal-guide') === 'true';
-    const seenSession = window.sessionStorage.getItem('fourcee-portal-guide-seen') === 'true';
-    if (forever || seenSession) return;
-    const t = window.setTimeout(() => setShowPortalGuide(true), 2800);
-    return () => window.clearTimeout(t);
-  }, []);
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setPortalNotifCount(Math.random() > 0.5 ? 2 : 1);
-    }, 4500);
-    return () => window.clearInterval(id);
-  }, []);
-
-  const reopenPortalGuide = () => {
-    window.localStorage.removeItem('fourcee-hide-portal-guide');
-    setShowPortalGuide(true);
-  };
+  useEscapeClose(isSideMenuOpen, () => setIsSideMenuOpen(false), 1200);
 
   const navigate = useCallback((view: AppView, post?: BlogPost, packageId?: string) => {
     setCurrentView(view);
@@ -266,7 +292,7 @@ const App: React.FC = () => {
     const nextHash = (() => {
       switch (view) {
         case AppView.LEAD_MAGNET: return '#/audit';
-        case AppView.DASHBOARD: return '#/ops';
+        case AppView.DASHBOARD: return '#/';
         case AppView.CHECKOUT: return '#/checkout';
         case AppView.BLOG: return '#/insights';
         case AppView.BLOG_POST: return post?.slug ? `#/insights/${post.slug}` : '#/insights';
@@ -280,43 +306,62 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Checkout and the audit report are full-screen views. Escape returns home, under any real dialog (menu, chat, AR).
+  useEscapeClose(currentView === AppView.CHECKOUT, () => navigate(AppView.LANDING), 80);
+  useEscapeClose(currentView === AppView.LEAD_MAGNET, () => navigate(AppView.LANDING), 80);
 
-  const viewToHash = useCallback((view: AppView, post?: BlogPost | null) => {
-    switch (view) {
-      case AppView.LEAD_MAGNET: return '#/audit';
-      case AppView.DASHBOARD: return '#/ops';
-      case AppView.CHECKOUT: return '#/checkout';
-      case AppView.BLOG: return '#/insights';
-      case AppView.BLOG_POST: return post?.slug ? `#/insights/${post.slug}` : '#/insights';
-      case AppView.TERMS: return '#/terms';
-      case AppView.ADMIN: return '#/admin';
-      case AppView.LANDING:
-      default: return '#/';
-    }
-  }, []);
+  const scrollLandingSection = (head: string) => {
+    const wide = window.matchMedia('(min-width: 1024px)').matches;
+    const id = landingSectionElementId(head, wide);
+    const container = scrollContainerRef.current;
+    if (container && pinScrollTarget(container, id)) return;
+    document.getElementById(id)?.scrollIntoView({ behavior: 'auto', block: 'start' });
+  };
 
   const applyHashRoute = useCallback(() => {
-    const raw = (window.location.hash || '#/').replace(/^#/, '') || '/';
-    const path = raw.startsWith('/') ? raw : `/${raw}`;
-    const parts = path.split('/').filter(Boolean);
-    const head = (parts[0] || '').toLowerCase();
-    if (head === 'audit' || head === 'lead-magnet') setCurrentView(AppView.LEAD_MAGNET);
-    else if (head === 'ops' || head === 'dashboard' || head === 'crm') setCurrentView(AppView.DASHBOARD);
-    else if (head === 'checkout' || head === 'pricing') setCurrentView(AppView.CHECKOUT);
-    else if (head === 'insights' || head === 'blog') {
-      if (parts[1]) {
-        const post = BLOG_POSTS.find((bp) => bp.slug === parts[1] || bp.id === parts[1]);
-        if (post) {
-          setSelectedPost(post);
-          setCurrentView(AppView.BLOG_POST);
-          return;
-        }
+    const plan = planHashRoute(window.location.hash, ADMIN_ENABLED);
+    if (plan.replaceHome && window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search || '/');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    }
+    if (plan.view === AppView.BLOG_POST && plan.postSlug) {
+      const post = BLOG_POSTS.find((bp) => bp.slug === plan.postSlug || bp.id === plan.postSlug);
+      if (post) {
+        setSelectedPost(post);
+        setCurrentView(AppView.BLOG_POST);
+        return;
       }
       setCurrentView(AppView.BLOG);
-    } else if (head === 'terms') setCurrentView(AppView.TERMS);
-    else if (head === 'admin' && ADMIN_ENABLED) setCurrentView(AppView.ADMIN);
-    else setCurrentView(AppView.LANDING);
+      return;
+    }
+    setCurrentView(plan.view);
+    if (plan.section) window.setTimeout(() => scrollLandingSection(plan.section!), 60);
   }, []);
+
+  // Cold load of ?v=full#/roi fires this effect while the splash is still the only tree, so the first
+  // scrollIntoView finds nothing. Retry once the landing sections exist.
+  useEffect(() => {
+    if (!isReady) return;
+    const plan = planHashRoute(window.location.hash, ADMIN_ENABLED);
+    if (!plan.section) return;
+    let cancelled = false;
+    let tries = 0;
+    let timer = 0;
+    const run = () => {
+      if (cancelled) return;
+      const wide = window.matchMedia('(min-width: 1024px)').matches;
+      const id = landingSectionElementId(plan.section!, wide);
+      const container = scrollContainerRef.current;
+      // pinScrollTarget keeps correcting after the mobile ring poster swaps for the 112vh track.
+      if (container && pinScrollTarget(container, id)) return;
+      if (tries++ < 40) timer = window.setTimeout(run, 50);
+    };
+    timer = window.setTimeout(run, 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [isReady]);
 
   useEffect(() => {
     applyHashRoute();
@@ -330,91 +375,17 @@ const App: React.FC = () => {
   }, [applyHashRoute]);
 
   const goToRingBuilder = useCallback(() => {
+    const next = '#/ring';
+    if (window.location.hash !== next) window.history.pushState(null, '', next);
     setCurrentView(AppView.LANDING);
-    window.setTimeout(() => {
-      const container = scrollContainerRef.current;
-      const wide = window.matchMedia('(min-width: 1024px)').matches;
-      const sel = wide ? '#ring-studio-hero' : '#ring-studio';
-      const target = container?.querySelector<HTMLElement>(sel);
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 280);
+    window.setTimeout(() => scrollLandingSection('ring'), 280);
   }, []);
 
   const toggleDarkMode = () => {}; // dark mode retired
-  const sideMenuRecoveredMonthly = Math.round(sideMenuCallsPerMonth * sideMenuAvgDeal * 0.22);
+  const sideMenuRecoveredMonthly = Math.round(sideMenuCallsPerMonth * dealValue * 0.22);
   const openCalendarBooking = () => {
-    const win = window as Window & {
-      Cal?: ((...args: unknown[]) => void) & {
-        q?: unknown[];
-        ns?: Record<string, ((...args: unknown[]) => void) & { q?: unknown[] }>;
-        loaded?: boolean;
-      };
-    };
-
-    // Cal element-click embed logic
-    ((C: typeof window, A: string, L: string) => {
-      const runtimeWindow = C as typeof window & { Cal?: unknown };
-      const p = (a: { q?: unknown[] }, ar: IArguments | unknown[]) => {
-        a.q = a.q || [];
-        a.q.push(Array.from(ar));
-      };
-      const d = C.document;
-      runtimeWindow.Cal =
-        (runtimeWindow.Cal as unknown) ||
-        function () {
-          const cal = runtimeWindow.Cal as ((...args: unknown[]) => void) & {
-            loaded?: boolean;
-            ns?: Record<string, ((...args: unknown[]) => void) & { q?: unknown[] }>;
-            q?: unknown[];
-          };
-          const ar = arguments;
-          if (!cal.loaded) {
-            cal.ns = {};
-            cal.q = cal.q || [];
-            d.head.appendChild(d.createElement('script')).src = A;
-            cal.loaded = true;
-          }
-          if (ar[0] === L) {
-            const api = function () {
-              p(api as { q?: unknown[] }, arguments);
-            } as ((...args: unknown[]) => void) & { q?: unknown[] };
-            const namespace = ar[1] as string | undefined;
-            api.q = api.q || [];
-            if (typeof namespace === 'string') {
-              cal.ns![namespace] = cal.ns![namespace] || api;
-              p(cal.ns![namespace] as { q?: unknown[] }, ar);
-              p(cal as { q?: unknown[] }, ['initNamespace', namespace]);
-            } else {
-              p(cal as { q?: unknown[] }, ar);
-            }
-            return;
-          }
-          p(cal as { q?: unknown[] }, ar);
-        };
-    })(window, 'https://app.cal.com/embed/embed.js', 'init');
-
-    win.Cal?.('init', '30min', { origin: 'https://app.cal.com' });
-    win.Cal?.ns?.['30min']?.('ui', {
-      cssVarsPerTheme: { light: { 'cal-brand': '#fff' }, dark: { 'cal-brand': '#000' } },
-      hideEventTypeDetails: false,
-      layout: 'week_view',
-    });
-
-    let triggerEl = document.getElementById('cal-booking-trigger') as HTMLButtonElement | null;
-    if (!triggerEl) {
-      triggerEl = document.createElement('button');
-      triggerEl.id = 'cal-booking-trigger';
-      triggerEl.type = 'button';
-      triggerEl.style.display = 'none';
-      triggerEl.setAttribute('data-cal-link', 'fourcee/30min');
-      triggerEl.setAttribute('data-cal-namespace', '30min');
-      triggerEl.setAttribute('data-cal-config', '{"layout":"week_view","useSlotsViewOnSmallScreen":"true"}');
-      document.body.appendChild(triggerEl);
-    }
-    window.setTimeout(() => triggerEl?.click(), 0);
-    window.setTimeout(() => triggerEl?.click(), 180);
+    if (!calUrl) return;
+    window.open(calUrl, '_blank', 'noopener,noreferrer');
   };
 
 
@@ -448,22 +419,6 @@ const App: React.FC = () => {
   }, [isDarkMode, businessName, auditData, ringBuilder, expandedIntegration, heroRingDesktop]);
 
 
-  // Scroll-linked horizontal carousels (mobile): vertical scroll drives scrollLeft
-  const scrollLinkedHorizontal = (
-    container: HTMLElement | null,
-    track: HTMLElement | null,
-  ) => {
-    if (!container || !track) return;
-    const maxX = Math.max(0, track.scrollWidth - track.clientWidth);
-    if (maxX <= 0) return;
-    const rect = container.getBoundingClientRect();
-    const viewH = window.innerHeight || 1;
-    const start = viewH * 0.85;
-    const end = viewH * 0.15;
-    const t = Math.min(1, Math.max(0, (start - rect.top) / (start - end)));
-    track.scrollLeft = maxX * t;
-  };
-
   const LandingPage = useMemo(() => {
     // LANDING_PAGE_STABLE — created once; reads live values via landingLiveRef
     return function LandingPageImpl({ scrollContainerRef }: { scrollContainerRef: React.RefObject<HTMLDivElement | null> }) {
@@ -478,39 +433,23 @@ const App: React.FC = () => {
       heroRingDesktop,
     } = landingLiveRef.current;
     const [showDemoCallModal, setShowDemoCallModal] = useState(false);
-    const problemRef = useRef<HTMLElement>(null);
-    const demoRef = useRef<HTMLElement>(null);
-    const { scrollYProgress: problemScroll } = useScroll({
-      target: problemRef,
-      offset: ["start end", "end start"],
-      container: scrollContainerRef,
-    });
-    const { scrollYProgress: demoScroll } = useScroll({
-      target: demoRef,
-      offset: ["start end", "center center"],
-      container: scrollContainerRef,
-    });
-
-    // Keep parallax subtle — large Y travel + overflow-hidden = elements vanish on fast scroll
-    const cardsY = useTransform(problemScroll, [0, 1], [-8, 8]);
-    const demoScale = useTransform(demoScroll, [0, 0.5, 1], [1, 1, 1]);
-    const demoOpacity = useTransform(demoScroll, [0, 0.4], [1, 1]);
-    const demoY = useTransform(demoScroll, [0, 0.5], [0, 0]);
-
+    useEscapeClose(showDemoCallModal, () => setShowDemoCallModal(false), 160);
     const scrollToSectionById = (id: string) => {
       const container = scrollContainerRef.current;
       if (!container) return;
-      const target = container.querySelector<HTMLElement>(`#${id}`);
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      pinScrollTarget(container, id);
     };
 
-    const scrollToRoi = () => scrollToSectionById('roi-calculator');
+    const pushSection = (section: string) => {
+      const next = `#/${section}`;
+      if (window.location.hash !== next) window.history.pushState(null, '', next);
+    };
+    const scrollToRoi = () => { pushSection('roi'); scrollToSectionById('roi-calculator'); };
     const scrollToPricing = () => navigate(AppView.CHECKOUT);
     const goToAudit = () => navigate(AppView.LEAD_MAGNET);
     const scrollToRingStudio = () => {
       const wide = typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches;
+      pushSection('ring');
       scrollToSectionById(wide ? 'ring-studio-hero' : 'ring-studio');
     };
 
@@ -522,32 +461,19 @@ const App: React.FC = () => {
     };
 
     useEffect(() => {
-      const root = scrollContainerRef.current;
-      if (!root) return;
-      const onScroll = () => {
-        if (window.matchMedia('(min-width: 768px)').matches) return;
-        const boutiqueSec = root.querySelector('#boutique-h-track')?.closest('section') as HTMLElement | null;
-        const boutiqueTrack = root.querySelector('#boutique-h-track') as HTMLElement | null;
-        scrollLinkedHorizontal(boutiqueSec, boutiqueTrack);
-        const integSec = root.querySelector('#integrations-h-track')?.closest('section') as HTMLElement | null;
-        const integTrack = root.querySelector('#integrations-h-track') as HTMLElement | null;
-        scrollLinkedHorizontal(integSec, integTrack);
-        const journeyTrack = root.querySelector('#faq-journey-track') as HTMLElement | null;
-        const faqSec = journeyTrack?.closest('section') as HTMLElement | null;
-        scrollLinkedHorizontal(faqSec, journeyTrack);
-      };
-      root.addEventListener('scroll', onScroll, { passive: true });
-      onScroll();
-      return () => root.removeEventListener('scroll', onScroll);
-    }, [scrollContainerRef]);
-
+      const boot = document.getElementById('lcp-poster') as HTMLImageElement | null;
+      if (!boot) return;
+      const drop = () => { boot.remove(); };
+      if (boot.complete && boot.naturalWidth > 0) requestAnimationFrame(drop);
+      else boot.addEventListener('load', () => requestAnimationFrame(drop), { once: true });
+    }, []);
 
     return (
     <div className="dock-safe-pad pb-32 md:pb-40" style={{ contentVisibility: 'visible' }}>
       {/* Hero: ribbed gold-glow texture + desktop ring-left / copy-right */}
       <section
         id="hero"
-        className="fourcee-hero-beige relative min-h-[100svh] overflow-hidden"
+        className="fourcee-hero-beige relative min-h-0 overflow-hidden lg:min-h-[100svh]"
       >
         <div
           className="fourcee-hero-beige-veil pointer-events-none absolute inset-0"
@@ -563,7 +489,7 @@ const App: React.FC = () => {
             solid beige, so the dark vertical slats of the background texture never sit behind small text. Starts at ~38% of the hero,
             fully solid by ~69%. Keeps the existing background, veil and grid above; md+ is unchanged. */}
         <div className="fourcee-hero-fade pointer-events-none absolute inset-0 z-[2] md:hidden" data-testid="hero-fade" aria-hidden />
-        <div className="relative z-10 mx-auto grid min-h-[100svh] w-full max-w-7xl grid-cols-1 content-start items-start gap-5 px-5 pt-16 pb-28 sm:px-8 sm:pt-20 md:px-12 md:items-center lg:grid-cols-2 lg:gap-10 lg:content-center lg:py-20">
+        <div className="relative z-10 mx-auto grid min-h-0 w-full max-w-7xl grid-cols-1 content-start items-start gap-4 px-5 pt-8 pb-8 sm:px-8 sm:pt-24 md:px-12 md:items-center lg:min-h-[100svh] lg:grid-cols-2 lg:gap-10 lg:content-center lg:py-20">
           {/* Desktop: Ring Builder inhabiting the left rail */}
           <div
             id="ring-studio-hero"
@@ -592,7 +518,17 @@ const App: React.FC = () => {
 
           {/* Copy / CTAs — full width on mobile, right rail on desktop */}
           <div className="w-full max-w-xl text-left lg:justify-self-end">
-            <div className="fx-chip mb-3 sm:mb-5">
+            <img
+              src={heroPoster}
+              alt=""
+              width={1280}
+              height={720}
+              fetchPriority="high"
+              decoding="async"
+              data-testid="hero-lcp-poster"
+              className="mb-0 h-auto max-h-[7.5rem] w-[min(88vw,380px)] aspect-video rounded-2xl object-cover object-[center_40%] shadow-[0_18px_40px_rgba(12,11,9,0.18)] lg:hidden"
+            />
+            <div className="fx-chip mb-1 sm:mb-5">
               <span className="fx-dot" />
               Concierge standby · audit compiled
             </div>
@@ -605,14 +541,14 @@ const App: React.FC = () => {
             <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-[#3a342b] sm:mt-4 sm:text-[11px] sm:tracking-[0.22em]">
               Tailored exclusively for high-end jewelers
             </p>
-            <div className="liquid-glass mt-4 max-w-[440px] rounded-2xl px-5 py-3.5 sm:mt-6 sm:py-4">
+            <div className="liquid-glass mt-2 max-w-[440px] rounded-2xl px-5 py-2.5 sm:mt-6 sm:py-4">
               <p className="fx-kicker">Prepared for</p>
               <p className="mt-1.5 text-sm sm:text-base text-[#0c0b09] font-medium tracking-wide">{businessName}</p>
               <p className="mt-1.5 text-[12px] sm:text-[13px] leading-relaxed text-[#3a342b]">
                 One recovered client can cover months of platform cost.
               </p>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2.5 sm:mt-6 sm:gap-3">
+            <div className="hero-cta mt-2 flex flex-wrap gap-2 sm:mt-6 sm:gap-3">
               <button type="button" onClick={scrollToRingStudio} className="fx-btn fx-btn-primary">
                 Try the Ring Builder
               </button>
@@ -624,14 +560,15 @@ const App: React.FC = () => {
               </button>
             </div>
             {/* Raised on mobile so phone demo is visible without deep scroll */}
-            <div className="mt-4 max-w-sm sm:mt-6 opacity-95 -translate-y-1 sm:translate-y-0">
+            <div className="mt-2 max-w-sm sm:mt-6 opacity-95 sm:translate-y-0">
               <MiniPhone
+                className="pb-2"
                 isDarkMode={false}
                 businessName={businessName}
                 leadId={auditData?.lead_id}
                 phoneCountryDefault={auditData?.liveDemo.phoneCountryDefault}
                 ctaLabel={auditData?.liveDemo.ctaLabel}
-                helperCopy={auditData?.liveDemo.helperCopy}
+                helperCopy={demoDurationLine(auditData?.liveDemo.helperCopy, auditData?.liveDemo.demoDurationHint)}
               />
             </div>
           </div>
@@ -654,18 +591,16 @@ const App: React.FC = () => {
             </p>
           </div>
           <div className="mx-auto w-full max-w-6xl px-0 sm:px-1">
-            <LazyRingBuilderSection config={ringBuilder} isDarkMode={false} eager businessName={businessName} />
+            <LazyRingBuilderSection config={ringBuilder} isDarkMode={false} businessName={businessName} />
           </div>
         </section>
       )}
 
       {/* Demo Video Section - now directly after hero; 9:16 portrait on mobile */}
-      <section ref={demoRef} id="demo" className="min-h-screen flex flex-col justify-center py-24 md:py-32 px-4 sm:px-6 bg-transparent relative">
+      <section id="demo" className="flex flex-col justify-center py-16 md:py-24 px-4 sm:px-6 bg-transparent relative scroll-mt-24">
         <div className="max-w-6xl mx-auto flex flex-col items-center w-full min-w-0">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif text-navy-900 mb-6 md:mb-10 text-center tracking-tighter">
-            <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-emerald-700 dark:from-white dark:via-slate-200 dark:to-emerald-300 bg-clip-text text-transparent">
-              Experience the Demo
-            </span>
+          <h2 id="demo-heading" className="mb-6 scroll-mt-24 overflow-visible px-4 text-center text-xl font-bold serif text-navy-900 sm:text-2xl md:mb-10 md:text-3xl">
+            Experience the Demo
           </h2>
           <button
             type="button"
@@ -674,18 +609,17 @@ const App: React.FC = () => {
           >
             Call me
           </button>
-          <motion.div
-            style={{ scale: demoScale, opacity: demoOpacity, y: demoY }}
+          <div
             className="relative w-full max-w-[280px] aspect-[9/16] md:max-w-4xl md:aspect-video rounded-2xl md:rounded-[3rem] overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] group origin-center"
           >
-             <img src={demoImage} alt="Demo" className="w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-1000" />
+             <img src={demoImage} alt="Demo" loading="lazy" decoding="async" className="w-full h-full object-cover brightness-75 group-hover:scale-105 transition-transform duration-1000" />
              <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 md:p-0">
                 <div className="mt-4 md:mt-8 text-center max-w-md px-2 md:px-6">
                   <p className="text-sm md:text-xl serif italic leading-relaxed">"Fourcee didn't just replace our receptionist; it enhanced the entire client experience. Our ROI was instant."</p>
-                  <p className="text-[9px] md:text-[10px] uppercase font-bold mt-2 md:mt-4 tracking-widest">- Julianna Rossi, Rossi Haute Joaillerie</p>
+                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#faf5ea] [text-shadow:0_1px_2px_rgba(0,0,0,0.9)] md:mt-4">— Julianna Rossi, Rossi Haute Joaillerie</p>
                 </div>
              </div>
-          </motion.div>
+          </div>
           <div className="mt-10 flex justify-center">
             <button
               type="button"
@@ -697,21 +631,23 @@ const App: React.FC = () => {
           </div>
         </div>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 md:h-72">
-          <DottedSurface
-            isDarkMode={isDarkMode}
-            className="h-full w-full opacity-75 [mask-image:linear-gradient(to_top,black,transparent)]"
-          />
+          <WhenNear className="h-full w-full">
+            <DottedSurface
+              isDarkMode={isDarkMode}
+              className="h-full w-full opacity-75 [mask-image:linear-gradient(to_top,black,transparent)]"
+            />
+          </WhenNear>
         </div>
       </section>
       {showDemoCallModal && (
-        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Demo callback">
           <button
             type="button"
-            className="absolute inset-0 bg-black/45 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#0c0b09]/80 backdrop-blur-md"
             onClick={() => setShowDemoCallModal(false)}
             aria-label="Close demo call popup"
           />
-          <div className="relative w-full max-w-md rounded-3xl border border-white/20 bg-white/90 dark:bg-navy-950/90 p-6 shadow-2xl">
+          <div className="relative w-full max-w-md rounded-3xl border border-[#d9c39a] bg-[#faf5ea] p-6 shadow-2xl">
             <p className="text-[10px] uppercase tracking-[0.26em] text-navy-600 dark:text-navy-300">Demo callback</p>
             <h3 className="mt-2 text-xl serif text-navy-900 dark:text-white">Get your live callback now</h3>
             <p className="mt-2 text-sm text-navy-700 dark:text-navy-300">
@@ -724,7 +660,7 @@ const App: React.FC = () => {
                 leadId={auditData?.lead_id}
                 phoneCountryDefault={auditData?.liveDemo.phoneCountryDefault}
                 ctaLabel={auditData?.liveDemo.ctaLabel}
-                helperCopy={auditData?.liveDemo.helperCopy}
+                helperCopy={demoDurationLine(auditData?.liveDemo.helperCopy, auditData?.liveDemo.demoDurationHint)}
                 onCallCompleted={handleDemoCallCompleted}
               />
             </div>
@@ -733,7 +669,7 @@ const App: React.FC = () => {
       )}
 
       {/* Value Calculator Section - before ROI messaging; its own snap after demo */}
-      <section id="roi-calculator" className="min-h-screen flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent">
+      <section id="roi-calculator" className="flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent scroll-mt-24">
         <div className="w-full max-w-4xl mx-auto">
           <ValueCalculator isDarkMode={isDarkMode} businessName={businessName} />
           <div className="mt-6 flex justify-center">
@@ -748,23 +684,22 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      {/* ROI Messaging Section (without calculator, stacked on mobile) */}
-      <section className="min-h-screen flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent">
-        <div className="w-full max-w-6xl mx-auto grid gap-10 lg:gap-16 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] items-start">
-          <div className="space-y-6">
+      {/* ROI follow-up: both columns and a full-width strip, so the band under the calculator is not an empty field */}
+      <section className="px-4 pb-6 pt-2 sm:px-6 md:pb-10">
+        <div className="mx-auto grid w-full max-w-6xl items-stretch gap-4 rounded-[1.75rem] border border-[#d9c39a]/70 bg-white/70 p-5 sm:p-6 lg:grid-cols-2 lg:gap-8">
+          <div className="flex flex-col justify-center space-y-4">
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-navy-400 dark:text-navy-300">
               See if the numbers make sense
             </p>
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold serif text-navy-900 tracking-tight">
-              Is Fourcee actually worth it
-              <br className="hidden md:block" /> for your showroom?
+            <h2 className="text-lg font-bold serif tracking-tight text-navy-900 sm:text-xl md:text-2xl">
+              Is Fourcee actually worth it for your showroom?
             </h2>
-            <p className="text-sm sm:text-base text-navy-600 dark:text-navy-300 max-w-xl">
-              Use your real averages to understand the real value of answered calls, reclaimed staff time, and higher-intent leads.
+            <p className="max-w-xl text-sm text-navy-600 dark:text-navy-300 sm:text-base">
+              The calculator above uses your averages. The signals beside it are what those answered calls turn into once the line is covered.
             </p>
           </div>
-          <div className="flex flex-col gap-6">
-            <div className="glass-card p-8 rounded-[2.5rem] border border-navy-50 shadow-xl dark:border-navy-800">
+          <div className="flex flex-col gap-4">
+            <div className="glass-card rounded-[1.75rem] border border-navy-50 p-6 shadow-xl dark:border-navy-800 sm:p-8">
               <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 mb-4 flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -794,11 +729,23 @@ const App: React.FC = () => {
               Configure your solution →
             </button>
           </div>
+          <div className="grid gap-3 sm:grid-cols-3 lg:col-span-2">
+            {[
+              ['Answered after hours', 'The line is covered when the showroom is dark.'],
+              ['A summary your team can use', 'Each recovered caller arrives with the ask already written down.'],
+              ['One number, still yours', 'Callers reach the same shop. Fourcee picks up the ones you miss.'],
+            ].map(([title, body]) => (
+              <div key={title} className="rounded-2xl border border-[#d9c39a]/80 bg-[#faf5ea] p-4">
+                <p className="text-sm font-semibold text-[#1a1714]">{title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#3a342b]">{body}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Problem Step - moved below calculator: blue + grid faded at top and bottom */}
-      <section ref={problemRef} className="fourcee-ribbed-wash min-h-screen flex flex-col justify-center py-32 px-6 text-white relative overflow-x-hidden overflow-y-visible border-y border-white/5">
+      <section className="fourcee-ribbed-wash min-h-screen flex flex-col justify-center py-32 px-6 text-white relative overflow-x-hidden overflow-y-visible border-y border-white/5">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -807,10 +754,12 @@ const App: React.FC = () => {
           }}
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 md:h-72">
-          <DottedSurface
-            isDarkMode
-            className="h-full w-full opacity-80 [mask-image:linear-gradient(to_top,black,transparent)]"
-          />
+          <WhenNear className="h-full w-full">
+            <DottedSurface
+              isDarkMode
+              className="h-full w-full opacity-80 [mask-image:linear-gradient(to_top,black,transparent)]"
+            />
+          </WhenNear>
         </div>
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20 items-center relative z-10">
           <div className="space-y-10">
@@ -833,17 +782,15 @@ const App: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate(AppView.CHECKOUT)}
-              className="inline-flex items-center gap-2 rounded-full bg-white text-navy-950 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.24em] shadow-xl hover:scale-105 transition-all"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.24em] text-[#050504] shadow-xl hover:scale-105 transition-all"
             >
               Recover that revenue
             </button>
           </div>
-          <div className="relative h-[320px] sm:h-[400px] md:h-[500px] flex items-start justify-center pt-4 overflow-visible">
-            <motion.div 
-              style={{ y: cardsY }}
-              className="relative group z-10 mt-8 md:mt-16 scale-[0.55] sm:scale-75 md:scale-100 origin-center"
+          <div className="relative flex flex-col items-center gap-6 overflow-visible">
+              <div
+              className="relative group z-10 mb-16 min-h-[18rem] origin-top scale-[0.72] sm:mb-14 sm:min-h-[20rem] sm:scale-90 md:mb-10 md:min-h-[22rem] md:scale-100"
             >
-              <div className="absolute -inset-10 bg-navy-900/50 blur-[100px] group-hover:bg-navy-800/50 transition-all"></div>
               <DisplayCards 
                 cards={[
                   {
@@ -853,7 +800,7 @@ const App: React.FC = () => {
                     date: "Sunday, 8:14 PM",
                     iconClassName: "text-red-500",
                     titleClassName: "text-red-500",
-                    className: "[grid-area:stack] -translate-y-6 hover:-translate-y-10 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
+                    className: "[grid-area:stack] -translate-y-4 hover:-translate-y-6 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
                   },
                   {
                     icon: <PhoneCall className="size-4 text-red-400" />,
@@ -862,7 +809,7 @@ const App: React.FC = () => {
                     date: "Saturday, 9:30 PM",
                     iconClassName: "text-red-500",
                     titleClassName: "text-red-500",
-                    className: "[grid-area:stack] translate-x-12 translate-y-2 hover:-translate-y-1 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
+                    className: "[grid-area:stack] translate-x-8 translate-y-1 hover:-translate-y-1 before:absolute before:w-[100%] before:outline-1 before:rounded-xl before:outline-border before:h-[100%] before:content-[''] before:bg-blend-overlay before:bg-background/50 grayscale-[100%] hover:before:opacity-0 before:transition-opacity before:duration-700 hover:grayscale-0 before:left-0 before:top-0",
                   },
                   {
                     icon: <PhoneCall className="size-4 text-red-400" />,
@@ -871,14 +818,14 @@ const App: React.FC = () => {
                     date: "Yesterday, 11:45 PM",
                     iconClassName: "text-red-500",
                     titleClassName: "text-red-500",
-                    className: "[grid-area:stack] translate-x-24 translate-y-10 hover:translate-y-6",
+                    className: "[grid-area:stack] translate-x-16 translate-y-8 hover:translate-y-6",
                   },
                 ]}
               />
-            </motion.div>
-            <div className="absolute bottom-0 left-0 md:-left-10 p-4 md:p-8 glass-card rounded-xl md:rounded-[2rem] border-white/10 max-w-[200px] sm:max-w-xs text-navy-950 dark:text-white shadow-2xl z-20">
+            </div>
+            <div className="relative z-20 w-full max-w-sm p-4 md:p-6 glass-card rounded-xl md:rounded-[2rem] border-white/10 text-[#050504] shadow-2xl">
               <p className="italic text-sm md:text-lg serif leading-tight">"We missed a $12k anniversary lead on a Sunday. Never again."</p>
-              <p className="text-[9px] md:text-[10px] uppercase font-bold mt-2 md:mt-4 tracking-widest text-navy-400 dark:text-navy-300">- London Diamonds</p>
+              <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1a1714] md:mt-4">— London Diamonds</p>
             </div>
           </div>
         </div>
@@ -901,10 +848,12 @@ const App: React.FC = () => {
           }}
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 md:h-72">
-          <DottedSurface
-            isDarkMode={isDarkMode}
-            className="h-full w-full opacity-80 [mask-image:linear-gradient(to_top,black,transparent)]"
-          />
+          <WhenNear className="h-full w-full">
+            <DottedSurface
+              isDarkMode={isDarkMode}
+              className="h-full w-full opacity-80 [mask-image:linear-gradient(to_top,black,transparent)]"
+            />
+          </WhenNear>
         </div>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-20 relative z-10">
           <div className="order-2 md:order-1 flex-1 space-y-8">
@@ -931,7 +880,9 @@ const App: React.FC = () => {
             </button>
           </div>
           <div className="order-1 md:order-2 flex-1 relative flex items-center justify-center">
-            <IncomingCallPhone className="w-full max-w-[260px] sm:max-w-[320px]" isDarkMode={isDarkMode} />
+            <WhenNear className="w-full">
+              <IncomingCallPhone className="w-full max-w-[260px] sm:max-w-[320px]" isDarkMode={isDarkMode} />
+            </WhenNear>
           </div>
         </div>
       </section>
@@ -940,10 +891,8 @@ const App: React.FC = () => {
       <section className="min-h-screen flex flex-col justify-center pt-32 pb-16 overflow-x-hidden bg-transparent transition-colors">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 min-w-0">
           <div className="text-center mb-16 md:mb-24 max-w-3xl mx-auto">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold serif text-slate-900 mb-5 md:mb-7 tracking-tighter break-words">
-              <span className="bg-gradient-to-r from-navy-900 via-navy-700 to-amber-700 dark:from-white dark:via-slate-200 dark:to-amber-200 bg-clip-text text-transparent">
-                Unified Workflow
-              </span>
+            <h2 className="mb-5 overflow-visible break-words px-4 text-xl font-bold serif text-navy-900 sm:text-2xl md:mb-7 md:text-3xl">
+              Unified Workflow
             </h2>
             <p className="text-slate-600 dark:text-navy-400 uppercase tracking-[0.2em] text-[11px] font-bold mb-6">Built for your current stack</p>
             <p className="text-base sm:text-lg text-slate-800 dark:text-navy-300 font-light leading-relaxed">
@@ -958,43 +907,25 @@ const App: React.FC = () => {
             </button>
           </div>
 
-          <div className="mb-16 md:mb-24 flex w-full justify-center">
-            <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl shadow-2xl sm:max-w-4xl sm:rounded-[3rem] md:max-w-5xl md:rounded-[4rem]">
-            <div
-              className="relative mx-auto w-full h-[32vh] min-h-[180px] max-h-[300px] sm:h-[36vh] sm:max-h-[340px] md:h-[400px] md:min-h-[300px] md:max-h-[440px]"
-              style={{
-                maskImage: 'radial-gradient(ellipse 65% 65% at 50% 50%, black 20%, transparent 100%)',
-                WebkitMaskImage: 'radial-gradient(ellipse 65% 65% at 50% 50%, black 20%, transparent 100%)',
-                maskSize: '100% 100%',
-              }}
-            >
-              <img 
-                src={workflowImage} 
-                className="mx-auto h-full w-full max-w-full object-contain brightness-75" 
-                alt="Connected digital ecosystem" 
+          <div className="mb-16 flex w-full justify-center md:mb-24">
+            <figure className="w-full max-w-5xl">
+              <img
+                src={workflowImage}
+                loading="lazy"
+                decoding="async"
+                alt="Connected digital ecosystem"
+                className="mx-auto h-auto max-h-[440px] w-full rounded-[2rem] object-contain brightness-95 [mask-image:radial-gradient(ellipse_at_center,black_46%,transparent_78%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_46%,transparent_78%)]"
               />
-            </div>
-            <div
-              className="absolute inset-0 pointer-events-none z-[1]"
-              style={{
-                background: isDarkMode
-                  ? 'radial-gradient(ellipse 75% 75% at 50% 50%, transparent 35%, rgba(5,5,4,0.92) 100%)'
-                  : 'radial-gradient(ellipse 75% 75% at 50% 50%, transparent 35%, rgba(255,255,255,0.92) 100%)',
-              }}
-              aria-hidden
-            />
-            <div className="absolute inset-0 z-[2] flex items-end bg-gradient-to-t from-navy-950/80 via-transparent to-transparent p-4 sm:p-8 md:p-12 pointer-events-none">
-              <div className="max-w-xl">
-                <h3 className={`text-2xl sm:text-3xl md:text-4xl font-bold serif mb-2 md:mb-4 italic ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>The Synchronized Showroom</h3>
-                <p className={`font-light text-sm sm:text-base md:text-lg ${isDarkMode ? 'text-white/80' : 'text-slate-800'}`}>Fourcee acts as the intelligent bridge between your client interactions and your inventory, scheduling, and CRM systems.</p>
-              </div>
-            </div>
-            </div>
+              <figcaption className="mx-auto mt-2 max-w-xl px-4 text-center">
+                <h3 className={`mb-2 font-serif text-2xl font-bold italic sm:text-3xl ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>The Synchronized Showroom</h3>
+                <p className={`text-sm font-light sm:text-base ${isDarkMode ? 'text-white/80' : 'text-slate-800'}`}>Fourcee acts as the intelligent bridge between your client interactions and your inventory, scheduling, and CRM systems.</p>
+              </figcaption>
+            </figure>
           </div>
 
-          <div id="integrations-h-track" className="md:grid md:grid-cols-2 lg:grid-cols-3 gap-8 flex w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain gap-4 sm:gap-6 pb-2 md:overflow-visible md:flex-none scrollbar-thin" data-scroll-link="1">
+          <div id="integrations-h-track" className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
             {INTEGRATIONS_DATA.map((cat, idx) => (
-              <div key={idx} className="glass-card p-5 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border border-navy-50 dark:border-navy-800 flex flex-col flex-shrink-0 w-[min(86vw,320px)] min-w-[min(86vw,320px)] sm:min-w-0 md:w-auto md:min-w-0">
+              <div key={idx} className="glass-card flex w-full min-w-0 flex-col rounded-[2rem] border border-navy-50 p-5 dark:border-navy-800 sm:rounded-[3rem] sm:p-10">
                 <h4 className="text-[11px] font-bold uppercase tracking-[0.2em] text-navy-400 mb-6">{cat.category}</h4>
                 <div className="flex flex-wrap gap-2 mb-6">
                   {cat.popular.map(p => (
@@ -1052,7 +983,7 @@ const App: React.FC = () => {
         />
         <div className="relative max-w-6xl mx-auto grid gap-10 lg:gap-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] items-center">
           <div className="relative flex items-center justify-center order-1">
-            <div className="w-full max-w-[220px] sm:max-w-[260px] md:max-w-md aspect-[4/5]">
+            <div className="aspect-[4/5] w-full max-w-[220px] overflow-hidden rounded-[2rem] sm:max-w-[260px] md:max-w-md [mask-image:radial-gradient(ellipse_at_center,black_58%,transparent_88%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_58%,transparent_88%)]">
               <svg
                 viewBox="0 0 100 125"
                 className={`w-full h-full ${!isDarkMode ? 'invert' : ''}`}
@@ -1061,7 +992,7 @@ const App: React.FC = () => {
               >
                 <defs>
                   <filter id="nivoda-soft-feather">
-                    <feGaussianBlur stdDeviation="10" />
+                    <feGaussianBlur stdDeviation="18" />
                   </filter>
                   <mask id="nivoda-soft-mask">
                     <rect width="100" height="125" fill="black" />
@@ -1162,8 +1093,7 @@ const App: React.FC = () => {
         />
         <div className="max-w-4xl mx-auto text-center relative z-10 px-4 w-full min-w-0 overflow-x-hidden">
           <h2 className="text-lg sm:text-xl md:text-2xl font-bold serif text-navy-900 mb-4 tracking-tight">Boutique Intelligence</h2>
-          <p className="mb-4 text-[10px] uppercase tracking-[0.2em] text-navy-500">Swipe · cards sequence as you scroll</p>
-          <div id="boutique-h-track" className="-mx-4 px-4 flex w-full min-w-0 max-w-full gap-3 overflow-x-auto overscroll-x-contain pb-3 scrollbar-thin md:mx-0 md:px-0 md:grid md:grid-cols-3 md:overflow-visible md:gap-4" data-scroll-link="1">
+          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
             {[
               { title: "Voice Cloning", desc: "Your actual voice, scaled across 100 simultaneous calls." },
               { title: "Live Estimates", desc: "Instant pricing based on daily market spot rates." },
@@ -1171,7 +1101,7 @@ const App: React.FC = () => {
             ].map((f, i) => (
               <div
                 key={i}
-                className="liquid-glass shrink-0 w-[min(82vw,300px)] min-w-[min(82vw,300px)] max-w-sm rounded-2xl p-5 sm:p-6 text-left hover:shadow-xl transition-all group md:w-auto md:min-w-0 md:max-w-none md:shrink"
+                className="liquid-glass min-w-0 rounded-2xl p-5 text-left transition-all hover:shadow-xl group sm:p-6"
               >
                 <div className="w-9 h-9 bg-navy-900 rounded-xl mb-4 flex items-center justify-center text-white font-bold text-sm group-hover:scale-105 transition-transform border border-[#c8b58f]/40">
                   {i + 1}
@@ -1193,7 +1123,7 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      <section className="min-h-screen flex flex-col justify-center py-16 md:py-20 px-6 bg-transparent transition-colors relative">
+      <section id="signal-faq" className="flex flex-col justify-center scroll-mt-24 py-16 md:py-20 px-6 bg-transparent transition-colors relative">
         <div className="max-w-5xl mx-auto relative z-10 px-4 sm:px-6 w-full min-w-0">
           <div className="mb-5 flex justify-center">
             <button
@@ -1360,13 +1290,7 @@ const App: React.FC = () => {
         background: 'linear-gradient(180deg, #faf5ea 0%, #f8f1e2 38%, #f6efdf 100%)',
       }}
     >
-      <div className="fixed inset-0 z-0 pointer-events-none fourcee-grain-lite">
-        <EtherealShadow
-          color="rgba(12, 11, 9, 0.08)"
-          animation={{ scale: 40, speed: 20 }}
-          noise={{ opacity: 0.04, scale: 1 }}
-        />
-      </div>
+      <div className="fixed inset-0 z-0 pointer-events-none fourcee-grain-lite" />
 
       {currentView === AppView.LANDING && (
         <div className="pointer-events-none fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-6 py-5 sm:px-10">
@@ -1409,68 +1333,62 @@ const App: React.FC = () => {
             </div>
             <div className="mt-5 rounded-2xl border border-[#d9c39a]/80 bg-[#0c0b09] dark:bg-[#faf5ea] p-4">
               <p className="text-[11px] font-semibold text-[#faf5ea] dark:text-[#0c0b09]">{businessName}</p>
-              <p className="mt-1 text-xs text-[#ddd4c6] dark:text-[#3a342b]">Voice agent ops: call logs, transcripts, actions, onboarding, handover.</p>
+              <p className="mt-1 text-xs text-[#ddd4c6] dark:text-[#3a342b]">Prepared brief for this showroom.</p>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              {[
-                { label: 'Home', sub: 'Main journey', icon: <House className="h-4 w-4" />, action: () => setCurrentView(AppView.LANDING) },
+              {([
+                { label: 'Home', sub: 'Main journey', icon: <House className="h-4 w-4" />, action: () => navigate(AppView.LANDING) },
                 { label: 'Ring Builder', sub: '3D lead magnet', icon: <Gem className="h-4 w-4" />, action: () => goToRingBuilder() },
-                { label: 'Audit', sub: 'Custom report', icon: <FileSearch className="h-4 w-4" />, action: () => setCurrentView(AppView.LEAD_MAGNET) },
-                { label: 'CRM / Ops', sub: 'Demo portal · onboarding', icon: <LayoutDashboard className="h-4 w-4" />, action: () => {
-                  try { window.sessionStorage.setItem('fourcee-crm-tab', 'onboard'); } catch {}
-                  navigate(AppView.DASHBOARD);
-                } },
-                { label: 'Checkout', sub: 'Plans and pricing', icon: <CreditCard className="h-4 w-4" />, action: () => setCurrentView(AppView.CHECKOUT) },
-                { label: 'Book Call', sub: 'Strategy meeting', icon: <CalendarDays className="h-4 w-4" />, action: () => openCalendarBooking() },
-              ].map((item) => (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => {
-                    item.action();
-                    setIsSideMenuOpen(false);
-                  }}
-                  className="rounded-[1.25rem] min-h-[96px] border border-[#d9c39a]/70 dark:border-[#c8b58f]/30 px-3 py-3 text-left bg-[#fbf4e7] dark:bg-[#1a1712] hover:bg-white dark:hover:bg-[#242018] transition"
-                >
-                  <div className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-[#0c0b09] dark:bg-[#faf5ea] text-[#faf5ea] dark:text-[#0c0b09]">
-                    {item.icon}
-                  </div>
-                  <p className="mt-2 text-xs font-semibold text-[#0c0b09] dark:text-[#faf5ea]">{item.label}</p>
-                  <p className="mt-1 text-[11px] text-[#3a342b] dark:text-[#c8b58f]">{item.sub}</p>
-                </button>
-              ))}
+                { label: 'Audit', sub: 'Custom report', icon: <FileSearch className="h-4 w-4" />, action: () => navigate(AppView.LEAD_MAGNET) },
+                { label: 'Checkout', sub: 'Plans and pricing', icon: <CreditCard className="h-4 w-4" />, action: () => navigate(AppView.CHECKOUT) },
+                ...(calUrl ? [{ label: 'Book Call', sub: 'Strategy meeting', icon: <CalendarDays className="h-4 w-4" />, href: calUrl }] : []),
+              ] as Array<{ label: string; sub: string; icon: React.ReactNode; action?: () => void; href?: string }>).map((item) => {
+                const tile = (
+                  <>
+                    <div className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-[#0c0b09] dark:bg-[#faf5ea] text-[#faf5ea] dark:text-[#0c0b09]">
+                      {item.icon}
+                    </div>
+                    <p className="mt-2 text-xs font-semibold text-[#0c0b09] dark:text-[#faf5ea]">{item.label}</p>
+                    <p className="mt-1 text-[11px] text-[#3a342b] dark:text-[#c8b58f]">{item.sub}</p>
+                  </>
+                );
+                const tileClass = 'rounded-[1.25rem] min-h-[96px] border border-[#d9c39a]/70 dark:border-[#c8b58f]/30 px-3 py-3 text-left bg-[#fbf4e7] dark:bg-[#1a1712] hover:bg-white dark:hover:bg-[#242018] transition';
+                return item.href ? (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsSideMenuOpen(false)}
+                    className={tileClass}
+                  >
+                    {tile}
+                  </a>
+                ) : (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => {
+                      item.action?.();
+                      setIsSideMenuOpen(false);
+                    }}
+                    className={tileClass}
+                  >
+                    {tile}
+                  </button>
+                );
+              })}
             </div>
             <div className="mt-6 rounded-2xl border border-[#d9c39a]/70 dark:border-[#c8b58f]/25 bg-[#fbf4e7]/90 dark:bg-[#1a1712] p-4">
               <p className="text-[10px] uppercase tracking-[0.22em] text-[#3a342b] dark:text-[#c8b58f]">Onboarding & help</p>
               <p className="mt-2 text-xs text-[#0c0b09] dark:text-[#faf5ea]">
-                Re-open the portal walkthrough at any time or launch a demo call popup to guide buyers through your concierge journey.
+                Home, audit, checkout and the ring studio. Press Escape or tap outside to close this menu.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => {
-                    try { window.sessionStorage.setItem('fourcee-crm-tab', 'onboard'); } catch {}
-                    navigate(AppView.DASHBOARD);
-                    setIsSideMenuOpen(false);
-                  }}
-                  className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] bg-[#0c0b09] text-[#faf5ea] dark:bg-[#faf5ea] dark:text-[#0c0b09]"
-                >
-                  Open CRM / Ops
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    reopenPortalGuide();
-                    setIsSideMenuOpen(false);
-                  }}
-                  className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] border border-[#d9c39a]/80 dark:border-[#c8b58f]/35 text-[#0c0b09] dark:text-[#faf5ea]"
-                >
-                  Open walkthrough
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentView(AppView.LANDING);
+                    navigate(AppView.LANDING);
                     setIsSideMenuOpen(false);
                   }}
                   className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] border border-[#d9c39a]/80 dark:border-[#c8b58f]/35 text-[#0c0b09] dark:text-[#faf5ea]"
@@ -1495,15 +1413,15 @@ const App: React.FC = () => {
                   className="w-full accent-emerald-600"
                 />
                 <label className="block text-[11px] text-[#0c0b09] dark:text-[#faf5ea]">
-                  Average deal value: <span className="font-semibold">${sideMenuAvgDeal.toLocaleString()}</span>
+                  Average deal value: <span className="font-semibold">${dealValue.toLocaleString()}</span>
                 </label>
                 <input
                   type="range"
                   min={1000}
                   max={20000}
                   step={250}
-                  value={sideMenuAvgDeal}
-                  onChange={(e) => setSideMenuAvgDeal(Number(e.target.value))}
+                  value={dealValue}
+                  onChange={(e) => setSideMenuAvgDeal(snapDeal(Number(e.target.value)))}
                   className="w-full accent-emerald-600"
                 />
                 <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900/25 border border-emerald-200 dark:border-emerald-500/20 px-3 py-2">
@@ -1534,46 +1452,26 @@ const App: React.FC = () => {
       )}
       {!isSideMenuOpen && (
       <FloatingNav
-        onNavigate={setCurrentView}
+        onNavigate={navigate}
         currentView={currentView}
         toggleDarkMode={toggleDarkMode}
         isDarkMode={isDarkMode}
         onOpenMenu={() => setIsSideMenuOpen(true)}
-        onBookMeeting={openCalendarBooking}
-        portalNotifCount={portalNotifCount}
-        showPortalGuide={showPortalGuide}
-        onDismissPortalGuide={() => {
-          window.sessionStorage.setItem('fourcee-portal-guide-seen', 'true');
-          setShowPortalGuide(false);
-        }}
-        onHidePortalGuideForever={() => {
-          window.localStorage.setItem('fourcee-hide-portal-guide', 'true');
-          window.sessionStorage.setItem('fourcee-portal-guide-seen', 'true');
-          setShowPortalGuide(false);
-        }}
-        onReopenPortalGuide={reopenPortalGuide}
+        bookingHref={calUrl || undefined}
       />
       )}
 
       <main className="relative z-10">
         {currentView === AppView.LANDING && <LandingPage scrollContainerRef={scrollContainerRef} />}
-        {currentView === AppView.LEAD_MAGNET && auditData && (
-          <AuditPage
-            data={auditData}
-            isDarkMode={isDarkMode}
-            onGetLive={() => navigate(AppView.CHECKOUT)}
-            onBookCall={openCalendarBooking}
-          />
-        )}
-        {currentView === AppView.LEAD_MAGNET && !auditData && !auditDataLoading && (
-          <div className="min-h-screen flex items-center justify-center">
-            <p className="text-navy-600 dark:text-navy-300">Failed to load audit data</p>
-          </div>
-        )}
-        {currentView === AppView.LEAD_MAGNET && auditDataLoading && (
-          <div className="min-h-screen flex items-center justify-center">
-            <p className="text-navy-600 dark:text-navy-300">Loading audit...</p>
-          </div>
+        {currentView === AppView.LEAD_MAGNET && (
+          <Suspense fallback={null}>
+            <AuditPage
+              brief={gateBrief ?? briefFromAudit(auditData)}
+              isDarkMode={isDarkMode}
+              onGetLive={() => navigate(AppView.CHECKOUT)}
+              onBookCall={openCalendarBooking}
+            />
+          </Suspense>
         )}
         {currentView === AppView.BLOG && <BlogPage />}
         {currentView === AppView.BLOG_POST && selectedPost && (
@@ -1595,19 +1493,12 @@ const App: React.FC = () => {
            </div>
         )}
         {currentView === AppView.CHECKOUT && (
-          <CheckoutFlow
-            isDarkMode={isDarkMode}
-            initialPackageId={preSelectedPackageId}
-          />
-        )}
-        {currentView === AppView.DASHBOARD && (
-          <CRMView
-            isDarkMode={isDarkMode}
-            businessName={auditData?.business.name ?? PLACEHOLDER_BUSINESS_NAME}
-            reportId={auditData?.auditMeta.reportId}
-            location={auditData?.business.location}
-            ringBuilder={ringBuilder ?? undefined}
-          />
+          <Suspense fallback={null}>
+            <CheckoutFlow
+              isDarkMode={isDarkMode}
+              initialPackageId={preSelectedPackageId}
+            />
+          </Suspense>
         )}
         {ADMIN_ENABLED && AdminDashboard && currentView === AppView.ADMIN && (
           <React.Suspense fallback={null}><AdminDashboard isDarkMode={isDarkMode} /></React.Suspense>
@@ -1615,18 +1506,8 @@ const App: React.FC = () => {
         {currentView === AppView.TERMS && <TermsPage />}
       </main>
 
-      {ADMIN_ENABLED && (
-        <button
-          type="button"
-          onClick={() => navigate(AppView.ADMIN)}
-          className="fixed bottom-4 left-4 z-[120] h-3 w-3 rounded-full bg-navy-900/20 dark:bg-white/20 hover:bg-navy-900/50 dark:hover:bg-white/50 transition-colors"
-          aria-label="Hidden admin access"
-          title="Admin access (internal preview)"
-        />
-      )}
-
       {/* Global footer — dotted ball field fills the band above Terms (no empty gap) */}
-      <footer className="relative w-full min-h-[120px] h-[min(18vh,160px)] flex-shrink-0 overflow-visible z-20 -mt-4">
+      <footer className="relative w-full min-h-[200px] h-[min(28vh,240px)] flex-shrink-0 overflow-visible z-20 -mt-4">
         <div
           className="absolute inset-0 rounded-t-[2rem]"
           style={{
@@ -1647,10 +1528,12 @@ const App: React.FC = () => {
             WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 40%, transparent 78%)',
           }}
         />
-        <DottedSurface
-          isDarkMode={false}
-          className="absolute inset-0 z-[5] h-full w-full opacity-100 -translate-y-3 [mask-image:linear-gradient(to_top,black_78%,transparent_100%)]"
-        />
+        <WhenNear className="absolute inset-0 z-[5] h-full w-full">
+          <DottedSurface
+            isDarkMode={false}
+            className="h-full w-full opacity-100 -translate-y-3 [mask-image:linear-gradient(to_top,black_78%,transparent_100%)]"
+          />
+        </WhenNear>
         <div className="absolute inset-0 z-[20] flex items-end justify-center footer-terms-clearance px-4 pointer-events-none">
           <button
             type="button"
@@ -1661,7 +1544,9 @@ const App: React.FC = () => {
           </button>
         </div>
       </footer>
-      <FloatingAiAssistant />
+      <Suspense fallback={null}>
+        <FloatingAiAssistant />
+      </Suspense>
     </div>
   );
 };

@@ -6,11 +6,12 @@ import { cn } from '@/lib/utils';
 import { requestDemoCall, turnstileSiteKey } from '@/lib/demo-client';
 import { normalizePhone } from '@/lib/phone';
 import { Turnstile } from './turnstile';
+import { useEscapeClose } from '@/lib/use-escape-close';
 
 const COUNTRIES = [
+  { code: '+27', name: 'ZA', flag: '🇿🇦' },
   { code: '+1', name: 'US/CA', flag: '🇺🇸' },
   { code: '+44', name: 'UK', flag: '🇬🇧' },
-  { code: '+27', name: 'ZA', flag: '🇿🇦' },
   { code: '+61', name: 'AU', flag: '🇦🇺' },
   { code: '+91', name: 'IN', flag: '🇮🇳' },
   { code: '+33', name: 'FR', flag: '🇫🇷' },
@@ -43,10 +44,11 @@ export function MiniPhone({
   helperCopy,
   onCallCompleted,
 }: MiniPhoneProps) {
-  const matchedDefault = COUNTRIES.find((c) => c.code === phoneCountryDefault) ?? COUNTRIES[0];
+  const matchedDefault = COUNTRIES.find((c) => c.code === phoneCountryDefault) ?? COUNTRIES.find((c) => c.code === '+27') ?? COUNTRIES[0];
   const [selectedCountry, setSelectedCountry] = React.useState(matchedDefault);
   const [phone, setPhone] = React.useState('');
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  useEscapeClose(dropdownOpen, () => setDropdownOpen(false), 1400);
   const [status, setStatus] = React.useState<'idle' | 'calling' | 'success'>('idle');
 
   React.useEffect(() => {
@@ -123,7 +125,7 @@ export function MiniPhone({
                 type="button"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className={cn(
-                  'h-10 sm:h-12 px-3 rounded-lg sm:rounded-xl border flex items-center gap-2 text-xs sm:text-sm font-bold min-w-[4.5rem]',
+                  'h-12 px-3 rounded-lg sm:rounded-xl border flex items-center gap-2 text-base font-bold min-w-[4.5rem]',
                   inputBg,
                   textClass
                 )}
@@ -173,7 +175,7 @@ export function MiniPhone({
               value={phone}
               onChange={(e) => { setPhone(e.target.value.replace(/[^\d+\s()-]/g, '').slice(0, 20)); if (error) setError(null); }}
               className={cn(
-                'flex-1 min-w-0 h-10 sm:h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl border text-xs sm:text-sm font-medium placeholder:opacity-60 focus:outline-none focus:ring-2 focus:ring-white/30',
+                'flex-1 min-w-0 h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl border text-base font-medium placeholder:opacity-60 focus:outline-none focus:ring-2 focus:ring-white/30',
                 inputBg,
                 textClass
               )}
@@ -206,7 +208,7 @@ export function MiniPhone({
             <Phone className="w-5 h-5" />
             {status === 'calling' ? 'Calling…' : 'Call'}
           </button>
-          <p className={cn('mt-3 text-[10px] leading-relaxed', mutedClass)}>
+          <p className={cn('mt-1.5 text-[10px] leading-snug', mutedClass)}>
             Optional. By requesting a call you consent to one demo callback to this number for product demonstration.
             We do not sell your number. Recording only if legally permitted and disclosed on the call.
           </p>

@@ -6,7 +6,10 @@ import type { RingBuilderConfig, RingSwatch } from '../types/audit';
 import { CrystalRingCanvas } from './CrystalRingCanvas';
 import { WebGiRingCanvas } from './WebGiRingCanvas';
 import { findScroller, hudVisible, isDocked, ringProgress } from '../lib/ring-scroll';
-import posterUrl from '../public/assets/plates/plate_hero_ring.png';
+import { assetUrl } from '../lib/asset-url';
+import { preloadRingAssets, scheduleAfterLcpIdle } from '../lib/preload-ring';
+
+const posterUrl = assetUrl('assets/plates/plate_hero_ring.webp');
 
 // AR + camera try-on are loaded on demand: model-viewer and MediaPipe never touch the first paint.
 const ArViewSheet = lazy(() => import('./ArViewSheet').then((m) => ({ default: m.ArViewSheet })));
@@ -53,7 +56,7 @@ function RingCanvas({ progressRef, active, onReady, onContextState, ...props }: 
 /** Lower edge of the docked ring as a fraction of the sticky viewport height (measured, iPhone 14 + Pixel). */
 const RING_BOTTOM_RATIO = 0.63;
 /** The docked ring is ~5-8% wider than a phone screen; 0.84 leaves a small margin on both sides (checked on iPhone 14 / Pixel). */
-const RING_PHONE_SCALE = 0.84;
+const RING_PHONE_SCALE = 0.74;
 
 function findSwatch(list: RingSwatch[], id: string, fallback: RingSwatch): RingSwatch {
   return list.find((item) => item.id === id) ?? fallback;
@@ -80,6 +83,13 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
   const hudRef = useRef<HTMLDivElement | null>(null);
   const [metalId, setMetalId] = useState(config.defaultMetalId);
   const [gemId, setGemId] = useState(config.defaultGemId);
+  // Poster stays up until the first WebGi frame. The runtime starts on a gesture, or on idle after LCP,
+  // never on a short timeout (that parsed the 2MB bundle inside the desktop TBT window).
+  const [engine, setEngine] = useState(false);
+  useEffect(() => scheduleAfterLcpIdle(() => {
+    void preloadRingAssets();
+    setEngine(true);
+  }), []);
   // Scroll state is owned HERE (a passive scroll listener on the section's real scroller), not by the WebGi scene: the HUD and the
   // poster must work even when the 3D scene is still loading, failed, or the user flung past the section before it was ready.
   const [docked, setDocked] = useState(false); // camera docked / ring interactive
@@ -124,7 +134,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
       const scale = phone ? RING_PHONE_SCALE : 1;
       const originY = sh * 0.42;
       const bottom = originY + (sh * RING_BOTTOM_RATIO - originY) * scale;
-      const lift = phone ? Math.max(0, Math.round(bottom - (hudTop - 16))) : 0;
+      const lift = phone ? Math.max(0, Math.round(bottom - (hudTop - 28))) : 0;
       sticky.style.setProperty('--ring-lift', `${lift}px`);
       sticky.style.setProperty('--ring-scale', String(scale));
     };
@@ -236,7 +246,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
         onPointerDown={warm}
         onFocus={warm}
         onTouchStart={warm}
-        className="min-h-11 flex-1 rounded-full border border-[#c8b58f]/60 bg-white/5 px-3 py-2.5 sm:flex-none sm:px-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f4efe4] active:scale-95"
+        className="min-h-11 flex-1 rounded-full border border-[#c8b58f] bg-[#0c0b09] px-3 py-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#faf5ea] active:scale-95 sm:flex-none sm:px-4"
         data-testid="open-tryon"
       >
         Try on your hand
@@ -258,17 +268,14 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
         )
       : null;
 
-  // one scrollable line on phones (pan-x only inside the row, page still scrolls vertically), wrapping from sm up
-  const swatchRow = 'flex min-w-0 flex-1 gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-2 sm:flex-wrap sm:overflow-visible';
+  // Phones wrap onto extra lines so every metal/stone name is fully on screen. A single nowrap row was clipping
+  // "Rose" and "Sapphire" at 390px with the scrollbar hidden, so there was no way to reach the rest.
+  const swatchRow = 'flex w-full min-w-0 flex-1 flex-wrap content-start gap-1.5';
   const chipClass = (active: boolean, accent: 'copper' | 'ice') =>
-    `inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] ${
+    `inline-flex max-w-full shrink-0 items-center gap-1.5 overflow-visible whitespace-nowrap rounded-full border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.06em] ${
       active
-        ? accent === 'copper'
-          ? 'border-[#c8b58f] bg-white/10 text-[#f4efe4]'
-          : 'border-[#c8b58f] bg-white/10 text-[#f4efe4]'
-        : isDarkMode
-          ? 'border-white/15 text-[#ddd4c6]'
-          : 'border-white/20 text-[#f3ebe0]'
+        ? 'border-[#0c0b09] bg-[#0c0b09] text-[#faf5ea]'
+        : 'border-[#1a1714]/30 bg-[#faf5ea] text-[#1a1714]'
     }`;
 
   if (compact || heroEmbed) {
@@ -284,13 +291,25 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
         <p className="mt-1 text-[11px] text-[#a8957a]">
           {heroEmbed ? 'Drag to orbit · swap metal & stone' : '3D ring · not the voice SOP'}
         </p>
-        <div className={canvasH} style={{ touchAction: 'pan-y' }}>
+        <div className={`${canvasH} bg-[#0c0b09]`} style={{ touchAction: 'pan-y' }}>
+          <img
+            src={posterUrl}
+            alt=""
+            width={1280}
+            height={720}
+            decoding="async"
+            fetchPriority="high"
+            className={`pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${sceneReady ? 'opacity-0' : 'opacity-80'}`}
+          />
+          {engine ? (
           <RingCanvas
             metalColor={metal.color}
             gemColor={gem.color}
             mode="orbit"
             interactive={heroEmbed || compact}
+            onReady={() => setSceneReady(true)}
           />
+          ) : null}
         </div>
         <p className="fx-kicker mt-4">Metal</p>
         <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Metal">
@@ -331,7 +350,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
   // —— One continuous scene: short scroll → same ring docks → HUD customize ——
   return (
     <div className="relative" ref={rootRef}>
-      <div ref={scrollRoot} className="relative h-[150vh] sm:h-[200vh]">
+      <div ref={scrollRoot} data-testid="ring-scroll-track" className="relative h-[112vh] sm:h-[160vh]">
         <div
           ref={stickyRef}
           className="sticky top-0 z-[1] h-[100svh] min-h-[100svh] w-full overflow-hidden bg-[#0c0b09]"
@@ -358,6 +377,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
                 <p className="absolute left-4 top-4 font-mono text-[10px] uppercase tracking-[0.18em] text-[#c8b58f]">Preparing the studio…</p>
               ) : null}
             </div>
+            {engine ? (
             <RingCanvas
               metalColor={metal.color}
               gemColor={gem.color}
@@ -371,6 +391,7 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
               dockAt={0.78}
               className="absolute inset-0"
             />
+            ) : null}
           </div>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_38%_48%,rgba(58,36,28,0.18),transparent_42%)]" />
           <div
@@ -452,14 +473,14 @@ export const RingBuilder: React.FC<RingBuilderProps> = ({
           {/* Studio HUD — same canvas, same ring, customize overlay */}
           <div
             id="ring-studio-interact"
-            className={`absolute inset-0 z-20 flex flex-col justify-end p-4 pb-[calc(5.25rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-8 transition-all duration-500 ${
+            className={`absolute inset-0 z-20 flex flex-col justify-end p-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-8 transition-all duration-500 ${
               hudOn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
             }`}
             data-hud-on={hudOn ? '1' : '0'}
           >
             <div
               ref={hudRef}
-              className="liquid-glass mx-auto w-full max-w-lg rounded-2xl border border-[rgba(200,181,143,0.35)] bg-[rgba(12,11,9,0.55)] p-3 backdrop-blur-xl shadow-[0_-12px_48px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.08)] sm:p-4"
+              className="liquid-glass mx-auto w-[min(100%,32rem)] min-w-0 max-w-full overflow-visible rounded-2xl border border-[rgba(200,181,143,0.35)] bg-[rgba(12,11,9,0.55)] p-3 backdrop-blur-xl shadow-[0_-12px_48px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.08)] sm:p-4"
               data-testid="ring-hud"
             >
               <div className="flex items-start justify-between gap-2">

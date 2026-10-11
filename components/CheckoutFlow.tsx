@@ -3,10 +3,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { PACKAGES, UPSELLS } from '../constants.tsx';
 import { CheckoutState } from '../types';
 import fcShad from '../public/assets/fcshad.png';
-import { isPlaceholderBusinessName, loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from '../lib/audit-content';
+import { isPlaceholderBusinessName, PLACEHOLDER_BUSINESS_NAME } from '../lib/audit-content';
+import { loadAuditGateBrief } from '../lib/audit-gate-brief';
 import { PayOnline, PayReturnBanner } from './ui/pay-online';
 import { flushQueue, newIdempotencyKey, submitLead, validateLeadFields, type LeadErrors } from '../lib/lead-client';
 import { isSouthAfricanStore, zarNote, zarRateFromEnv } from '../lib/pricing-display';
+import { configuredCalUrl, formatUsdAddon } from '../lib/prospect-fixes';
 import { byStatus } from '../lib/capabilities';
 interface CheckoutFlowProps {
   isDarkMode?: boolean;
@@ -17,9 +19,7 @@ const LEGACY_PACKAGE_IDS: Record<string, string> = { premium: 'pro' };
 
 const WISE_PAYMENT_URL = (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_WISE_PAYMENT_URL || '';
 const ZAR_RATE = zarRateFromEnv((import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_ZAR_PER_USD);
-const CAL_BOOKING_URL =
-  (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_CAL_BOOKING_URL ||
-  'https://app.cal.com/fourcee/30min';
+const BOOKING_URL = configuredCalUrl();
 
 
 export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, initialPackageId }) => {
@@ -61,11 +61,11 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
 
   useEffect(() => {
     let mounted = true;
-    loadAuditContent()
-      .then((data) => {
+    loadAuditGateBrief()
+      .then((brief) => {
         if (!mounted) return;
-        setIsZar(isSouthAfricanStore({ currencyCode: data?.auditMeta?.currencyCode, phoneCountryDefault: data?.liveDemo?.phoneCountryDefault }));
-        const incomingName = data?.business?.name?.trim();
+        setIsZar(isSouthAfricanStore({ currencyCode: brief.currencyCode, phoneCountryDefault: brief.phoneCountryDefault }));
+        const incomingName = brief.businessName?.trim();
         if (!incomingName) return;
         setCompanyName((current) =>
           isPlaceholderBusinessName(current) ? incomingName : current
@@ -308,10 +308,10 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                         )}
                       </div>
                       <span className="font-bold text-base text-navy-900 dark:text-white flex-shrink-0 ml-4 text-right">
-                        {u.price ? `+$${u.price}` : null}
+                        {u.price ? formatUsdAddon(u.price) : null}
                         {'monthlyPrice' in u && (u as { monthlyPrice?: number }).monthlyPrice ? (
                           <span className="block text-xs font-medium text-navy-700 dark:text-navy-400 mt-0.5">
-                            ${(u as { monthlyPrice: number }).monthlyPrice}/mo
+                            ${(u as { monthlyPrice: number }).monthlyPrice.toLocaleString('en-US')}/mo
                           </span>
                         ) : u.price ? (
                           <span className="block text-xs font-medium text-navy-700 dark:text-navy-400 mt-0.5">one-time</span>
@@ -449,6 +449,9 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                 </div>
               )}
               <div className="flex flex-col gap-3 pt-2">
+                <p className="text-sm leading-relaxed text-navy-700 dark:text-navy-300">
+                  Request the invoice below. We email it to you with a link to book onboarding. Nothing is charged on this page.
+                </p>
                 {WISE_PAYMENT_URL ? (
                   <a
                     href={WISE_PAYMENT_URL}
@@ -458,19 +461,17 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                   >
                     Pay with Wise · ${total.toLocaleString()}
                   </a>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-navy-300 dark:border-navy-600 px-4 py-3 text-xs text-navy-600 dark:text-navy-400">
-                    Online payment is not switched on yet. Request your invoice below and we&apos;ll email it to you personally.
-                  </div>
-                )}
-                <a
-                  href={CAL_BOOKING_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="fx-btn fx-btn-ghost w-full text-center"
-                >
-                  Book strategy call (Cal.com)
-                </a>
+                ) : null}
+                {BOOKING_URL ? (
+                  <a
+                    href={BOOKING_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fx-btn fx-btn-ghost w-full text-center"
+                  >
+                    Book a strategy call
+                  </a>
+                ) : null}
               </div>
             </div>
             <p className="text-[10px] text-center text-navy-600 dark:text-navy-500 uppercase tracking-widest">
@@ -534,7 +535,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
         {renderStep()}
 
         {state.step < 4 && (
-          <div className="mt-16 flex justify-between items-center relative z-30 min-h-[72px] pb-24 sm:pb-20">
+          <div className="relative z-30 mt-16 flex min-h-[72px] flex-col-reverse items-stretch gap-3 px-1 pb-24 sm:flex-row sm:items-center sm:justify-between sm:pb-20">
             <button 
               type="button"
               onClick={prevStep}
@@ -552,7 +553,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
               }}
               disabled={sending}
               data-testid="checkout-next"
-              className="fx-btn fx-btn-primary px-12 py-5 text-xs cursor-pointer shrink-0 select-none touch-manipulation disabled:opacity-60"
+              className="fx-btn fx-btn-primary w-full cursor-pointer select-none touch-manipulation px-4 py-3 text-center text-[10px] leading-snug disabled:opacity-60 sm:w-auto sm:px-12 sm:py-5 sm:text-xs"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               {state.step === 3 ? (sending ? 'Sending…' : `Request invoice · $${total.toLocaleString()}`) : 'Forward →'}

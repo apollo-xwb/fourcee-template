@@ -133,22 +133,22 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
                 </span>
                 <span className="h-1.5 w-16 rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 opacity-80" />
               </div>
-              <div id="faq-journey-track" className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 w-full min-w-0 max-w-full" style={{ scrollbarWidth: 'none' as const }}>
+              <div id="faq-journey-track" className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
                 {steps.map((step, idx) => (
                   <div
                     key={step.label}
                     className={[
-                      'w-[min(78vw,240px)] min-w-[min(78vw,240px)] max-w-[240px] flex-shrink-0 rounded-2xl border px-3 py-2.5 text-left shadow-sm break-words',
+                      'min-w-0 rounded-2xl border px-3 py-2.5 text-left shadow-sm',
                       'bg-white dark:bg-white/5',
                       idx === 0
                         ? 'border-navy-900/70 dark:border-white/70'
                         : 'border-navy-100/70 dark:border-white/10',
                     ].join(' ')}
                   >
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-navy-500 dark:text-navy-200">
+                    <p className="text-[11px] font-semibold normal-case tracking-normal text-navy-800 dark:text-navy-100">
                       {step.label}
                     </p>
-                    <p className="mt-1 text-[11px] leading-relaxed text-navy-600 dark:text-navy-100">
+                    <p className="mt-1 text-[12px] leading-relaxed text-navy-600 dark:text-navy-100">
                       {step.description}
                     </p>
                   </div>
@@ -210,10 +210,10 @@ export function FaqMonochrome({ isDarkMode, faqs, steps }: FaqMonochromeProps) {
                         {item.meta && (
                           <span
                             className={[
-                              'hidden sm:inline-flex items-center rounded-full border px-3 py-1 text-[9px] md:text-[10px] uppercase tracking-[0.3em] max-w-[60%] md:max-w-none truncate',
+                              'inline-flex max-w-full shrink-0 items-center whitespace-normal break-words rounded-full border px-2.5 py-1 text-[10px] font-semibold normal-case tracking-normal',
                               isDarkMode
                                 ? 'border-white/20 text-slate-200 bg-white/5'
-                                : 'border-slate-200 text-slate-600 bg-white/80',
+                                : 'border-slate-200 text-slate-700 bg-white/80',
                             ].join(' ')}
                           >
                             {item.meta}

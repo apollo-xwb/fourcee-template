@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { assetUrl } from '../lib/asset-url';
+import { AuditLeadGate } from './AuditLeadGate';
+import { loadAuditContent } from '../lib/audit-content';
+import { loadAuditGateBrief, type AuditGateBrief } from '../lib/audit-gate-brief';
+import { takeSealedAudit } from '../lib/audit-sealed';
+import { configuredCalUrl, demoDurationLine, isPlaceholderReportId, visitAuditDate } from '../lib/prospect-fixes';
 import fcWhite from '../public/assets/fcwhite.png';
 import fcBlack from '../public/assets/fcblack.png';
 import placeholderGif from '../public/assets/placeholder.gif';
@@ -28,7 +33,8 @@ interface AuditPageProps {
   isDarkMode: boolean;
   onGetLive: () => void;
   onBookCall: () => void;
-  data: AuditData;
+  /** Showroom name/city already read for the long page. Omit on a direct #/audit visit so the report file is not fetched yet. */
+  brief?: AuditGateBrief | null;
 }
 
 /** `surface`: navy = light page header (blue bar); white = dark page header (white bar). */
@@ -56,6 +62,32 @@ const HeroMetricPill: React.FC<{ label: string; value: string; isDarkMode: boole
     <p className={`mt-2 text-xl font-semibold ${isDarkMode ? 'text-slate-100' : 'text-navy-900'}`}>{value}</p>
   </div>
 );
+
+/** Sits just above the dock, and only after the first stats row has scrolled off, so it does not cover that card. */
+const RecoverDock: React.FC<{ label: string; onClick: () => void }> = ({ label, onClick }) => {
+  const [clear, setClear] = useState(false);
+  useEffect(() => {
+    const el = document.getElementById('audit-hero-metrics');
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setClear(true);
+      return;
+    }
+    const io = new IntersectionObserver(([entry]) => setClear(!entry.isIntersecting), { threshold: 0.25 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  if (!clear) return null;
+  return (
+    <div
+      className="pointer-events-none fixed inset-x-0 z-20 flex justify-center px-4 md:hidden"
+      style={{ bottom: 'calc(var(--nav-dock-bottom, 1rem) + var(--nav-dock-height, 3.5rem) + 0.75rem)' }}
+    >
+      <button type="button" onClick={onClick} className="pointer-events-auto fx-btn fx-btn-primary max-w-[calc(100vw-2rem)] shadow-lg">
+        {label}
+      </button>
+    </div>
+  );
+};
 
 const KpiCard: React.FC<{ title: string; value: string; isDarkMode: boolean }> = ({ title, value, isDarkMode }) => (
   <div className={`group rounded-3xl border p-6 transition hover:-translate-y-0.5 ${isDarkMode ? 'border-white/10 bg-gradient-to-br from-zinc-950/80 to-black shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-amber-500/20' : 'border-navy-200 bg-white/85 shadow-[0_10px_28px_rgba(12,11,9,0.06)] hover:border-navy-300'}`}>
@@ -103,22 +135,59 @@ const gridBgStyleLight: React.CSSProperties = {
   backgroundSize: '28px 28px',
 };
 
-export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onBookCall, data }) => {
-  // The short prospect page sets this flag on "See the full report" so a prospect who already chose to read the detail is not gated again.
-  const [showIntroSplash, setShowIntroSplash] = useState(() => {
-    try { return sessionStorage.getItem('fourcee-skip-audit-intro') !== '1'; } catch { return true; }
-  });
+export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onBookCall, brief: briefProp }) => {
+  // The report tree is not created until a sent lead. A refresh shows the gate again.
+  const [brief, setBrief] = useState<AuditGateBrief | null>(briefProp ?? null);
+  const [report, setReport] = useState<AuditData | null>(null);
+  const [gateError, setGateError] = useState(false);
   const [showHeaderStats, setShowHeaderStats] = useState(false);
+
+  useEffect(() => {
+    if (briefProp) setBrief(briefProp);
+  }, [briefProp]);
+
+  useEffect(() => {
+    if (briefProp || brief) return;
+    let live = true;
+    loadAuditGateBrief()
+      .then((next) => { if (live) setBrief(next); })
+      .catch(() => { if (live) setGateError(true); });
+    return () => { live = false; };
+  }, [briefProp, brief]);
+
+  const unlock = () => {
+    const sealed = takeSealedAudit();
+    const pending = sealed ? Promise.resolve(sealed) : loadAuditContent();
+    void pending.then((full) => setReport(full)).catch(() => setGateError(true));
+  };
+
+  if (!report) {
+    return (
+      <div className={`relative min-h-screen dock-safe-pad ${isDarkMode ? 'text-white' : 'text-navy-900'} font-sans`}>
+        {brief ? (
+          <AuditLeadGate brief={brief} isDarkMode={isDarkMode} onUnlocked={unlock} />
+        ) : gateError ? (
+          <p className="px-6 pt-24 text-center text-navy-700">The showroom brief could not be loaded.</p>
+        ) : (
+          <p className="px-6 pt-24 text-center text-navy-700">Loading audit…</p>
+        )}
+      </div>
+    );
+  }
+
+  const data = report;
   const headerSurface = 'navy';
   const triggerBooking = () => {
     scrollToId('audit-booking-cta');
     onBookCall();
   };
-  const generatedDate = data.auditMeta.generatedDate;
-  const reportId = data.auditMeta.reportId;
+  const generatedDate = visitAuditDate(data.auditMeta.generatedDate);
+  const reportId = isPlaceholderReportId(data.auditMeta.reportId) ? '' : data.auditMeta.reportId;
   const businessLogo = resolveBusinessLogo(data);
   const businessHeroImage = resolveHeroImage(data);
   const liveDemo = data.liveDemo;
+  const durationLine = demoDurationLine(liveDemo.helperCopy, liveDemo.demoDurationHint);
+  const calUrl = configuredCalUrl();
   const formatCurrency = (amount: number) => formatAuditCurrency(data, amount);
   const formatRange = formatAuditRange;
   const shellClass = isDarkMode
@@ -130,7 +199,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
 
   return (
     <div
-      className={`relative min-h-screen pb-12 sm:pb-16 ${
+      className={`relative min-h-screen dock-safe-pad pb-28 sm:pb-32 ${
         isDarkMode
           ? 'text-white [background:radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(212,175,55,0.07),transparent_55%),linear-gradient(180deg,#050504_0%,#0d0d0d_45%,#0c0b09_100%)]'
           : 'text-navy-900 [background:radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(188,146,72,0.16),transparent_58%),linear-gradient(180deg,#faf5ea_0%,#f6efdf_50%,#f2e8d2_100%)]'
@@ -145,138 +214,14 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
         }}
       />
 
-      {/* Scrollable intro brief — business hero behind sphere, cuts off under confidentiality label */}
-      {showIntroSplash && (
-        <section className="relative z-20 mx-auto w-full max-w-xl px-3 pb-6 pt-3 sm:max-w-2xl sm:px-4 sm:pt-4 md:pt-5">
-          <div className={`relative overflow-hidden rounded-[1.5rem] border text-center sm:rounded-[1.75rem] ${shellClass}`}>
-            {/* Hero image zone: sphere + confidentiality label only */}
-            <div className="relative isolate overflow-hidden">
-              <img
-                src={businessHeroImage}
-                alt=""
-                className="absolute inset-0 h-full w-full scale-105 object-cover object-top"
-                aria-hidden
-              />
-              <div
-                className={`absolute inset-0 ${
-                  isDarkMode
-                    ? 'bg-gradient-to-b from-navy-950/55 via-navy-950/70 to-navy-950/92'
-                    : 'bg-gradient-to-b from-white/35 via-slate-100/55 to-slate-100/90'
-                }`}
-              />
-              {isDarkMode && (
-                <div
-                  className="pointer-events-none absolute inset-0 opacity-30 mix-blend-soft-light"
-                  style={{
-                    backgroundImage:
-                      'radial-gradient(rgba(255,255,255,0.18) 0.6px, transparent 0.6px), radial-gradient(rgba(255,255,255,0.1) 0.6px, transparent 0.6px)',
-                    backgroundSize: '3px 3px, 5px 5px',
-                    backgroundPosition: '0 0, 1px 2px',
-                  }}
-                />
-              )}
-              <div className="relative z-10 flex flex-col items-center px-4 pb-4 pt-5 sm:px-6 sm:pb-5 sm:pt-6">
-                <img
-                  src={isDarkMode ? fcWhite : fcBlack}
-                  alt="Fourcee"
-                  className="mx-auto mb-3 h-8 w-auto object-contain drop-shadow-md sm:mb-4 sm:h-10 md:h-11"
-                />
-                <div className="mx-auto mb-3 flex w-full max-w-[min(42vw,148px)] shrink-0 items-center justify-center overflow-visible sm:mb-4 sm:max-w-[168px] md:max-w-[188px]">
-                  <div className="aspect-square w-full overflow-visible">
-                    <PendantFBX className="h-full w-full" isDarkMode={isDarkMode} />
-                  </div>
-                </div>
-                <p
-                  className={`text-[9px] font-semibold uppercase tracking-[0.32em] sm:text-[10px] sm:tracking-[0.35em] ${
-                    isDarkMode ? 'text-amber-100' : 'text-navy-800'
-                  }`}
-                >
-                  {data.auditMeta.confidentialityLabel}
-                </p>
-              </div>
-            </div>
 
-            {/* Body below hero — no business image */}
-            <div className="relative z-10 px-4 pb-5 pt-4 sm:px-7 sm:pb-7 sm:pt-5 md:px-8">
-              <div
-                className="pointer-events-none absolute inset-0 opacity-[0.14] sm:opacity-20"
-                style={isDarkMode ? gridBgStyle : gridBgStyleLight}
-              />
-              <div className="relative z-10 flex flex-col items-center">
-                <h2
-                  className={`text-lg font-semibold leading-snug sm:text-2xl md:text-3xl ${
-                    isDarkMode ? 'text-slate-100' : 'text-navy-900'
-                  }`}
-                >
-                  {data.auditMeta.preparedForLabel} {data.business.name}
-                </h2>
-                <p className={`mt-2 max-w-lg text-xs leading-relaxed sm:mt-3 sm:text-sm ${isDarkMode ? 'text-slate-300' : 'text-navy-700'}`}>
-                  This intelligence report is private, tailored to your showroom performance, and intended only for the
-                  {` `}
-                  <span className={`font-semibold ${isDarkMode ? 'text-amber-100' : 'text-navy-900'}`}>{data.business.name}</span>{' '}
-                  leadership team.
-                </p>
-                <p className={`mt-2 max-w-lg text-[11px] leading-relaxed sm:text-xs ${isDarkMode ? 'text-slate-300' : 'text-navy-700'}`}>
-                  Phone test is optional. You can open the full report now, or try a demo call later — we only use your number
-                  to place that one callback, with your consent.
-                </p>
-                <div
-                  className={`mt-4 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] sm:mt-5 sm:px-4 sm:py-2 sm:text-[10px] ${
-                    isDarkMode
-                      ? 'border-emerald-400/35 bg-emerald-950/30 text-emerald-200'
-                      : 'border-emerald-600/35 bg-emerald-50 text-emerald-900'
-                  }`}
-                >
-                  <span
-                    className={`h-2 w-2 animate-pulse rounded-full ${isDarkMode ? 'bg-emerald-300' : 'bg-emerald-600'}`}
-                  />
-                  Prepared preview ready
-                </div>
-                <div className="mt-5 sm:mt-6">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowIntroSplash(false);
-                      window.requestAnimationFrame(() => {
-                        const scroller = document.querySelector('.overflow-y-auto');
-                        if (scroller instanceof HTMLElement) {
-                          scroller.scrollTo({ top: 0, behavior: 'smooth' });
-                        }
-                      });
-                    }}
-                    className={`rounded-full border px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.24em] shadow-lg transition sm:px-7 sm:py-3 sm:text-[11px] ${
-                      isDarkMode
-                        ? 'border-amber-300/40 bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-500 text-black hover:brightness-110'
-                        : 'border-[#9f8251] bg-gradient-to-r from-[#f7e4bb] via-[#f2d8a1] to-[#e5bf78] text-[#312415] hover:brightness-105'
-                    }`}
-                  >
-                    Proceed to report
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowIntroSplash(false)}
-                  className={`mt-3 text-[10px] uppercase tracking-[0.22em] underline-offset-4 hover:underline ${isDarkMode ? 'text-slate-400' : 'text-navy-500'}`}
-                >
-                  Skip phone · view report
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      <div className={`fixed top-2 left-0 right-0 z-40 px-3 md:top-4 ${showIntroSplash ? 'pointer-events-none opacity-0' : ''}`}>
+      <div className="relative z-30 px-3 pt-2 md:sticky md:top-2 md:px-4">
         <div
-          className={`relative mx-auto w-full rounded-[1.8rem] border shadow-[0_18px_45px_rgba(0,0,0,0.15)] backdrop-blur-xl lg:w-[min(1120px,94vw)] ${
+          className={`relative mx-auto w-full rounded-2xl border shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-xl lg:w-[min(1120px,94vw)] ${
             isDarkMode
-              ? 'border-[rgba(200,181,143,0.28)] bg-[rgba(8,18,28,0.72)] text-[#f3ebe0]'
-              : 'border-navy-700/70 bg-[#0a0a0a]/82 text-white'
+              ? 'border-[rgba(200,181,143,0.28)] bg-[rgba(8,18,28,0.92)] text-[#f3ebe0]'
+              : 'border-navy-700/70 bg-[#0a0a0a]/92 text-white'
           }`}
-          style={{
-            maskImage: 'linear-gradient(to bottom, black 0%, black 90%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 90%, transparent 100%)',
-          }}
         >
           <div className="pointer-events-none absolute inset-0 opacity-[0.16]" style={isDarkMode ? gridBgStyleLight : gridBgStyle} />
           <div className="relative z-10 mx-auto flex w-full flex-col gap-3 px-4 py-3 md:px-6">
@@ -359,34 +304,17 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
 
       <div
         className={`mx-auto w-full max-w-7xl px-4 md:px-8 ${
-          showIntroSplash ? 'pt-2 pb-8' : 'pt-52 sm:pt-48 md:pt-44 lg:pt-40'
+          'pt-4 pb-8'
         }`}
       >
         {/* Hero: Fourcee mark + copy + MiniPhone + 3D ring — business image via content.json injection */}
         <section
-          className={`relative overflow-hidden rounded-[2rem] border p-6 md:p-10 ${
+          className={`relative isolate overflow-hidden rounded-[2rem] border p-6 md:p-10 ${
             isDarkMode
-              ? 'border-white/10 text-white'
-              : 'border-navy-200/80 text-navy-900 shadow-[0_18px_55px_rgba(12,11,9,0.08)]'
+              ? 'border-white/10 bg-[#0c0b09] text-white'
+              : 'border-navy-200/80 bg-[#faf5ea] text-navy-900 shadow-[0_18px_55px_rgba(12,11,9,0.08)]'
           }`}
         >
-          <img
-            src={businessHeroImage}
-            alt=""
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover object-top"
-            aria-hidden
-          />
-          <div
-            className={`pointer-events-none absolute inset-0 ${
-              isDarkMode ? 'bg-navy-950/55' : 'bg-[#faf5ea]/45'
-            }`}
-            aria-hidden
-          />
-          {/* Soft black fade at bottom — not harsh */}
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-gradient-to-b from-transparent via-black/25 to-black/70"
-            aria-hidden
-          />
           {isDarkMode && (
             <div
               className="pointer-events-none absolute inset-0 opacity-35 mix-blend-soft-light"
@@ -439,7 +367,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                 Fourcee responds before you commit.
               </p>
 
-              <div className="mt-7 grid gap-3 sm:grid-cols-3">
+              <div id="audit-hero-metrics" className="mt-7 grid gap-3 sm:grid-cols-3">
                 <HeroMetricPill label="Inbound Calls / Week" value={formatRange(data.callModel.inboundCallsPerWeekMin, data.callModel.inboundCallsPerWeekMax)} isDarkMode={isDarkMode} />
                 <HeroMetricPill label="Typical Answer Rate" value={`${formatRange(data.callModel.answerRateMin, data.callModel.answerRateMax)}%`} isDarkMode={isDarkMode} />
                 <HeroMetricPill label="Likely Missed / Week" value={`${formatRange(data.callModel.missedCallsPerWeekMin, data.callModel.missedCallsPerWeekMax)} calls`} isDarkMode={isDarkMode} />
@@ -456,6 +384,13 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
             </div>
 
             <div className="flex min-w-0 flex-col gap-8 lg:max-w-[min(100%,440px)] lg:justify-self-end">
+              {businessHeroImage ? (
+                <img
+                  src={businessHeroImage}
+                  alt=""
+                  className="mx-auto max-h-56 w-full rounded-[1.75rem] object-contain [mask-image:radial-gradient(ellipse_at_center,black_62%,transparent_92%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_62%,transparent_92%)]"
+                />
+              ) : null}
               <div className={`relative isolate flex min-h-[200px] w-full items-center justify-center overflow-visible rounded-2xl border sm:min-h-[260px] md:min-h-[300px] ${isDarkMode ? 'border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent' : 'border-navy-200 bg-gradient-to-b from-white to-slate-100'}`}>
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_40%_35%,rgba(212,175,55,0.14),transparent_55%)]" />
                 <div className="pointer-events-none absolute bottom-6 left-1/2 h-14 w-44 -translate-x-1/2 rounded-[100%] bg-white/10 blur-2xl" />
@@ -464,7 +399,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                   isDarkMode={isDarkMode}
                 />
               </div>
-              <div id="audit-live-test" className="scroll-mt-32 w-full max-w-md shrink-0 self-center">
+              <div id="audit-live-test" className="relative z-20 scroll-mt-28 w-full max-w-md shrink-0 self-center rounded-2xl bg-[#faf5ea] p-3 shadow-[0_12px_40px_rgba(12,11,9,0.12)]">
                 <p
                   className={`mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.28em] ${isDarkMode ? 'text-amber-200/85' : 'text-navy-700'}`}
                 >
@@ -477,11 +412,8 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
                   leadId={data.lead_id}
                   phoneCountryDefault={liveDemo.phoneCountryDefault}
                   ctaLabel={liveDemo.ctaLabel}
-                  helperCopy={liveDemo.helperCopy}
+                  helperCopy={durationLine}
                 />
-                <p className={`mt-3 text-center text-xs ${isDarkMode ? 'text-slate-400' : 'text-navy-600'}`}>
-                  {liveDemo.helperCopy} {liveDemo.demoDurationHint}
-                </p>
               </div>
             </div>
           </div>
@@ -489,7 +421,7 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
 
         <section
           id="audit-lost-revenue"
-          className="relative mt-8 min-h-[72vh] overflow-hidden rounded-[2rem] border border-[rgba(200,181,143,0.22)] bg-[#050504] px-5 py-8 md:px-10 md:py-10"
+          className="relative z-0 mt-12 min-h-0 overflow-hidden rounded-[2rem] border border-[rgba(200,181,143,0.22)] bg-[#050504] px-5 py-8 pb-16 md:px-10 md:py-10"
         >
           <div className="fx-grid opacity-80" aria-hidden />
           <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
@@ -835,9 +767,11 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
             <button type="button" onClick={onGetLive} className="fx-btn fx-btn-primary">
               Get Live Within Days
             </button>
-            <button type="button" onClick={onBookCall} className="fx-btn fx-btn-ghost">
-              Book a 15-Minute Strategy Call
-            </button>
+            {calUrl ? (
+              <a href={calUrl} target="_blank" rel="noopener noreferrer" className="fx-btn fx-btn-ghost">
+                Book a strategy call
+              </a>
+            ) : null}
           </div>
           {data.compliance.disclaimerShort ? (
             <p className={`mt-5 text-[10px] uppercase tracking-[0.18em] ${isDarkMode ? 'text-slate-500' : 'text-navy-500'}`}>
@@ -847,20 +781,10 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
         </section>
       </div>
 
-      {!showIntroSplash && (
-        <div
-          className="fixed inset-x-0 z-20 flex justify-center px-4 md:hidden pointer-events-none"
-          style={{ bottom: 'calc(var(--footer-nav-clearance, 6.5rem) + 0.25rem)' }}
-        >
-          <button
-            type="button"
-            onClick={onGetLive}
-            className="pointer-events-auto fx-btn fx-btn-primary shadow-lg"
-          >
-            Recover {formatCurrency(data.revenueModel.monthlyLossMidpoint)} / mo
-          </button>
-        </div>
-      )}
+      <RecoverDock
+        label={`Recover ${formatCurrency(data.revenueModel.monthlyLossMidpoint)} / mo`}
+        onClick={onGetLive}
+      />
     </div>
   );
 };

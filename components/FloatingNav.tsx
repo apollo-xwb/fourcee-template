@@ -11,12 +11,8 @@ interface FloatingNavProps {
   toggleDarkMode?: () => void;
   isDarkMode?: boolean;
   onOpenMenu?: () => void;
-  onBookMeeting?: () => void;
-  portalNotifCount?: number;
-  showPortalGuide?: boolean;
-  onDismissPortalGuide?: () => void;
-  onHidePortalGuideForever?: () => void;
-  onReopenPortalGuide?: () => void;
+  /** Opens in a new tab. Empty hides the Book control. */
+  bookingHref?: string;
 }
 
 /**
@@ -28,11 +24,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
   currentView,
   isDarkMode = false,
   onOpenMenu,
-  onBookMeeting,
-  portalNotifCount = 0,
-  showPortalGuide = false,
-  onDismissPortalGuide,
-  onHidePortalGuideForever,
+  bookingHref,
 }) => {
   const isActive = (view: AppView) => currentView === view;
   const iconBtn = isDarkMode
@@ -58,52 +50,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
               title="Menu"
             >
               <Menu className="h-5 w-5" />
-              {portalNotifCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-emerald-600 text-white text-[9px] font-bold flex items-center justify-center">
-                  {portalNotifCount}
-                </span>
-              )}
             </button>
-            {showPortalGuide && (
-              <div
-                className="absolute bottom-[calc(100%+0.5rem)] left-0 w-[min(78vw,280px)] rounded-2xl border border-[#d9c39a]/70 bg-white/95 shadow-2xl p-3 z-10 pointer-events-auto"
-                role="dialog"
-                aria-label="Portal walkthrough"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-[10px] uppercase tracking-[0.23em] text-[#7a6648] dark:text-amber-200/80">
-                    Portal tip
-                  </p>
-                  <button
-                    type="button"
-                    onClick={onDismissPortalGuide}
-                    className="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-navy-600 dark:text-slate-300 hover:bg-navy-900/5 dark:hover:bg-white/10"
-                    aria-label="Dismiss walkthrough"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <p className="mt-1.5 text-xs text-navy-800 dark:text-slate-200 leading-relaxed">
-                  Menu opens Ops, walkthrough, and ROI tools. Dock stays clear for the journey.
-                </p>
-                <div className="mt-2.5 flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={onDismissPortalGuide}
-                    className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] bg-navy-900 text-white dark:bg-white dark:text-navy-950"
-                  >
-                    Got it
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onHidePortalGuideForever}
-                    className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] border border-navy-200 dark:border-white/20 text-navy-700 dark:text-slate-200"
-                  >
-                    Don&apos;t show again
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -146,26 +93,25 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
         <div className="w-px h-6 bg-navy-200 dark:bg-white/20 mx-0.5 sm:mx-1 shrink-0" />
 
         {/* 4 · Book */}
-        {onBookMeeting && (
-          <button
-            type="button"
-            onClick={onBookMeeting}
+        {bookingHref ? (
+          <a
+            href={bookingHref}
+            target="_blank"
+            rel="noopener noreferrer"
             className={`inline-flex h-11 sm:h-12 items-center px-3.5 sm:px-4 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.16em] shrink-0 border border-dashed border-[#d4af37] transition-all hover:scale-[1.03] active:scale-95 ${
               isDarkMode ? 'text-white/95 bg-white/5' : 'text-navy-900 bg-navy-900/[0.03]'
             }`}
           >
             Book
-          </button>
-        )}
+          </a>
+        ) : null}
 
         {/* 5 · Primary CTA */}
         <button
           type="button"
           onClick={() => onNavigate(AppView.CHECKOUT)}
-          className={`h-11 sm:h-12 px-4 sm:px-5 rounded-full text-[10px] sm:text-xs font-semibold transition-all uppercase tracking-[0.14em] shrink-0 ${
-            isActive(AppView.CHECKOUT)
-              ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950 shadow-lg scale-105'
-              : 'bg-navy-900 dark:bg-white text-white dark:text-navy-950 hover:shadow-xl hover:scale-105 active:scale-95'
+          className={`h-11 sm:h-12 px-4 sm:px-5 rounded-full text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] shrink-0 bg-[#0c0b09] text-[#faf5ea] hover:brightness-125 active:scale-95 ${
+            isActive(AppView.CHECKOUT) ? 'shadow-lg scale-105' : 'hover:shadow-xl hover:scale-105'
           }`}
         >
           {isActive(AppView.CHECKOUT) ? 'Paying' : 'Get Fourcee'}
@@ -187,12 +133,11 @@ const DockItem: React.FC<{
     onClick={onClick}
     aria-label={label}
     title={label}
+    data-theme={isDarkMode ? 'dark' : 'light'}
     className={`flex h-11 sm:h-12 items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 rounded-full transition-all duration-300 shrink-0 ${
       active
-        ? 'bg-navy-900 text-white shadow-md scale-105 dark:bg-white dark:text-navy-950'
-        : isDarkMode
-          ? 'text-white/90 hover:text-white hover:bg-white/10'
-          : 'text-navy-800 hover:text-navy-950 hover:bg-navy-900/5'
+        ? 'bg-[#0c0b09] text-[#faf5ea] shadow-md scale-105'
+        : 'text-[#1a1714] hover:bg-black/5'
     }`}
   >
     {icon}

@@ -1,6 +1,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { wantsShortPage } from './lib/cro';
+import './index.css';
 
 // Two entry chunks so the short prospect page never downloads the 3D / WebGi / charts bundle of the full app.
 // `/` -> short page (default; VITE_CRO_SHORT=0 or ?v=full restores the legacy landing). Any #/route -> the existing app, unchanged.

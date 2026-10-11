@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { resolveCtaVariant, toE164, wantsShortPage, readProof, CTA_LABEL, OFFER_LINE } from '../lib/cro';
+import { bookingUrl, resolveCtaVariant, toE164, wantsShortPage, readProof, CTA_LABEL, OFFER_LINE } from '../lib/cro';
+import { DEFAULT_BOOKING_URL } from '../lib/prospect-fixes';
 import type { AuditData } from '../types/audit';
 
 afterEach(() => vi.unstubAllEnvs());
@@ -37,6 +38,15 @@ describe('CTA copy is truthful by construction', () => {
     expect(resolveCtaVariant('?cta=hear')).toBe('hear');
     vi.stubEnv('VITE_CRO_CTA', 'hear');
     expect(resolveCtaVariant('')).toBe('hear');
+  });
+  it('book link defaults to the Google appointment page; an http(s) env url overrides it', () => {
+    expect(bookingUrl()).toBe(DEFAULT_BOOKING_URL);
+    expect(bookingUrl()).not.toMatch(/cal\.com/i);
+    vi.stubEnv('VITE_BOOKING_URL', 'https://book.example/fourcee');
+    expect(bookingUrl()).toBe('https://book.example/fourcee');
+    vi.stubEnv('VITE_BOOKING_URL', '');
+    vi.stubEnv('VITE_CAL_BOOKING_URL', 'https://book.example/intro');
+    expect(bookingUrl()).toBe('https://book.example/intro');
   });
   it('offer line matches the founder-assisted positioning (no "2 hours", no "5 minutes")', () => {
     expect(OFFER_LINE).toBe('Free audit · done-for-you setup · live within days');
