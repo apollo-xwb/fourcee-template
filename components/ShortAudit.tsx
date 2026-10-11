@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { CountUp } from './count-up';
+import { CountUp, RangeCount } from './count-up';
 import type { AuditData } from '../types/audit';
 import {
   formatAuditCurrency,
@@ -275,7 +275,7 @@ export default function ShortAudit() {
             ] as const).map(([min, max, suffix, l]) => (
               <div key={l} className="rounded-2xl border border-[#0c0b09]/10 bg-white/60 px-2 py-4">
                 <dd className="text-[22px] font-bold leading-none tabular-nums md:text-[28px]">
-                  <CountUp value={min} format={(n) => String(Math.round(n))} />–<CountUp value={max} format={(n) => String(Math.round(n))} />{suffix}
+                  <RangeCount min={min} max={max} suffix={suffix} />
                 </dd>
                 <dt className="mt-2 text-[12px] leading-tight text-[#5b5346]">{l}</dt>
               </div>
