@@ -76,7 +76,9 @@ interface ImportMetaEnv {
   /** '1' only once the voice-onboarding platform is live and "Go live in 5 minutes" is true. */
   readonly VITE_VOICE_ONBOARDING?: string;
   readonly VITE_ONBOARDING_URL?: string;
-  /** Booking page for the default CTA. */
+  /** Optional http(s) override for the booking page. Wins over VITE_BOOKING_URL. Empty uses the Google Calendar appointment page. */
+  readonly VITE_CAL_BOOKING_URL?: string;
+  /** Optional http(s) override for the booking page. */
   readonly VITE_BOOKING_URL?: string;
   /** Fourcee platform API event endpoint (POST, JSON as text/plain). Unset = events stay in memory only. */
   readonly VITE_TRACK_URL?: string;

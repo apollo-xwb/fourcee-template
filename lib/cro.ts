@@ -41,7 +41,7 @@ export const CTA_LABEL: Record<CtaVariant, string> = {
   golive: 'Go live in 5 minutes',
 };
 
-/** http(s) booking link from VITE_CAL_BOOKING_URL or VITE_BOOKING_URL. Empty hides every Book control. */
+/** Booking link. An http(s) VITE_CAL_BOOKING_URL or VITE_BOOKING_URL overrides the Google appointment page. */
 export function bookingUrl(): string {
   return resolveCalUrl(import.meta.env as { VITE_CAL_BOOKING_URL?: string; VITE_BOOKING_URL?: string });
 }

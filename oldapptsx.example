@@ -40,7 +40,7 @@ const INTEGRATIONS_DATA = [
   {
     category: "Calendar & Scheduling",
     popular: ["Google Calendar", "Calendly"],
-    others: ["Microsoft Outlook", "Office 365", "Cal.com", "Apple Calendar"],
+    others: ["Microsoft Outlook", "Office 365", "Apple Calendar"],
     description: "Seamless consultation booking and staff availability sync."
   },
   {

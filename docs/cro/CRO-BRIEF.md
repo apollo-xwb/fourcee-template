@@ -41,7 +41,7 @@ There is no "truthful-copy PR" in `apollo-xwb/fourcee-template` (open PRs at the
 
 | Flag (build-time env, `?cta=` can pick `hear` for tests) | CTA text | True today? |
 |---|---|---|
-| default / `VITE_CRO_CTA=book` | "Book my free audit walkthrough" (opens `VITE_CAL_BOOKING_URL` or `VITE_BOOKING_URL` in a new tab). Hidden when neither is an http(s) URL. | Yes: founder-assisted walkthrough exists |
+| default / `VITE_CRO_CTA=book` | "Book my free audit walkthrough" (opens the Google Calendar appointment page in a new tab). An http(s) `VITE_CAL_BOOKING_URL` or `VITE_BOOKING_URL` overrides it. | Yes: founder-assisted walkthrough exists |
 | `VITE_CRO_CTA=hear` | "Hear your AI receptionist in 60 seconds" (inline phone field, then one demo call through the guarded `/api/demo-call` (PR #12) - the browser never calls n8n) | Only after TK confirms the demo call works end to end, the guard from PR #12 is deployed with its secret and n8n Header Auth is on (leading-0 normalisation is done by the guard). I did not place a real call. |
 | `VITE_CRO_CTA=golive` | "Go live in 5 minutes" | **No.** Cannot render unless `VITE_VOICE_ONBOARDING=1` **and** `VITE_ONBOARDING_URL` are set; otherwise falls back to `book`. Unit-tested. Flip only when the voice onboarding platform is live. |
 
@@ -113,7 +113,7 @@ These are decision thresholds we set ourselves; none is a forecast or a publishe
 
 - Real iPhone/Android devices (only Chromium emulation on the farm; Safari's zoom-on-focus is not reproduced by emulation, so the check is "all inputs >= 16 px and `visualViewport.scale` stays 1").
 - The event endpoint does not exist yet; events are verified only up to the beacon request.
-- Cal booking page URL and the 30-minute length need TK's confirmation (the old page said "15-minute strategy call").
+- The booking page is the founder's Google Calendar appointment link. The 30-minute length on older copy still needs TK's confirmation (the old page said "15-minute strategy call").
 - Real Fourcee testimonials/logos for the social-proof slot.
 - Removing `cdn.tailwindcss.com`; compressing/removing the 5 MB `nivoda.gif` and 3.7 MB `placeholder.gif` from the legacy landing; the 8.7 MB sphere in the audit intro (legacy pages remain heavy).
 - Currency/locale: the legacy ROI calculator shows `$` for a ZAR audit. Out of scope here.

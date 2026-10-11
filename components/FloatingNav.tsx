@@ -11,7 +11,8 @@ interface FloatingNavProps {
   toggleDarkMode?: () => void;
   isDarkMode?: boolean;
   onOpenMenu?: () => void;
-  onBookMeeting?: () => void;
+  /** Opens in a new tab. Empty hides the Book control. */
+  bookingHref?: string;
 }
 
 /**
@@ -23,7 +24,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
   currentView,
   isDarkMode = false,
   onOpenMenu,
-  onBookMeeting,
+  bookingHref,
 }) => {
   const isActive = (view: AppView) => currentView === view;
   const iconBtn = isDarkMode
@@ -92,17 +93,18 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
         <div className="w-px h-6 bg-navy-200 dark:bg-white/20 mx-0.5 sm:mx-1 shrink-0" />
 
         {/* 4 · Book */}
-        {onBookMeeting && (
-          <button
-            type="button"
-            onClick={onBookMeeting}
+        {bookingHref ? (
+          <a
+            href={bookingHref}
+            target="_blank"
+            rel="noopener noreferrer"
             className={`inline-flex h-11 sm:h-12 items-center px-3.5 sm:px-4 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.16em] shrink-0 border border-dashed border-[#d4af37] transition-all hover:scale-[1.03] active:scale-95 ${
               isDarkMode ? 'text-white/95 bg-white/5' : 'text-navy-900 bg-navy-900/[0.03]'
             }`}
           >
             Book
-          </button>
-        )}
+          </a>
+        ) : null}
 
         {/* 5 · Primary CTA */}
         <button

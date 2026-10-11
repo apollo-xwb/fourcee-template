@@ -19,7 +19,7 @@ const LEGACY_PACKAGE_IDS: Record<string, string> = { premium: 'pro' };
 
 const WISE_PAYMENT_URL = (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_WISE_PAYMENT_URL || '';
 const ZAR_RATE = zarRateFromEnv((import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_ZAR_PER_USD);
-const CAL_BOOKING_URL = configuredCalUrl();
+const BOOKING_URL = configuredCalUrl();
 
 
 export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, initialPackageId }) => {
@@ -462,14 +462,14 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                     Pay with Wise · ${total.toLocaleString()}
                   </a>
                 ) : null}
-                {CAL_BOOKING_URL ? (
+                {BOOKING_URL ? (
                   <a
-                    href={CAL_BOOKING_URL}
+                    href={BOOKING_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="fx-btn fx-btn-ghost w-full text-center"
                   >
-                    Book strategy call
+                    Book a strategy call
                   </a>
                 ) : null}
               </div>

@@ -77,10 +77,17 @@ export function formatUsdAddon(amount: number): string {
   return `+$${amount.toLocaleString('en-US')}`;
 }
 
-/** http(s) booking link from env. Empty hides Book on the short page, the dock, and checkout. No hardcoded event. */
-export function resolveCalUrl(env: { VITE_CAL_BOOKING_URL?: string; VITE_BOOKING_URL?: string } | undefined | null): string {
-  const raw = (env?.VITE_CAL_BOOKING_URL || env?.VITE_BOOKING_URL || '').trim();
+/** Founder Google Calendar appointment page. Shown unless an http(s) env override is set. */
+export const DEFAULT_BOOKING_URL = 'https://calendar.app.google/Ra2fzveKj33ZqbAG9';
+
+function httpBookingUrl(value: string | undefined): string {
+  const raw = (value || '').trim();
   return /^https?:\/\//i.test(raw) ? raw : '';
+}
+
+/** http(s) booking link. VITE_CAL_BOOKING_URL wins, then VITE_BOOKING_URL, otherwise the Google appointment page. */
+export function resolveCalUrl(env: { VITE_CAL_BOOKING_URL?: string; VITE_BOOKING_URL?: string } | undefined | null): string {
+  return httpBookingUrl(env?.VITE_CAL_BOOKING_URL) || httpBookingUrl(env?.VITE_BOOKING_URL) || DEFAULT_BOOKING_URL;
 }
 
 export function configuredCalUrl(): string {

@@ -768,9 +768,9 @@ export const AuditPage: React.FC<AuditPageProps> = ({ isDarkMode, onGetLive, onB
               Get Live Within Days
             </button>
             {calUrl ? (
-              <button type="button" onClick={onBookCall} className="fx-btn fx-btn-ghost">
+              <a href={calUrl} target="_blank" rel="noopener noreferrer" className="fx-btn fx-btn-ghost">
                 Book a strategy call
-              </button>
+              </a>
             ) : null}
           </div>
           {data.compliance.disclaimerShort ? (

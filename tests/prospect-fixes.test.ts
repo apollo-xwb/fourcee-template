@@ -8,6 +8,7 @@ import {
   isPlaceholderReportId,
   paybackMonths,
   leadSubmitUnlocksReport,
+  DEFAULT_BOOKING_URL,
   resolveCalUrl,
   snapDeal,
   visitAuditDate,
@@ -69,11 +70,16 @@ describe('audit lead gate', () => {
   });
 });
 
-describe('cal link', () => {
-  it('hides the CTA when no http(s) url is configured', () => {
-    expect(resolveCalUrl({})).toBe('');
-    expect(resolveCalUrl({ VITE_CAL_BOOKING_URL: '' })).toBe('');
-    expect(resolveCalUrl({ VITE_CAL_BOOKING_URL: 'https://cal.com/fourcee/intro' })).toBe('https://cal.com/fourcee/intro');
-    expect(resolveCalUrl({ VITE_BOOKING_URL: 'https://cal.com/fallback' })).toBe('https://cal.com/fallback');
+describe('booking link', () => {
+  it('uses the Google appointment page unless an http(s) env override is set', () => {
+    expect(resolveCalUrl({})).toBe(DEFAULT_BOOKING_URL);
+    expect(resolveCalUrl(null)).toBe(DEFAULT_BOOKING_URL);
+    expect(resolveCalUrl({ VITE_CAL_BOOKING_URL: '' })).toBe(DEFAULT_BOOKING_URL);
+    expect(resolveCalUrl({ VITE_BOOKING_URL: 'not a url' })).toBe(DEFAULT_BOOKING_URL);
+    expect(DEFAULT_BOOKING_URL).toBe('https://calendar.app.google/Ra2fzveKj33ZqbAG9');
+    expect(resolveCalUrl({ VITE_CAL_BOOKING_URL: 'https://book.example/intro' })).toBe('https://book.example/intro');
+    expect(resolveCalUrl({ VITE_BOOKING_URL: 'https://book.example/fallback' })).toBe('https://book.example/fallback');
+    expect(resolveCalUrl({ VITE_CAL_BOOKING_URL: 'https://book.example/primary', VITE_BOOKING_URL: 'https://book.example/fallback' })).toBe('https://book.example/primary');
+    expect(resolveCalUrl({ VITE_CAL_BOOKING_URL: 'javascript:alert(1)', VITE_BOOKING_URL: 'https://book.example/fallback' })).toBe('https://book.example/fallback');
   });
 });

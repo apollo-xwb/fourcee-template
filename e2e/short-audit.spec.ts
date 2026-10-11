@@ -1,8 +1,10 @@
 import { test, expect, type Page } from '@playwright/test';
 import { watchConsole } from './helpers';
+import { DEFAULT_BOOKING_URL } from '../lib/prospect-fixes';
 
 // Short prospect page (components/ShortAudit.tsx). Runs on all four profiles; the phone-only checks skip on desktop.
-// Nothing leaves the machine: content.json is rewritten per test, the demo webhook, Cal and the tracker are intercepted.
+// Nothing leaves the machine: content.json is rewritten per test, the demo webhook and the tracker are intercepted.
+// Book opens the Google Calendar appointment page in a new tab (no iframe). An env URL can override it; this build does not set one.
 
 const isPhone = (name: string) => ['iphone14', 'pixel'].includes(name);
 
@@ -38,11 +40,19 @@ test('hero: one outcome line, their own number, ONE primary CTA above the fold, 
   await expect(page.getByTestId('splash')).toHaveCount(0);
   await expect(page.getByTestId('proof')).toContainText('R16');
   await expect(page.getByTestId('proof')).toContainText('Estimate');
+  const vh = page.viewportSize()!.height;
+  const book = page.locator('[data-cta-pos=hero] a');
+  await expect(book).toBeVisible();
+  await expect(book).toHaveText('Book my free audit walkthrough');
+  await expect(book).toHaveAttribute('href', DEFAULT_BOOKING_URL);
+  await expect(book).toHaveAttribute('target', '_blank');
+  await expect(book).toHaveAttribute('rel', /noopener/);
+  const bookBox = (await book.boundingBox())!;
+  expect(bookBox.y + bookBox.height, 'the booking CTA sits inside the first screen').toBeLessThanOrEqual(vh);
   await expect(page.locator('a[href*="cal.com"]')).toHaveCount(0);
-  await expect(page.getByText('Book my free audit walkthrough')).toHaveCount(0);
+  await expect(page.locator('iframe')).toHaveCount(0);
   const proof = page.getByTestId('proof');
   const box = (await proof.boundingBox())!;
-  const vh = page.viewportSize()!.height;
   expect(box.y + box.height, 'the audit number sits inside the first screen').toBeLessThanOrEqual(vh);
   expect(await page.locator('canvas').count(), 'no WebGL canvas on the short page').toBe(0);
   expect(requests.filter((u) => /\.(glb|gltf|usdz|wasm|task|bin|hdr)(\?|$)|webgi|mediapipe|draco/i.test(u)), 'no 3D / AR assets requested').toEqual([]);
@@ -70,15 +80,29 @@ test('no horizontal overflow', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 });
 
-test('sticky CTA (phone): stays hidden while no booking URL is configured', async ({ page }, info) => {
+test('sticky CTA (phone): hidden beside the hero booking link, then the same calendar link', async ({ page }, info) => {
   test.skip(!isPhone(info.project.name), 'sticky bar is phone-only');
   await page.setViewportSize({ width: 390, height: 640 });
   await openShort(page);
+  const hero = page.locator('[data-cta-pos=hero] a');
+  await expect(hero).toHaveAttribute('href', DEFAULT_BOOKING_URL);
+  await expect(hero).toHaveAttribute('target', '_blank');
+  await expect(hero).toHaveAttribute('rel', /noopener/);
   const sticky = page.getByTestId('sticky-cta');
+  await hero.evaluate((el) => el.scrollIntoView({ block: 'center' }));
   await expect(sticky).toBeHidden();
-  await page.evaluate(() => window.scrollTo(0, 400));
-  await expect(sticky).toBeHidden();
+  await page.evaluate(() => {
+    const heroCta = document.querySelector('[data-cta-pos=hero]');
+    const bottom = (heroCta?.getBoundingClientRect().bottom ?? 0) + window.scrollY;
+    window.scrollTo(0, bottom + 120);
+  });
+  await expect(sticky).toBeVisible();
+  const stickyLink = sticky.locator('a');
+  await expect(stickyLink).toHaveAttribute('href', DEFAULT_BOOKING_URL);
+  await expect(stickyLink).toHaveAttribute('target', '_blank');
+  await expect(stickyLink).toHaveAttribute('rel', /noopener/);
   await expect(page.locator('a[href*="cal.com"]')).toHaveCount(0);
+  await expect(page.locator('iframe')).toHaveCount(0);
 });
 
 test('accordions: closed by default, open on tap, tracked', async ({ page }) => {
@@ -159,7 +183,11 @@ test('hear variant (flag): tapping the input keeps scale 1, inputs are >= 16 px,
 test('"Go live in 5 minutes" is not reachable without the platform flag', async ({ page }) => {
   await openShort(page, '?cta=golive');
   await expect(page.getByText('Go live in 5 minutes')).toHaveCount(0);
-  await expect(page.locator('[data-cta-pos=hero] a')).toHaveCount(0);
+  const hero = page.locator('[data-cta-pos=hero] a');
+  await expect(hero).toHaveCount(1);
+  await expect(hero).toHaveAttribute('href', DEFAULT_BOOKING_URL);
+  await expect(hero).toHaveAttribute('target', '_blank');
+  await expect(hero).toHaveAttribute('rel', /noopener/);
   await expect(page.locator('a[href*="cal.com"]')).toHaveCount(0);
 });
 
@@ -184,6 +212,10 @@ test('content.json failure still shows a working page and CTA', async ({ page })
   await page.route('**/content.json', (r) => r.abort());
   await page.goto('/?v=short');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('your business');
+  const hero = page.locator('[data-cta-pos=hero] a');
+  await expect(hero).toHaveAttribute('href', DEFAULT_BOOKING_URL);
+  await expect(hero).toHaveAttribute('target', '_blank');
+  await expect(hero).toHaveAttribute('rel', /noopener/);
   await expect(page.locator('a[href*="cal.com"]')).toHaveCount(0);
-  await expect(page.locator('[data-cta-pos=hero] a')).toHaveCount(0);
+  await expect(page.locator('iframe')).toHaveCount(0);
 });

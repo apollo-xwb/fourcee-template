@@ -79,8 +79,8 @@ const INTEGRATIONS_DATA = [
   },
   {
     category: "Calendar & Scheduling",
-    popular: ["Google Calendar", "Cal.com"],
-    others: ["Microsoft Outlook", "Office 365", "Cal.com", "Apple Calendar"],
+    popular: ["Google Calendar"],
+    others: ["Microsoft Outlook", "Office 365", "Apple Calendar"],
     description: "Seamless consultation booking and staff availability sync."
   },
   {
@@ -1336,29 +1336,48 @@ const App: React.FC = () => {
               <p className="mt-1 text-xs text-[#ddd4c6] dark:text-[#3a342b]">Prepared brief for this showroom.</p>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              {[
+              {([
                 { label: 'Home', sub: 'Main journey', icon: <House className="h-4 w-4" />, action: () => navigate(AppView.LANDING) },
                 { label: 'Ring Builder', sub: '3D lead magnet', icon: <Gem className="h-4 w-4" />, action: () => goToRingBuilder() },
                 { label: 'Audit', sub: 'Custom report', icon: <FileSearch className="h-4 w-4" />, action: () => navigate(AppView.LEAD_MAGNET) },
                 { label: 'Checkout', sub: 'Plans and pricing', icon: <CreditCard className="h-4 w-4" />, action: () => navigate(AppView.CHECKOUT) },
-                ...(calUrl ? [{ label: 'Book Call', sub: 'Strategy meeting', icon: <CalendarDays className="h-4 w-4" />, action: () => openCalendarBooking() }] : []),
-              ].map((item) => (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => {
-                    item.action();
-                    setIsSideMenuOpen(false);
-                  }}
-                  className="rounded-[1.25rem] min-h-[96px] border border-[#d9c39a]/70 dark:border-[#c8b58f]/30 px-3 py-3 text-left bg-[#fbf4e7] dark:bg-[#1a1712] hover:bg-white dark:hover:bg-[#242018] transition"
-                >
-                  <div className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-[#0c0b09] dark:bg-[#faf5ea] text-[#faf5ea] dark:text-[#0c0b09]">
-                    {item.icon}
-                  </div>
-                  <p className="mt-2 text-xs font-semibold text-[#0c0b09] dark:text-[#faf5ea]">{item.label}</p>
-                  <p className="mt-1 text-[11px] text-[#3a342b] dark:text-[#c8b58f]">{item.sub}</p>
-                </button>
-              ))}
+                ...(calUrl ? [{ label: 'Book Call', sub: 'Strategy meeting', icon: <CalendarDays className="h-4 w-4" />, href: calUrl }] : []),
+              ] as Array<{ label: string; sub: string; icon: React.ReactNode; action?: () => void; href?: string }>).map((item) => {
+                const tile = (
+                  <>
+                    <div className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-[#0c0b09] dark:bg-[#faf5ea] text-[#faf5ea] dark:text-[#0c0b09]">
+                      {item.icon}
+                    </div>
+                    <p className="mt-2 text-xs font-semibold text-[#0c0b09] dark:text-[#faf5ea]">{item.label}</p>
+                    <p className="mt-1 text-[11px] text-[#3a342b] dark:text-[#c8b58f]">{item.sub}</p>
+                  </>
+                );
+                const tileClass = 'rounded-[1.25rem] min-h-[96px] border border-[#d9c39a]/70 dark:border-[#c8b58f]/30 px-3 py-3 text-left bg-[#fbf4e7] dark:bg-[#1a1712] hover:bg-white dark:hover:bg-[#242018] transition';
+                return item.href ? (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsSideMenuOpen(false)}
+                    className={tileClass}
+                  >
+                    {tile}
+                  </a>
+                ) : (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => {
+                      item.action?.();
+                      setIsSideMenuOpen(false);
+                    }}
+                    className={tileClass}
+                  >
+                    {tile}
+                  </button>
+                );
+              })}
             </div>
             <div className="mt-6 rounded-2xl border border-[#d9c39a]/70 dark:border-[#c8b58f]/25 bg-[#fbf4e7]/90 dark:bg-[#1a1712] p-4">
               <p className="text-[10px] uppercase tracking-[0.22em] text-[#3a342b] dark:text-[#c8b58f]">Onboarding & help</p>
@@ -1438,7 +1457,7 @@ const App: React.FC = () => {
         toggleDarkMode={toggleDarkMode}
         isDarkMode={isDarkMode}
         onOpenMenu={() => setIsSideMenuOpen(true)}
-        onBookMeeting={calUrl ? openCalendarBooking : undefined}
+        bookingHref={calUrl || undefined}
       />
       )}
 
