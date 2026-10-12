@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { AuditRequestForm } from './components/AuditRequestForm';
 import { AppView, BlogPost } from './types';
 import { FloatingNav } from './components/FloatingNav';
 
@@ -297,6 +298,7 @@ const App: React.FC = () => {
         case AppView.BLOG: return '#/insights';
         case AppView.BLOG_POST: return post?.slug ? `#/insights/${post.slug}` : '#/insights';
         case AppView.TERMS: return '#/terms';
+        case AppView.AUDIT_REQUEST: return '#/free-audit';
         case AppView.ADMIN: return '#/admin';
         default: return '#/';
       }
@@ -1504,6 +1506,7 @@ const App: React.FC = () => {
           <React.Suspense fallback={null}><AdminDashboard isDarkMode={isDarkMode} /></React.Suspense>
         )}
         {currentView === AppView.TERMS && <TermsPage />}
+        {currentView === AppView.AUDIT_REQUEST && <AuditRequestForm isDarkMode={isDarkMode} />}
       </main>
 
       {/* Global footer — dotted ball field fills the band above Terms (no empty gap) */}
