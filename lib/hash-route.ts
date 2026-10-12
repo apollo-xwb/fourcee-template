@@ -14,6 +14,7 @@ export function planHashRoute(hash: string, adminEnabled: boolean): HashPlan {
   const path = raw.startsWith('/') ? raw : `/${raw}`;
   const parts = path.split('/').filter(Boolean);
   const head = (parts[0] || '').toLowerCase();
+  if (head === 'free-audit' || head === 'request-audit') return { view: AppView.AUDIT_REQUEST };
   if (head === 'audit' || head === 'lead-magnet') return { view: AppView.LEAD_MAGNET };
   if (head === 'ops' || head === 'dashboard' || head === 'crm') return { view: AppView.LANDING, replaceHome: true };
   if (head === 'checkout' || head === 'pricing') return { view: AppView.CHECKOUT };

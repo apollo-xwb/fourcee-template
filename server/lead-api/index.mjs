@@ -12,6 +12,7 @@ import { validateLead, isHoneypotHit } from './lib/validate.mjs';
 import { notifyLead, notifyEnabled } from './lib/notify.mjs';
 import { createDemoCallRoute } from './routes/demo-call.mjs';
 import { createCheckoutRoutes } from './routes/checkout.mjs';
+import { createAuditRequestRoute } from './routes/audit-request.mjs';
 import { clientIp, send, checkOrigin, corsHeaders, readJson } from './lib/http.mjs';
 
 export { loadConfig };
@@ -68,6 +69,7 @@ export async function createLeadApi(cfg = loadConfig(), deps = {}) {
 
   const ROUTES = {
     'POST /api/lead': handleLead,
+    'POST /api/audit-request': await createAuditRequestRoute(cfg, { log, fetchImpl: deps.fetchImpl, now: deps.now }),
     'POST /api/demo-call': createDemoCallRoute(cfg, { log, fetchImpl: deps.fetchImpl, now: deps.now }),
     ...createCheckoutRoutes(cfg, { log, fetchImpl: deps.fetchImpl, now: deps.now, notifyDeps: ctx.notifyDeps }).routes, // test-mode payments (off unless PAYMENTS_ENABLED=1)
     ...(deps.routes || {}),

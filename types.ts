@@ -8,6 +8,7 @@ export enum AppView {
   DASHBOARD = 'dashboard',
   ADMIN = 'admin',
   TERMS = 'terms',
+  AUDIT_REQUEST = 'audit-request',
 }
 
 export interface CallRecord {
