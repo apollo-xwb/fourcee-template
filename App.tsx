@@ -342,76 +342,7 @@ const App: React.FC = () => {
   const toggleDarkMode = () => {}; // dark mode retired
   const sideMenuRecoveredMonthly = Math.round(sideMenuCallsPerMonth * sideMenuAvgDeal * 0.22);
   const openCalendarBooking = () => {
-    const win = window as Window & {
-      Cal?: ((...args: unknown[]) => void) & {
-        q?: unknown[];
-        ns?: Record<string, ((...args: unknown[]) => void) & { q?: unknown[] }>;
-        loaded?: boolean;
-      };
-    };
-
-    // Cal element-click embed logic
-    ((C: typeof window, A: string, L: string) => {
-      const runtimeWindow = C as typeof window & { Cal?: unknown };
-      const p = (a: { q?: unknown[] }, ar: IArguments | unknown[]) => {
-        a.q = a.q || [];
-        a.q.push(Array.from(ar));
-      };
-      const d = C.document;
-      runtimeWindow.Cal =
-        (runtimeWindow.Cal as unknown) ||
-        function () {
-          const cal = runtimeWindow.Cal as ((...args: unknown[]) => void) & {
-            loaded?: boolean;
-            ns?: Record<string, ((...args: unknown[]) => void) & { q?: unknown[] }>;
-            q?: unknown[];
-          };
-          const ar = arguments;
-          if (!cal.loaded) {
-            cal.ns = {};
-            cal.q = cal.q || [];
-            d.head.appendChild(d.createElement('script')).src = A;
-            cal.loaded = true;
-          }
-          if (ar[0] === L) {
-            const api = function () {
-              p(api as { q?: unknown[] }, arguments);
-            } as ((...args: unknown[]) => void) & { q?: unknown[] };
-            const namespace = ar[1] as string | undefined;
-            api.q = api.q || [];
-            if (typeof namespace === 'string') {
-              cal.ns![namespace] = cal.ns![namespace] || api;
-              p(cal.ns![namespace] as { q?: unknown[] }, ar);
-              p(cal as { q?: unknown[] }, ['initNamespace', namespace]);
-            } else {
-              p(cal as { q?: unknown[] }, ar);
-            }
-            return;
-          }
-          p(cal as { q?: unknown[] }, ar);
-        };
-    })(window, 'https://app.cal.com/embed/embed.js', 'init');
-
-    win.Cal?.('init', '30min', { origin: 'https://app.cal.com' });
-    win.Cal?.ns?.['30min']?.('ui', {
-      cssVarsPerTheme: { light: { 'cal-brand': '#fff' }, dark: { 'cal-brand': '#000' } },
-      hideEventTypeDetails: false,
-      layout: 'week_view',
-    });
-
-    let triggerEl = document.getElementById('cal-booking-trigger') as HTMLButtonElement | null;
-    if (!triggerEl) {
-      triggerEl = document.createElement('button');
-      triggerEl.id = 'cal-booking-trigger';
-      triggerEl.type = 'button';
-      triggerEl.style.display = 'none';
-      triggerEl.setAttribute('data-cal-link', 'fourcee/30min');
-      triggerEl.setAttribute('data-cal-namespace', '30min');
-      triggerEl.setAttribute('data-cal-config', '{"layout":"week_view","useSlotsViewOnSmallScreen":"true"}');
-      document.body.appendChild(triggerEl);
-    }
-    window.setTimeout(() => triggerEl?.click(), 0);
-    window.setTimeout(() => triggerEl?.click(), 180);
+    window.open('https://calendar.app.google/Ra2fzveKj33ZqbAG9', '_blank', 'noopener,noreferrer');
   };
 
 

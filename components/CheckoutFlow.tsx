@@ -14,7 +14,7 @@ const LEGACY_PACKAGE_IDS: Record<string, string> = { premium: 'pro' };
 const WISE_PAYMENT_URL = (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_WISE_PAYMENT_URL || '';
 const CAL_BOOKING_URL =
   (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_CAL_BOOKING_URL ||
-  'https://app.cal.com/fourcee/30min';
+  'https://calendar.app.google/Ra2fzveKj33ZqbAG9';
 
 
 export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, initialPackageId }) => {
@@ -314,7 +314,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
               </div>
               <ol className="space-y-3 text-sm text-navy-700 dark:text-navy-300 list-decimal pl-5">
                 <li>We email a Wise invoice for the amount above (or open your payment link if configured).</li>
-                <li>Book a 30-minute strategy / onboarding call on Cal.com.</li>
+                <li>Book a 30-minute strategy / onboarding call.</li>
                 <li>Deployment starts after payment confirmation — typically under 2 hours once assets are ready.</li>
               </ol>
               <div className="flex flex-col gap-3 pt-2">
@@ -329,8 +329,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                   </a>
                 ) : (
                   <div className="rounded-xl border border-dashed border-navy-300 dark:border-navy-600 px-4 py-3 text-xs text-navy-600 dark:text-navy-400">
-                    Wise payment URL not configured yet. Set <code className="font-mono">VITE_WISE_PAYMENT_URL</code> when the
-                    live invoice link is ready — until then, request invoice below and we&apos;ll send it manually.
+                    Your Wise invoice is emailed to you after you confirm below. No card details are taken on this page.
                   </div>
                 )}
                 <a
@@ -339,7 +338,7 @@ export const CheckoutFlow: React.FC<CheckoutFlowProps> = ({ isDarkMode = false, 
                   rel="noopener noreferrer"
                   className="fx-btn fx-btn-ghost w-full text-center"
                 >
-                  Book strategy call (Cal.com)
+                  Book a strategy call
                 </a>
               </div>
             </div>

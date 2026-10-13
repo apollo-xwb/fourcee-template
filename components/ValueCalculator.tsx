@@ -50,7 +50,9 @@ export const ValueCalculator: React.FC<ValueCalculatorProps> = ({
   const roiMonthsLabel =
     results.roiMonths === Infinity || Number.isNaN(results.roiMonths)
       ? '-'
-      : results.roiMonths.toFixed(1);
+      : results.roiMonths < 1
+        ? 'under 1'
+        : results.roiMonths.toFixed(1);
 
   const rangeClass = isDarkMode
     ? 'h-2 w-full cursor-pointer appearance-none rounded-full bg-white/28 accent-amber-300 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-amber-200/80 [&::-webkit-slider-thumb]:bg-gradient-to-br [&::-webkit-slider-thumb]:from-amber-50 [&::-webkit-slider-thumb]:to-amber-600 [&::-webkit-slider-thumb]:shadow-[0_0_14px_rgba(253,224,71,0.55)]'
@@ -149,7 +151,7 @@ export const ValueCalculator: React.FC<ValueCalculatorProps> = ({
             <p className={smallLabelClass}>Est. Annual Value</p>
             <p className={bigNumberClass}>{formatCurrency(results.annual)}</p>
           </div>
-          <div className={roiPillClass}>ROI in {roiMonthsLabel} Months</div>
+          <div className={roiPillClass}>{roiMonthsLabel === 'under 1' ? 'ROI in under 1 month' : `ROI in ${roiMonthsLabel} months`}</div>
         </div>
 
         <button type="button" onClick={() => setShowInsights((prev) => !prev)} className={infoBtnClass}>
@@ -182,7 +184,7 @@ export const ValueCalculator: React.FC<ValueCalculatorProps> = ({
                 • Payback window (illustrative): first month subscription (e.g. {formatCurrency(997)} on Pro, setup
                 waived on annual) vs about{' '}
                 <span className={insightsStrong}>{formatCurrency(results.monthlyBenefit)}</span> of monthly uplift →
-                roughly <span className={insightsStrong}>{roiMonthsLabel} months</span> to break even on that month,
+                roughly <span className={insightsStrong}>{roiMonthsLabel === 'under 1' ? 'under 1 month' : `${roiMonthsLabel} months`}</span> to break even on that month,
                 then upside.
               </p>
             )}
