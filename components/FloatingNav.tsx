@@ -17,6 +17,7 @@ interface FloatingNavProps {
   onDismissPortalGuide?: () => void;
   onHidePortalGuideForever?: () => void;
   onReopenPortalGuide?: () => void;
+  onStartSetup?: () => void;
 }
 
 /**
@@ -33,6 +34,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
   showPortalGuide = false,
   onDismissPortalGuide,
   onHidePortalGuideForever,
+  onStartSetup,
 }) => {
   const isActive = (view: AppView) => currentView === view;
   const iconBtn = isDarkMode
@@ -84,15 +86,18 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
                   </button>
                 </div>
                 <p className="mt-1.5 text-xs text-navy-800 dark:text-slate-200 leading-relaxed">
-                  Menu opens Ops, walkthrough, and ROI tools. Dock stays clear for the journey.
+                  {onStartSetup
+                    ? 'Five quick questions and we send you a setup plan for your store. About two minutes.'
+                    : 'Menu opens Ops, walkthrough, and ROI tools. Dock stays clear for the journey.'}
                 </p>
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
                   <button
                     type="button"
-                    onClick={onDismissPortalGuide}
+                    onClick={onStartSetup ?? onDismissPortalGuide}
                     className="rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] bg-navy-900 text-white dark:bg-white dark:text-navy-950"
+                    data-testid="portal-tip-primary"
                   >
-                    Got it
+                    {onStartSetup ? 'Start setup' : 'Got it'}
                   </button>
                   <button
                     type="button"
