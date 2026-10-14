@@ -37,7 +37,7 @@ export const STEPS = [
   { id: 'goals', title: 'What is going wrong', blurb: 'Pick everything that sounds familiar.' },
   { id: 'tools', title: 'Your phones today', blurb: 'Rough numbers are fine.' },
   { id: 'fit', title: 'Budget and timing', blurb: 'So we suggest the right plan, not the biggest one.' },
-  { id: 'contact', title: 'Where to send it', blurb: 'We email your setup plan. No spam, no list.' },
+  { id: 'contact', title: 'Where to send it', blurb: 'We reply by email. No spam, no mailing list.' },
 ] as const;
 
 const PAINS = [
@@ -113,6 +113,7 @@ function Chip({ on, children, onClick }: { on: boolean; children: React.ReactNod
       type="button"
       onClick={onClick}
       aria-pressed={on}
+      style={on ? { color: '#ffffff', backgroundColor: '#0c0b09' } : undefined}
       className={`text-left rounded-xl border px-4 py-3 text-base transition-colors ${on ? 'border-navy-900 bg-navy-900 text-white' : 'border-[#d9c39a]/80 bg-white text-navy-800 hover:bg-[#faf5ea]'}`}
     >
       {children}
@@ -177,7 +178,7 @@ export const SetupWizard: React.FC<{ open: boolean; onClose: () => void }> = ({ 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[170] flex items-end sm:items-center justify-center sm:p-4" data-testid="setup-wizard">
+    <div className="fixed inset-0 z-[1250] flex items-end sm:items-center justify-center sm:p-4" data-testid="setup-wizard">
       <button type="button" aria-label="Close setup" className="absolute inset-0 bg-black/45 backdrop-blur-sm" onClick={onClose} />
       <div role="dialog" aria-modal="true" aria-labelledby="wizard-title" className="relative w-full sm:max-w-lg max-h-[92dvh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-[#d9c39a]/70 bg-[#fffdf8] shadow-2xl">
         <div className="sticky top-0 z-10 bg-[#fffdf8]/95 backdrop-blur px-5 pt-5 pb-3 sm:px-7">
@@ -190,15 +191,15 @@ export const SetupWizard: React.FC<{ open: boolean; onClose: () => void }> = ({ 
           <div className="mt-2 h-1.5 w-full rounded-full bg-[#efe5d0]" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
             <div className="h-full rounded-full bg-navy-900 transition-[width] duration-300" style={{ width: `${pct}%` }} />
           </div>
-        </div>
-
-        <div className="px-5 pb-6 sm:px-7">
-          <h3 id="wizard-title" ref={headingRef} tabIndex={-1} className="mt-2 text-xl serif text-navy-900 outline-none">
+          <h3 id="wizard-title" ref={headingRef} tabIndex={-1} className="mt-3 text-xl serif text-navy-900 outline-none">
             {isResult ? 'Thanks. Here is what happens next.' : STEPS[step].title}
           </h3>
           {!isResult && <p className="mt-1 text-sm text-navy-600">{STEPS[step].blurb}</p>}
+        </div>
 
-          <div className="mt-5 space-y-4">
+        <div className="px-5 pb-6 sm:px-7">
+
+          <div className="mt-2 space-y-4">
             {step === 0 && (
               <>
                 <div><label className={label} htmlFor="wz-biz">Business name</label><input id="wz-biz" className={field} value={a.businessName} onChange={(e) => set('businessName', e.target.value)} autoComplete="organization" /></div>
@@ -239,7 +240,7 @@ export const SetupWizard: React.FC<{ open: boolean; onClose: () => void }> = ({ 
                 <p>We have your answers for <strong>{a.businessName || 'your business'}</strong>{a.city ? ` in ${a.city}` : ''}. Here is the plan:</p>
                 <ol className="list-decimal pl-5 space-y-2">
                   <li>We look at how your calls are handled today{a.callsPerWeek ? ` (about ${a.callsPerWeek} a week, ${a.missedShare.toLowerCase()} missed)` : ''}.</li>
-                  <li>You get a written setup plan by email at {a.email || 'your inbox'}, usually within one working day.</li>
+                  <li>We reply by email to {a.email || 'you'} with a suggested setup.</li>
                   <li>On a 30-minute call we agree the script, hours and handover rules before anything goes live.</li>
                 </ol>
                 <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="block w-full rounded-full bg-navy-900 px-6 py-3.5 text-center text-sm font-bold uppercase tracking-[0.18em] text-white" data-testid="wizard-book">Book the 30-minute call</a>
