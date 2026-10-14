@@ -87,7 +87,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
                 </div>
                 <p className="mt-1.5 text-xs text-navy-800 dark:text-slate-200 leading-relaxed">
                   {onStartSetup
-                    ? 'Five quick questions and we send you a setup plan for your store. About two minutes.'
+                    ? 'Five quick questions, then we email your setup plan.'
                     : 'Menu opens Ops, walkthrough, and ROI tools. Dock stays clear for the journey.'}
                 </p>
                 <div className="mt-2.5 flex flex-wrap gap-1.5">

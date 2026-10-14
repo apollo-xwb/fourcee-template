@@ -121,26 +121,20 @@ function Chip({ on, children, onClick }: { on: boolean; children: React.ReactNod
 }
 
 export const SetupWizard: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
-  const [step, setStep] = useState(0);
-  const [a, setA] = useState<WizardAnswers>(EMPTY);
+  const saved = useRef<{ step?: number; answers?: Partial<WizardAnswers>; done?: boolean } | null>(null);
+  if (saved.current === null) {
+    try { saved.current = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '{}') || {}; } catch { saved.current = {}; }
+  }
+  const [step, setStep] = useState(() => {
+    const s = saved.current?.step;
+    return typeof s === 'number' ? Math.min(Math.max(s, 0), STEPS.length) : 0;
+  });
+  const [a, setA] = useState<WizardAnswers>(() => ({ ...EMPTY, ...(saved.current?.answers || {}) }));
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'failed'>('idle');
-  const loaded = useRef(false);
+  const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'failed'>(() => (saved.current?.done ? 'done' : 'idle'));
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    if (!open || loaded.current) return;
-    loaded.current = true;
-    try {
-      const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null');
-      if (saved?.answers) setA({ ...EMPTY, ...saved.answers });
-      if (typeof saved?.step === 'number') setStep(Math.min(Math.max(saved.step, 0), STEPS.length));
-      if (saved?.done) setStatus('done');
-    } catch { /* ignore */ }
-  }, [open]);
-
-  useEffect(() => {
-    if (!loaded.current) return;
     try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ step, answers: a, done: status === 'done' })); } catch { /* ignore */ }
   }, [step, a, status]);
 
