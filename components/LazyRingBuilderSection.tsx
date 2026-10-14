@@ -26,8 +26,8 @@ export const LazyRingBuilderSection: React.FC<LazyRingBuilderSectionProps> = (pr
   const [visible, setVisible] = useState(Boolean(props.heroEmbed || props.compact || props.eager));
 
   useEffect(() => {
-    schedulePreloadRing(); // idempotent: network now, webgi runtime when idle / on first interaction
     if (props.heroEmbed || props.compact || props.eager) {
+      schedulePreloadRing(); // idempotent: network now, webgi runtime when idle / on first interaction
       setVisible(true);
       return;
     }
@@ -36,6 +36,7 @@ export const LazyRingBuilderSection: React.FC<LazyRingBuilderSectionProps> = (pr
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
+          schedulePreloadRing();
           setVisible(true);
           observer.disconnect();
         }
