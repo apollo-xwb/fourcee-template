@@ -511,7 +511,9 @@ const App: React.FC = () => {
             id="ring-studio-hero"
             className="relative hidden min-h-[560px] w-full lg:block"
           >
-            {ringBuilder && heroRingDesktop ? (
+            {/* Desktop: the WebGi studio (2 MB runtime) mounts when the splash lifts, not underneath it; the placeholder keeps the rail's
+                loaded height (671 px) so nothing shifts. */}
+            {ringBuilder && heroRingDesktop && isReady ? (
               <LazyRingBuilderSection
                 config={ringBuilder}
                 isDarkMode
@@ -519,7 +521,7 @@ const App: React.FC = () => {
                 businessName={businessName}
               />
             ) : ringBuilder ? (
-              <div className="flex min-h-[560px] items-center justify-center rounded-[2rem] border border-white/10 text-[10px] uppercase tracking-[0.22em] text-[#c8b58f]">
+              <div className="flex min-h-[671px] items-center justify-center rounded-[2rem] border border-white/10 text-[10px] uppercase tracking-[0.22em] text-[#c8b58f]">
                 Ring studio
               </div>
             ) : (
