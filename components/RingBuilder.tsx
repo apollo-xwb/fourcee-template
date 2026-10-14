@@ -6,7 +6,7 @@ import type { RingBuilderConfig, RingSwatch } from '../types/audit';
 import { CrystalRingCanvas } from './CrystalRingCanvas';
 import { WebGiRingCanvas } from './WebGiRingCanvas';
 import { findScroller, hudVisible, isDocked, ringProgress } from '../lib/ring-scroll';
-import posterUrl from '../public/assets/plates/plate_hero_ring.png';
+import posterUrl from '../public/assets/plates/plate_hero_ring.webp';
 
 // AR + camera try-on are loaded on demand: model-viewer and MediaPipe never touch the first paint.
 const ArViewSheet = lazy(() => import('./ArViewSheet').then((m) => ({ default: m.ArViewSheet })));

@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { RingBuilderConfig } from '../types/audit';
 import { ErrorBoundary } from './ErrorBoundary';
-import { RingBuilder } from './RingBuilder';
+// Split: three.js + the builder UI load only when the studio is about to show (Vercel deployments are immutable, so no stale-chunk 404s).
+const RingBuilder = React.lazy(() => import('./RingBuilder').then((m) => ({ default: m.RingBuilder })));
 import { schedulePreloadRing } from '../lib/preload-ring';
 
 interface LazyRingBuilderSectionProps {
@@ -66,7 +67,9 @@ export const LazyRingBuilderSection: React.FC<LazyRingBuilderSectionProps> = (pr
     <div ref={hostRef} className="min-h-[240px]">
       {visible ? (
         <ErrorBoundary label="Ring Builder" fallback={fallback}>
-          <RingBuilder {...props} />
+          <React.Suspense fallback={<div className={placeholderClass}>Ring studio preview</div>}>
+            <RingBuilder {...props} />
+          </React.Suspense>
         </ErrorBoundary>
       ) : (
         <div className={placeholderClass}>Ring studio preview</div>

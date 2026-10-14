@@ -2,14 +2,17 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { AppView, BlogPost } from './types';
 import { FloatingNav } from './components/FloatingNav';
 
-import logoUrl from './assets/logo.png';
-import workflowImage from './assets/workflow5.png';
-import nivodaGif from './public/assets/nivoda.gif';
+import logoUrl from './assets/logo-256.webp';
+import workflowImage from './assets/workflow5.webp';
 import fcWhite from './public/assets/fcwhite.png';
 import fcBlack from './public/assets/fcblack.png';
 import { ValueCalculator } from './components/ValueCalculator';
 import { EtherealShadow } from './components/ui/etheral-shadow';
-import { DottedSurface } from './components/ui/dotted-surface';
+// three.js (DottedSurface) is split out of the entry chunk and loaded after first paint.
+const DottedSurfaceInner = React.lazy(() => import('./components/ui/dotted-surface').then((m) => ({ default: m.DottedSurface })));
+const DottedSurface: React.FC<React.ComponentProps<typeof DottedSurfaceInner>> = (props) => (
+  <React.Suspense fallback={null}><DottedSurfaceInner {...props} /></React.Suspense>
+);
 import DisplayCards from './components/ui/display-cards';
 import { IncomingCallPhone } from './components/ui/incoming-call-phone';
 import { MiniPhone } from './components/ui/mini-phone';
@@ -26,15 +29,15 @@ import {
   Gem,
 } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { CheckoutFlow } from './components/CheckoutFlow';
-import { CRMView } from './components/CRMView';
-import { AdminDashboard } from './components/AdminDashboard';
+const CheckoutFlow = React.lazy(() => import('./components/CheckoutFlow').then((m) => ({ default: m.CheckoutFlow })));
+const CRMView = React.lazy(() => import('./components/CRMView').then((m) => ({ default: m.CRMView })));
+const AdminDashboard = React.lazy(() => import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard })));
 import { SplashScreen } from './components/SplashScreen';
 import { schedulePreloadRing } from './lib/preload-ring';
-import { PhoneTester } from './components/PhoneTester';
+const PhoneTester = React.lazy(() => import('./components/PhoneTester').then((m) => ({ default: m.PhoneTester })));
 import { FaqMonochrome } from './components/ui/faq-monochrome.tsx';
 import { ArticleCard } from './components/ui/blog-post-card';
-import { FloatingAiAssistant } from './components/ui/glowing-ai-chat-assistant';
+const FloatingAiAssistant = React.lazy(() => import('./components/ui/glowing-ai-chat-assistant').then((m) => ({ default: m.FloatingAiAssistant })));
 import { BLOG_POSTS } from './constants';
 import { AuditPage } from './components/AuditPage';
 import { LazyRingBuilderSection } from './components/LazyRingBuilderSection';
@@ -362,6 +365,7 @@ const App: React.FC = () => {
     showTester,
     setShowTester,
     heroRingDesktop,
+    isReady,
   });
   landingLiveRef.current = {
     isDarkMode,
@@ -374,11 +378,12 @@ const App: React.FC = () => {
     showTester,
     setShowTester,
     heroRingDesktop,
+    isReady,
   };
   const [, landingBump] = useState(0);
   useEffect(() => {
     landingBump((n) => n + 1);
-  }, [isDarkMode, businessName, auditData, ringBuilder, expandedIntegration, showTester, heroRingDesktop]);
+  }, [isDarkMode, businessName, auditData, ringBuilder, expandedIntegration, showTester, heroRingDesktop, isReady]);
 
 
   // Scroll-linked horizontal carousels (mobile): vertical scroll drives scrollLeft
@@ -411,6 +416,7 @@ const App: React.FC = () => {
       showTester,
       setShowTester,
       heroRingDesktop,
+      isReady,
     } = landingLiveRef.current;
     const [showDemoCallModal, setShowDemoCallModal] = useState(false);
     const problemRef = useRef<HTMLElement>(null);
@@ -504,7 +510,7 @@ const App: React.FC = () => {
             id="ring-studio-hero"
             className="relative hidden min-h-[560px] w-full lg:block"
           >
-            {ringBuilder && heroRingDesktop ? (
+            {ringBuilder && heroRingDesktop && isReady ? (
               <LazyRingBuilderSection
                 config={ringBuilder}
                 isDarkMode
@@ -589,7 +595,7 @@ const App: React.FC = () => {
             </p>
           </div>
           <div className="mx-auto w-full max-w-6xl px-0 sm:px-1">
-            <LazyRingBuilderSection config={ringBuilder} isDarkMode={false} eager businessName={businessName} />
+            <LazyRingBuilderSection config={ringBuilder} isDarkMode={false} businessName={businessName} />
           </div>
         </section>
       )}
@@ -992,40 +998,16 @@ const App: React.FC = () => {
         <div className="relative max-w-6xl mx-auto grid gap-10 lg:gap-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] items-center">
           <div className="relative flex items-center justify-center order-1">
             <div className="w-full max-w-[220px] sm:max-w-[260px] md:max-w-md aspect-[4/5]">
-              <svg
-                viewBox="0 0 100 125"
-                className={`w-full h-full ${!isDarkMode ? 'invert' : ''}`}
-                aria-label="Nivoda inventory layers feeding Fourcee"
-                role="img"
-              >
-                <defs>
-                  <filter id="nivoda-soft-feather">
-                    <feGaussianBlur stdDeviation="10" />
-                  </filter>
-                  <mask id="nivoda-soft-mask">
-                    <rect width="100" height="125" fill="black" />
-                    <rect
-                      x="10"
-                      y="10"
-                      width="80"
-                      height="105"
-                      rx="20"
-                      ry="20"
-                      fill="white"
-                      filter="url(#nivoda-soft-feather)"
-                    />
-                  </mask>
-                </defs>
-                <image
-                  href={nivodaGif}
-                  x="0"
-                  y="0"
-                  width="100"
-                  height="125"
-                  preserveAspectRatio="xMidYMid slice"
-                  mask="url(#nivoda-soft-mask)"
-                />
-              </svg>
+              <LazyVideo
+                src="/media/nivoda.mp4"
+                poster="/media/nivoda-poster.webp"
+                label="Nivoda inventory feeding Fourcee"
+                className={`w-full h-full object-cover ${!isDarkMode ? 'invert' : ''}`}
+                style={{
+                  WebkitMaskImage: 'radial-gradient(ellipse 62% 58% at 50% 50%, black 55%, transparent 100%)',
+                  maskImage: 'radial-gradient(ellipse 62% 58% at 50% 50%, black 55%, transparent 100%)',
+                }}
+              />
             </div>
           </div>
           <div className="space-y-6 text-left order-2">
@@ -1154,7 +1136,7 @@ const App: React.FC = () => {
       {/* Final snap point just above footer so bottom doesn't bounce */}
       <div className="h-0" />
 
-      {showTester && <PhoneTester onClose={() => setShowTester(false)} />}
+      {showTester && <React.Suspense fallback={null}><PhoneTester onClose={() => setShowTester(false)} /></React.Suspense>}
     </div>
   ); }; }, []); // stable component type — live data via landingLiveRef + landingBump
 
@@ -1288,9 +1270,6 @@ const App: React.FC = () => {
     </div>
   );
 
-  if (!isReady) {
-    return <SplashScreen onComplete={() => setIsReady(true)} />;
-  }
 
   return (
     <div
@@ -1496,6 +1475,7 @@ const App: React.FC = () => {
       )}
 
       <main className="relative z-10">
+        <React.Suspense fallback={<div className="min-h-screen" />}>
         {currentView === AppView.LANDING && <LandingPage scrollContainerRef={scrollContainerRef} />}
         {currentView === AppView.LEAD_MAGNET && auditData && (
           <AuditPage
@@ -1551,6 +1531,7 @@ const App: React.FC = () => {
         )}
         {currentView === AppView.ADMIN && <AdminDashboard isDarkMode={isDarkMode} />}
         {currentView === AppView.TERMS && <TermsPage />}
+        </React.Suspense>
       </main>
 
       <button
@@ -1597,7 +1578,9 @@ const App: React.FC = () => {
           </button>
         </div>
       </footer>
-      <FloatingAiAssistant />
+      {isReady && <React.Suspense fallback={null}><FloatingAiAssistant /></React.Suspense>}
+      {/* The splash is a fixed overlay; the page renders underneath it so the hero paints immediately (LCP) instead of after ~3.5 s. */}
+      {!isReady && <SplashScreen onComplete={() => setIsReady(true)} />}
     </div>
   );
 };

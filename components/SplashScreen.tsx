@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PhoneCall } from 'lucide-react';
 import DisplayCards from './ui/display-cards';
-import fcShad from '../public/assets/fcshad.png';
+import fcShad from '../public/assets/fcshad.webp';
 import { preloadRingNetwork } from '../lib/preload-ring';
 import { splashTrioLayout } from '../lib/splash-layout';
 
@@ -64,7 +64,8 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
     // Only the cheap, off-main-thread part of the ring preload runs here (plain fetches of the GLB + Draco files into the HTTP cache).
     // Parsing the 2 MB webgi runtime and creating a WebGL context used to land in the middle of the entrance (the 41.7 ms frame where all
     // three cards jumped together on GPU); that CPU work now starts after the splash, see App.tsx.
-    preloadRingNetwork();
+    // Phones/tablets don't show the ring until they scroll to it: keep their first-load bandwidth for the page itself.
+    if (window.matchMedia('(min-width: 1024px)').matches) preloadRingNetwork();
     let done: number | undefined;
     const timer = window.setTimeout(() => {
       setFade(true);

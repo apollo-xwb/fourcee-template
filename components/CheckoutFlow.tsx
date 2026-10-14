@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { PACKAGES, UPSELLS } from '../constants.tsx';
 import { CheckoutState } from '../types';
-import fcShad from '../public/assets/fcshad.png';
+import fcShad from '../public/assets/fcshad.webp';
 import { isPlaceholderBusinessName, loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from '../lib/audit-content';
 interface CheckoutFlowProps {
   isDarkMode?: boolean;

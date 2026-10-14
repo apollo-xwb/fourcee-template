@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+/* Replaces the runtime Tailwind CDN (render-blocking ~120 KB script + in-browser compile) that used to supply these. */
+@custom-variant dark (&:where(.dark, .dark *));
+@theme {
+  --color-navy-50: #faf7f0; --color-navy-100: #f3ebe0; --color-navy-200: #e5d9c8; --color-navy-300: #cfc0a8;
+  --color-navy-400: #a8957a; --color-navy-500: #7a6b55; --color-navy-600: #564c3d; --color-navy-700: #3a342b;
+  --color-navy-800: #1f1c18; --color-navy-900: #0c0b09; --color-navy-950: #050504;
+  --color-silver-50: #faf8f4; --color-silver-100: #f0ebe3; --color-silver-200: #ddd4c6; --color-silver-300: #b8ae9e;
+  --color-silver-400: #8f8678; --color-silver-500: #6b6358;
+}
+/* Tailwind v3 defaults the CDN provided */
+@layer base {
+  *, ::after, ::before, ::backdrop, ::file-selector-button { border-color: var(--color-gray-200, currentColor); }
+  button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
+}
+
 /* Custom Sphere fonts optional — missing files must not 404-spam; Michroma/Inter already loaded. */
 @font-face {
   font-family: "SphereNextThin";
