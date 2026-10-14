@@ -14,6 +14,8 @@ import { DottedSurface } from './components/ui/dotted-surface';
 import DisplayCards from './components/ui/display-cards';
 import { IncomingCallPhone } from './components/ui/incoming-call-phone';
 import { MiniPhone } from './components/ui/mini-phone';
+import { SetupWizard } from './components/SetupWizard';
+import { Reveal } from './components/motion-polish';
 import {
   PhoneCall,
   ChevronDown,
@@ -170,6 +172,7 @@ const App: React.FC = () => {
   const [auditDataLoading, setAuditDataLoading] = useState(true);
   const [portalNotifCount, setPortalNotifCount] = useState<1 | 2>(1);
   const [showPortalGuide, setShowPortalGuide] = useState(false);
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
   // Synchronous initial value: exactly ONE Ring Builder (WebGi context) is ever mounted - the desktop hero rail OR the phone/tablet
   // section - never both (the hidden one used to stay mounted, wait 4 s for a zero-size host and then spin up a second, fallback WebGL context).
@@ -669,7 +672,9 @@ const App: React.FC = () => {
       {/* Value Calculator Section - before ROI messaging; its own snap after demo */}
       <section id="roi-calculator" className="min-h-screen flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent">
         <div className="w-full max-w-4xl mx-auto">
+          <Reveal>
           <ValueCalculator isDarkMode={isDarkMode} businessName={businessName} />
+          </Reveal>
           <div className="mt-6 flex justify-center">
             <button
               type="button"
@@ -685,7 +690,7 @@ const App: React.FC = () => {
       {/* ROI Messaging Section (without calculator, stacked on mobile) */}
       <section className="min-h-screen flex flex-col justify-center px-4 sm:px-6 py-16 md:py-24 bg-transparent">
         <div className="w-full max-w-6xl mx-auto grid gap-10 lg:gap-16 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] items-start">
-          <div className="space-y-6">
+          <Reveal className="space-y-6">
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-navy-400 dark:text-navy-300">
               See if the numbers make sense
             </p>
@@ -696,8 +701,8 @@ const App: React.FC = () => {
             <p className="text-sm sm:text-base text-navy-600 dark:text-navy-300 max-w-xl">
               Use your real averages to understand the real value of answered calls, reclaimed staff time, and higher-intent leads.
             </p>
-          </div>
-          <div className="flex flex-col gap-6">
+          </Reveal>
+          <Reveal className="flex flex-col gap-6" delay={0.08}>
             <div className="glass-card p-8 rounded-[2.5rem] border border-navy-50 shadow-xl dark:border-navy-800">
               <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 mb-4 flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
@@ -727,7 +732,7 @@ const App: React.FC = () => {
             >
               Configure your solution →
             </button>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -1356,6 +1361,7 @@ const App: React.FC = () => {
                   navigate(AppView.DASHBOARD);
                 } },
                 { label: 'Checkout', sub: 'Plans and pricing', icon: <CreditCard className="h-4 w-4" />, action: () => setCurrentView(AppView.CHECKOUT) },
+                { label: 'Setup plan', sub: '5 quick questions', icon: <CalendarDays className="h-4 w-4" />, action: () => { setIsSideMenuOpen(false); setShowSetupWizard(true); } },
                 { label: 'Book Call', sub: 'Strategy meeting', icon: <CalendarDays className="h-4 w-4" />, action: () => openCalendarBooking() },
               ].map((item) => (
                 <button
@@ -1467,7 +1473,7 @@ const App: React.FC = () => {
           </aside>
         </div>
       )}
-      {!isSideMenuOpen && (
+      {!isSideMenuOpen && !showSetupWizard && (
       <FloatingNav
         onNavigate={setCurrentView}
         currentView={currentView}
@@ -1487,8 +1493,14 @@ const App: React.FC = () => {
           setShowPortalGuide(false);
         }}
         onReopenPortalGuide={reopenPortalGuide}
+        onStartSetup={() => {
+          window.sessionStorage.setItem('fourcee-portal-guide-seen', 'true');
+          setShowPortalGuide(false);
+          setShowSetupWizard(true);
+        }}
       />
       )}
+      <SetupWizard open={showSetupWizard} onClose={() => setShowSetupWizard(false)} />
 
       <main className="relative z-10">
         {currentView === AppView.LANDING && <LandingPage scrollContainerRef={scrollContainerRef} />}
