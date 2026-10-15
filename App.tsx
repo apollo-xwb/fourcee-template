@@ -3,7 +3,6 @@ import { AppView, BlogPost } from './types';
 import { FloatingNav } from './components/FloatingNav';
 
 import logoUrl from './assets/logo.png';
-import demoImage from './public/assets/placeholder.gif';
 import workflowImage from './assets/workflow5.png';
 import nivodaGif from './public/assets/nivoda.gif';
 import fcWhite from './public/assets/fcwhite.png';
@@ -43,6 +42,8 @@ import type { AuditData } from './types/audit';
 import { loadAuditContent, PLACEHOLDER_BUSINESS_NAME } from './lib/audit-content';
 import { resolveRingBuilder } from './lib/ring-builder';
 import { assetUrl } from './lib/asset-url';
+import { LazyVideo } from './components/LazyVideo';
+import { EdgeBeam, ListeningOrb } from './components/luxe-fx';
 import { renderSimpleMarkdown } from './lib/markdown';
 
 const INTEGRATIONS_DATA = [
@@ -604,22 +605,26 @@ const App: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowDemoCallModal(true)}
-            className="mb-6 h-12 md:h-14 px-5 md:px-8 bg-navy-900/90 dark:bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all border border-[#c8b58f]/50 text-white dark:text-navy-950 text-[10px] md:text-xs uppercase tracking-[0.22em] font-bold shadow-xl"
+            className="mb-6 h-12 md:h-14 px-5 md:px-8 gap-2.5 bg-navy-900/90 dark:bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all border border-[#c8b58f]/50 text-white dark:text-navy-950 text-[10px] md:text-xs uppercase tracking-[0.22em] font-bold shadow-xl"
+            data-testid="demo-call-me"
           >
-            Call me
+            <ListeningOrb theme={isDarkMode ? 'light' : 'dark'} />
+            <span>Call me</span>
           </button>
           <motion.div
             style={{ scale: demoScale, opacity: demoOpacity, y: demoY }}
-            className="relative w-full max-w-[280px] aspect-[9/16] md:max-w-4xl md:aspect-video rounded-2xl md:rounded-[3rem] overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] group origin-center"
+            className="relative w-full max-w-[360px] md:max-w-[600px] aspect-square rounded-2xl md:rounded-[2rem] bg-[#0a0908] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.45)] origin-center"
+            data-testid="demo-film"
           >
-             <img src={demoImage} alt="Demo" className="w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-1000" />
-             <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 md:p-0">
-                <div className="mt-4 md:mt-8 text-center max-w-md px-2 md:px-6">
-                  <p className="text-sm md:text-xl serif italic leading-relaxed">"Fourcee didn't just replace our receptionist; it enhanced the entire client experience. Our ROI was instant."</p>
-                  <p className="text-[9px] md:text-[10px] uppercase font-bold mt-2 md:mt-4 tracking-widest">- Julianna Rossi, Rossi Haute Joaillerie</p>
-                </div>
+             <div className="absolute inset-0 overflow-hidden rounded-2xl md:rounded-[2rem]">
+               <LazyVideo src={{ webm: assetUrl('media/fourcee-atelier-1x1.webm'), mp4: assetUrl('media/fourcee-atelier-1x1.mp4') }} poster={assetUrl('media/fourcee-atelier-1x1.webp')} label="Fourcee: custom rings, private ring studio, built to order" className="w-full h-full object-cover" />
              </div>
+             <EdgeBeam radiusClass="rounded-2xl md:rounded-[2rem]" size="line" theme="dark" strength={0.8} duration={4.5} testId="demo-beam" />
           </motion.div>
+          <div className="mt-7 md:mt-9 text-center max-w-md px-2 md:px-6">
+            <p className="text-base md:text-xl serif italic leading-relaxed text-[#0c0b09] dark:text-white">"Fourcee didn't just replace our receptionist; it enhanced the entire client experience. Our ROI was instant."</p>
+            <p className="text-[10px] uppercase font-bold mt-2 md:mt-3 tracking-[0.22em] text-[#7a6648] dark:text-[#c8b58f]">- Julianna Rossi, Rossi Haute Joaillerie</p>
+          </div>
           <div className="mt-10 flex justify-center">
             <button
               type="button"
