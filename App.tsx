@@ -166,7 +166,6 @@ const App: React.FC = () => {
   // Ring assets: the splash only fetches the files (cheap). Once the splash is gone, parse the webgi runtime when the main thread is idle
   // or on the first touch/scroll, so the studio scene is warm long before the user reaches it.
   // Phones/tablets: the ring loads when its section nears the viewport (LazyRingBuilderSection), not on page load.
-  useEffect(() => (isReady && heroRingDesktop ? schedulePreloadRing() : undefined), [isReady, heroRingDesktop]);
   const [isDarkMode] = useState(false); // light theme only — dark mode retired
   const [showTester, setShowTester] = useState(false);
   const [expandedIntegration, setExpandedIntegration] = useState<number | null>(null);
@@ -179,6 +178,7 @@ const App: React.FC = () => {
   // Synchronous initial value: exactly ONE Ring Builder (WebGi context) is ever mounted - the desktop hero rail OR the phone/tablet
   // section - never both (the hidden one used to stay mounted, wait 4 s for a zero-size host and then spin up a second, fallback WebGL context).
   const [heroRingDesktop, setHeroRingDesktop] = useState(() => typeof window !== 'undefined' && (window.matchMedia?.('(min-width: 1024px)').matches ?? false));
+  useEffect(() => (isReady && heroRingDesktop ? schedulePreloadRing() : undefined), [isReady, heroRingDesktop]);
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1024px)');
     const apply = () => setHeroRingDesktop(mq.matches);
