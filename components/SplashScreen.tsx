@@ -57,6 +57,7 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
   // App passes a fresh arrow function on every render. With [onComplete] as the effect dependency the 2.8 s timer (and the ring
   // preload) were cancelled and restarted on every App re-render (6 restarts in the first 3.3 s: the splash stayed up ~6.8 s instead
   // of ~3.5 s, and the "loop" never settled). Keep the latest callback in a ref and run the timers exactly once.
+  const [staticSplash] = useState(() => (typeof document !== 'undefined' ? document.getElementById('static-splash') : null));
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
@@ -67,16 +68,23 @@ export const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete 
     // Phones/tablets don't show the ring until they scroll to it: keep their first-load bandwidth for the page itself.
     if (window.matchMedia('(min-width: 1024px)').matches) preloadRingNetwork();
     let done: number | undefined;
+    // dist/index.html carries a static copy of this splash (scripts/prerender-splash.mjs) so phones paint it before the app bundle
+    // has run. When it is there, it stays on screen (no re-mount, no replayed entrance) and this component only fades it out on the
+    // same schedule as before, counted from navigation start.
+    const st = staticSplash;
+    const wait = st ? Math.max(600, 2800 - Math.round(performance.now())) : 2800;
     const timer = window.setTimeout(() => {
-      setFade(true);
-      done = window.setTimeout(() => onCompleteRef.current(), 700);
-    }, 2800);
+      if (st) { st.classList.remove('opacity-100'); st.classList.add('opacity-0'); st.style.pointerEvents = 'none'; }
+      else setFade(true);
+      done = window.setTimeout(() => { st?.remove(); onCompleteRef.current(); }, 700);
+    }, wait);
     return () => {
       window.clearTimeout(timer);
       if (done) window.clearTimeout(done);
     };
   }, []);
 
+  if (staticSplash) return null;
   return (
     <div
       className={`fixed inset-0 z-[9999] bg-[#faf5ea] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-700 ${

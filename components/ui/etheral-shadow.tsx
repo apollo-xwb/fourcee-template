@@ -60,8 +60,9 @@ export function EtherealShadow({
     animation,
     noise,
     style,
-    className
-}: ShadowOverlayProps) {
+    className,
+    paused = false
+}: ShadowOverlayProps & { paused?: boolean }) {
     const id = useInstanceId();
     const animationEnabled = animation && animation.scale > 0;
     const feColorMatrixRef = useRef<SVGFEColorMatrixElement>(null);
@@ -72,7 +73,7 @@ export function EtherealShadow({
     const animationDuration = animation ? mapRange(animation.speed, 1, 100, 1000, 50) : 1;
 
     useEffect(() => {
-        if (feColorMatrixRef.current && animationEnabled) {
+        if (feColorMatrixRef.current && animationEnabled && !paused) {
             if (hueRotateAnimation.current) {
                 hueRotateAnimation.current.stop();
             }
@@ -97,7 +98,7 @@ export function EtherealShadow({
                 }
             };
         }
-    }, [animationEnabled, animationDuration, hueRotateMotionValue]);
+    }, [animationEnabled, animationDuration, hueRotateMotionValue, paused]);
 
     return (
         <div

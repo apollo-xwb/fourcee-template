@@ -10,9 +10,15 @@ import { ValueCalculator } from './components/ValueCalculator';
 import { EtherealShadow } from './components/ui/etheral-shadow';
 // three.js (DottedSurface) is split out of the entry chunk and loaded after first paint.
 const DottedSurfaceInner = React.lazy(() => import('./components/ui/dotted-surface').then((m) => ({ default: m.DottedSurface })));
-const DottedSurface: React.FC<React.ComponentProps<typeof DottedSurfaceInner>> = (props) => (
-  <React.Suspense fallback={null}><DottedSurfaceInner {...props} /></React.Suspense>
-);
+import { useAmbient } from './lib/ambient';
+const DottedSurface: React.FC<React.ComponentProps<typeof DottedSurfaceInner>> = (props) => {
+  const ambient = useAmbient(); // three.js waves start on first interaction (or after a delay), not during the first render
+  return ambient ? <React.Suspense fallback={null}><DottedSurfaceInner {...props} /></React.Suspense> : null;
+};
+const AmbientShadow: React.FC<React.ComponentProps<typeof EtherealShadow>> = (props) => {
+  const ambient = useAmbient();
+  return <EtherealShadow {...props} paused={!ambient} />;
+};
 import DisplayCards from './components/ui/display-cards';
 import { IncomingCallPhone } from './components/ui/incoming-call-phone';
 import { MiniPhone } from './components/ui/mini-phone';
@@ -1283,7 +1289,7 @@ const App: React.FC = () => {
       }}
     >
       <div className="fixed inset-0 z-0 pointer-events-none fourcee-grain-lite">
-        <EtherealShadow
+        <AmbientShadow
           color="rgba(12, 11, 9, 0.08)"
           animation={{ scale: 40, speed: 20 }}
           noise={{ opacity: 0.04, scale: 1 }}
