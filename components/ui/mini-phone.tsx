@@ -167,6 +167,9 @@ export function MiniPhone({
                 </>
               )}
             </div>
+            {/* 16px computed font (iOS never zooms on focus) drawn at the original 12/14px size: the input is laid out
+                1/s larger and scaled by s (0.75 phones, 0.875 at sm), so the box, text and ring look exactly as before. */}
+            <div className="relative flex-1 min-w-0 h-10 sm:h-12 [--s:0.75] sm:[--s:0.875]">
             <input
               type="tel"
               inputMode="numeric"
@@ -174,12 +177,14 @@ export function MiniPhone({
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 15))}
               className={cn(
-                'flex-1 min-w-0 h-10 sm:h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl border text-xs sm:text-sm font-medium placeholder:opacity-60 focus:outline-none focus:ring-2 focus:ring-white/30',
+                'absolute left-0 top-0 origin-top-left [scale:var(--s)] w-[calc(100%/var(--s))] h-[calc(100%/var(--s))] px-[calc(12px/var(--s))] sm:px-[calc(16px/var(--s))] rounded-[calc(8px/var(--s))] sm:rounded-[calc(12px/var(--s))] border-[length:calc(1px/var(--s))] text-[16px] font-medium placeholder:opacity-60 focus:outline-none focus:ring-[length:calc(2px/var(--s))] focus:ring-white/30',
                 inputBg,
                 textClass
               )}
               aria-label="Phone number"
+              data-testid="mini-phone-tel"
             />
+            </div>
           </div>
 
           <button
