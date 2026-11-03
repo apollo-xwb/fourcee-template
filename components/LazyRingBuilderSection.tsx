@@ -4,7 +4,8 @@ import { assetUrl } from '../lib/asset-url';
 import { scheduleAfterLcpIdle } from '../lib/preload-ring';
 import { ErrorBoundary } from './ErrorBoundary';
 
-const RingBuilder = lazy(() => import('./RingBuilder').then((m) => ({ default: m.RingBuilder })));
+// Eternity-engine ring studio (replaces the WebGi RingBuilder, which is left in place unreferenced).
+const RingBuilder = lazy(() => import('./ring-studio/RingStudio').then((m) => ({ default: m.RingStudio })));
 const POSTER = assetUrl('assets/plates/plate_hero_ring.webp');
 
 interface LazyRingBuilderSectionProps {
@@ -20,7 +21,7 @@ interface LazyRingBuilderSectionProps {
 /**
  * Poster first. The RingBuilder chunk (three.js) loads after a gesture, when the section
  * is near the viewport, or once the browser is idle — not during the first paint.
- * webgi itself stays a dynamic import inside WebGiRingCanvas.
+ * The three.js engine itself stays a dynamic import inside RingStudio.
  */
 export const LazyRingBuilderSection: React.FC<LazyRingBuilderSectionProps> = (props) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -59,9 +60,9 @@ export const LazyRingBuilderSection: React.FC<LazyRingBuilderSectionProps> = (pr
 
   const fallback = (
     <div className={`rounded-[2rem] border px-6 py-12 text-center ${
-      props.isDarkMode ? 'border-amber-300/30 bg-navy-950/50 text-slate-300' : 'border-navy-200 bg-white/70 text-navy-700'
+      props.isDarkMode ? 'border-[rgba(200,181,143,0.3)] bg-[#0c0b09] text-[#ddd4c6]' : 'border-[rgba(58,52,43,0.2)] bg-[#f4efe4] text-[#3a342b]'
     }`}>
-      <p className="text-[10px] uppercase tracking-[0.22em] text-amber-700 dark:text-amber-200/80">
+      <p className="text-[10px] uppercase tracking-[0.22em] text-[#a8957a]">
         Ring studio preview unavailable
       </p>
       <p className="mt-3 text-sm normal-case tracking-normal">
