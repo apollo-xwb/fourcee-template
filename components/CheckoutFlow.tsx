@@ -17,7 +17,11 @@ interface CheckoutFlowProps {
 
 const LEGACY_PACKAGE_IDS: Record<string, string> = { premium: 'pro' };
 
-const WISE_PAYMENT_URL = (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_WISE_PAYMENT_URL || '';
+// Payments are off until TK re-enables them: set VITE_PAYMENTS_ENABLED=1 to show the Wise link.
+const PAYMENTS_ENABLED = (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_PAYMENTS_ENABLED === '1';
+const WISE_PAYMENT_URL = PAYMENTS_ENABLED
+  ? (import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_WISE_PAYMENT_URL || ''
+  : '';
 const ZAR_RATE = zarRateFromEnv((import.meta as ImportMeta & { env: Record<string, string> }).env?.VITE_ZAR_PER_USD);
 const BOOKING_URL = configuredCalUrl();
 
